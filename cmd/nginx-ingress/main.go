@@ -29,7 +29,7 @@ import (
 	cr_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	conf_scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
-	"github.com/nginxinc/nginx-plus-go-client/client"
+	"github.com/nginxinc/nginx-plus-go-client/v2/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
@@ -44,10 +44,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/record"
-
-	kitlog "github.com/go-kit/log"
-
-	"github.com/go-kit/log/level"
 
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
@@ -853,9 +849,7 @@ func createPlusAndLatencyCollectors(
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
 				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil)
-			logger := kitlog.NewLogfmtLogger(os.Stdout)
-			logger = level.NewFilter(logger, level.AllowError())
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, l)
 			go metrics.RunPrometheusListenerForNginxPlus(ctx, *prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.8
-FROM nginx:1.27.3@sha256:0c86dddac19f2ce4fd716ac58c0fd87bf69bfd4edabfd6971fb885bafd12a00b AS nginx
+FROM nginx:1.27.3@sha256:fb197595ebe76b9c0c14ab68159fd3c08bd067ec62300583543f0ebda353b5be AS nginx
 
 FROM redhat/ubi9:9.4@sha256:ee0b908e958a1822afc57e5d386d1ea128eebe492cb2e01b6903ee19c133ea75 AS rpm-build
 ARG NGINX
