@@ -29,6 +29,22 @@ metadata:
 data:
   {}
 /-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appprotect-dos-nginx-ingress-mgmt
+  namespace: appprotect-dos
+  labels:
+    helm.sh/chart: nginx-ingress-1.5.0
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/instance: appprotect-dos
+    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  license-token-secret-name: license-token
+/-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -379,6 +395,7 @@ spec:
           - -app-protect-dos-memory=1024
           
           - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-dos-nginx-ingress
+          - -mgmt-configmap=$(POD_NAMESPACE)/appprotect-dos-nginx-ingress-mgmt
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -471,6 +488,22 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   {}
+/-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appprotect-waf-nginx-ingress-mgmt
+  namespace: appprotect-waf
+  labels:
+    helm.sh/chart: nginx-ingress-1.5.0
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/instance: appprotect-waf
+    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  license-token-secret-name: license-token
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -817,6 +850,7 @@ spec:
           - -enable-app-protect=true
           - -enable-app-protect-dos=false
           - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-waf-nginx-ingress
+          - -mgmt-configmap=$(POD_NAMESPACE)/appprotect-waf-nginx-ingress-mgmt
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -909,6 +943,22 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   {}
+/-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appprotect-wafv5-nginx-ingress-mgmt
+  namespace: appprotect-wafv5
+  labels:
+    helm.sh/chart: nginx-ingress-1.5.0
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/instance: appprotect-wafv5
+    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  license-token-secret-name: license-token
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -1272,6 +1322,7 @@ spec:
           - -app-protect-enforcer-address="localhost:50001"
           - -enable-app-protect-dos=false
           - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-wafv5-nginx-ingress
+          - -mgmt-configmap=$(POD_NAMESPACE)/appprotect-wafv5-nginx-ingress-mgmt
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -1308,16 +1359,18 @@ spec:
           - -weight-changes-dynamic-reload=false
       
       - name: waf-enforcer
-        image: my.private.reg/nap/waf-enforcer:5.3.0
+        image: my.private.reg/nap/waf-enforcer:5.4.0
         imagePullPolicy: "IfNotPresent"
         env:
           - name: ENFORCER_PORT
             value: "50001"
+          - name: ENFORCER_CONFIG_TIMEOUT
+            value: "0"
         volumeMounts:
           - name: app-protect-bd-config
             mountPath: /opt/app_protect/bd_config
       - name: waf-config-mgr
-        image: my.private.reg/nap/waf-config-mgr:5.3.0
+        image: my.private.reg/nap/waf-config-mgr:5.4.0
         imagePullPolicy: "IfNotPresent"
         securityContext:
       
@@ -1750,6 +1803,9 @@ metadata:
 spec:
   controller: nginx.org/ingress-controller
 /-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+/-/-/-/
 # Source: nginx-ingress/templates/controller-lease.yaml
 apiVersion: coordination.k8s.io/v1
 kind: Lease
@@ -2177,6 +2233,9 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
+/-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
 /-/-/-/
 # Source: nginx-ingress/templates/controller-lease.yaml
 apiVersion: coordination.k8s.io/v1
@@ -2606,6 +2665,9 @@ metadata:
 spec:
   controller: nginx.org/ingress-controller
 /-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+/-/-/-/
 # Source: nginx-ingress/templates/controller-lease.yaml
 apiVersion: coordination.k8s.io/v1
 kind: Lease
@@ -3034,6 +3096,9 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
+/-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
 /-/-/-/
 # Source: nginx-ingress/templates/controller-globalconfiguration.yaml
 apiVersion: k8s.nginx.org/v1
@@ -3486,6 +3551,9 @@ metadata:
 spec:
   controller: nginx.org/ingress-controller
 /-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+/-/-/-/
 # Source: nginx-ingress/templates/controller-lease.yaml
 apiVersion: coordination.k8s.io/v1
 kind: Lease
@@ -3914,6 +3982,9 @@ metadata:
 spec:
   controller: nginx.org/ingress-controller
 /-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+/-/-/-/
 # Source: nginx-ingress/templates/controller-lease.yaml
 apiVersion: coordination.k8s.io/v1
 kind: Lease
@@ -3957,6 +4028,22 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   {}
+/-/-/-/
+# Source: nginx-ingress/templates/controller-configmap.yaml
+/-/-/-/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plus-nginx-ingress-mgmt
+  namespace: default
+  labels:
+    helm.sh/chart: nginx-ingress-1.5.0
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/instance: plus
+    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  license-token-secret-name: license-token
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -4293,6 +4380,7 @@ spec:
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
           - -nginx-configmaps=$(POD_NAMESPACE)/plus-nginx-ingress
+          - -mgmt-configmap=$(POD_NAMESPACE)/plus-nginx-ingress-mgmt
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health

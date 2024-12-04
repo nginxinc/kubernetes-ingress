@@ -78,6 +78,7 @@ const (
 	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
 	fatalEventFlushTime      = 200 * time.Millisecond
 	secretErrorReason        = "SecretError"
+	configMapErrorReason     = "ConfigMapError"
 )
 
 func main() {
@@ -150,6 +151,14 @@ func main() {
 
 	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
+	var mgmtCfgParams *configs.MGMTConfigParams
+	if *nginxPlus {
+		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder, pod)
+		if err := processLicenseSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+	}
+
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
 	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
@@ -199,7 +208,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	mustProcessNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	mustProcessNginxConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -215,6 +224,7 @@ func main() {
 		NginxManager:                        nginxManager,
 		StaticCfgParams:                     staticCfgParams,
 		Config:                              cfgParams,
+		MGMTCfgParams:                       mgmtCfgParams,
 		TemplateExecutor:                    templateExecutor,
 		TemplateExecutorV2:                  templateExecutorV2,
 		LatencyCollector:                    latencyCollector,
@@ -266,6 +276,7 @@ func main() {
 		LeaderElectionLockName:       *leaderElectionLockName,
 		WildcardTLSSecret:            *wildcardTLSSecret,
 		ConfigMaps:                   *nginxConfigMaps,
+		MGMTConfigMap:                *mgmtConfigMap,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
 		EnableOIDC:                   *enableOIDC,
@@ -616,6 +627,22 @@ func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.
 	return isWildcardEnabled, nil
 }
 
+func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
+	licenseSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.License
+
+	secret, err := getAndValidateSecret(kubeClient, licenseSecretNsName, secrets.SecretTypeLicense)
+	if err != nil {
+		return fmt.Errorf("license secret: %w", err)
+	}
+
+	bytes, err := configs.GenerateLicenseSecret(secret)
+	if err != nil {
+		return err
+	}
+	nginxManager.CreateSecret(configs.LicenseSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
+	return nil
+}
+
 func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationValidator {
 	forbiddenListenerPorts := map[int]bool{
 		80:  true,
@@ -642,9 +669,9 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 
 // mustProcessNginxConfig calls internally os.Exit
 // if can't generate a valid NGINX config.
-func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
 	l := nl.LoggerFromContext(cfgParams.Context)
-	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
+	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
 		nl.Fatalf(l, "Error generating NGINX main config: %v", err)
@@ -683,13 +710,18 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string,
 	}
 	secret, err = kubeClient.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
+		return nil, fmt.Errorf("could not find %v: %w", secretNsName, err)
 	}
 	switch secretType {
 	case api_v1.SecretTypeTLS:
 		err = secrets.ValidateTLSSecret(secret)
 		if err != nil {
 			return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
+		}
+	case secrets.SecretTypeLicense:
+		err = secrets.ValidateLicenseSecret(secret)
+		if err != nil {
+			return nil, err
 		}
 	}
 	return secret, nil
@@ -907,6 +939,24 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		}
 	}
 	return cfgParams
+}
+
+func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams, eventLog record.EventRecorder, pod *api_v1.Pod) *configs.MGMTConfigParams {
+	ctx := mgmtCfgParams.Context
+	var fatalErr error
+
+	ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
+	if err != nil {
+		logEventAndExit(ctx, eventLog, pod, configMapErrorReason, fmt.Errorf("error parsing the mgmt-configmap argument: %w", err))
+	}
+	cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+	if err != nil {
+		logEventAndExit(ctx, eventLog, cfm, configMapErrorReason, fmt.Errorf("error when getting mgmt-configmap [%v]: %w", *mgmtConfigMap, err))
+	}
+	if mgmtCfgParams, _, fatalErr = configs.ParseMGMTConfigMap(ctx, cfm, eventLog); fatalErr != nil {
+		logEventAndExit(ctx, eventLog, cfm, secretErrorReason, fatalErr)
+	}
+	return mgmtCfgParams
 }
 
 func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorder, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
