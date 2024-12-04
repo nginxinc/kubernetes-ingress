@@ -133,7 +133,7 @@ type LoadBalancerController struct {
 	Logger                        *slog.Logger
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
-	watchNginxConfigMaps          bool
+	watchNginxConfigMap           bool
 	watchGlobalConfiguration      bool
 	watchIngressLink              bool
 	isNginxPlus                   bool
@@ -208,7 +208,7 @@ type NewLoadBalancerControllerInput struct {
 	IsLeaderElectionEnabled      bool
 	LeaderElectionLockName       string
 	WildcardTLSSecret            string
-	ConfigMaps                   string
+	ConfigMap                    string
 	GlobalConfiguration          string
 	AreCustomResourcesEnabled    bool
 	EnableOIDC                   bool
@@ -271,7 +271,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
 		weightChangesDynamicReload:   input.DynamicWeightChangesReload,
-		nginxConfigMapName:           input.ConfigMaps,
+		nginxConfigMapName:           input.ConfigMap,
 	}
 
 	lbc.syncQueue = newTaskQueue(lbc.Logger, lbc.sync)
@@ -316,13 +316,13 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	if input.ConfigMaps != "" {
-		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
+	if input.ConfigMap != "" {
+		nginxConfigMapNS, nginxConfigMapName, err := ParseNamespaceName(input.ConfigMap)
 		if err != nil {
 			nl.Warn(lbc.Logger, err)
 		} else {
-			lbc.watchNginxConfigMaps = true
-			lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
+			lbc.watchNginxConfigMap = true
+			lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapName), nginxConfigMapNS)
 		}
 	}
 
@@ -617,7 +617,7 @@ func (lbc *LoadBalancerController) Run() {
 		nif.start()
 	}
 
-	if lbc.watchNginxConfigMaps {
+	if lbc.watchNginxConfigMap {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 
