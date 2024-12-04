@@ -217,11 +217,11 @@ Path to the main NGINX configuration template.
 - Default for NGINX is `nginx.tmpl`.
 - Default for NGINX Plus is `nginx-plus.tmpl`.
 
-<a name="cmdoption-nginx-configmaps"></a>
+<a name="cmdoption-nginx-configmap"></a>
 
 ---
 
-### -nginx-configmaps `<string>`
+### -nginx-configmap `<string>`
 
 A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set, but NGINX Ingress Controller is not able to fetch it from Kubernetes API, NGINX Ingress Controller will fail to start.
 

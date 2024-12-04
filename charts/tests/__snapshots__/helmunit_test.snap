@@ -378,7 +378,7 @@ spec:
           - -app-protect-dos-max-workers=5
           - -app-protect-dos-memory=1024
           
-          - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-dos-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/appprotect-dos-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -816,7 +816,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=true
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-waf-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/appprotect-waf-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -1271,7 +1271,7 @@ spec:
           - -enable-app-protect=true
           - -app-protect-enforcer-address="localhost:50001"
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/appprotect-wafv5-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/appprotect-wafv5-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -1706,7 +1706,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/custom-resources-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/custom-resources-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -2128,7 +2128,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/daemonset-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/daemonset-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -2556,7 +2556,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/default-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/default-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -2984,7 +2984,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/global-configuration-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/global-configuration-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -3434,7 +3434,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/ingress-class-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/ingress-class-nginx-ingress
           - -ingress-class=changed
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -3864,7 +3864,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/namespace-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/namespace-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health
@@ -4292,7 +4292,7 @@ spec:
           - -nginx-reload-timeout=60000
           - -enable-app-protect=false
           - -enable-app-protect-dos=false
-          - -nginx-configmaps=$(POD_NAMESPACE)/plus-nginx-ingress
+          - -nginx-configmap=$(POD_NAMESPACE)/plus-nginx-ingress
           - -ingress-class=nginx
           - -health-status=false
           - -health-status-uri=/nginx-health

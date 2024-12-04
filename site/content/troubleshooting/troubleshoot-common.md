@@ -91,7 +91,7 @@ Here is a small snippet of setting these command line arguments in the `args` se
 
 ```yaml
 args:
-  - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+  - -nginx-configmap=$(POD_NAMESPACE)/nginx-config
   - -enable-cert-manager
   - -nginx-debug
   - -log-level=debug
