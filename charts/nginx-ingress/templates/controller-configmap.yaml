@@ -30,3 +30,22 @@ data:
   nginx-agent.conf: |-
 {{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
 {{- end }}
+---
+{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.customConfigMap | default "") "") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-ingress.mgmtConfigName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.config.annotations }}
+  annotations:
+{{ toYaml .Values.controller.config.annotations | indent 4 }}
+{{- end }}
+data:
+  license-token-secret-name: {{ include "nginx-ingress.licenseTokenSecretName" . }}
+{{- if hasKey .Values.controller.mgmt "enforceInitialReport" }}
+  enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
+{{- end }}
+{{- end }}

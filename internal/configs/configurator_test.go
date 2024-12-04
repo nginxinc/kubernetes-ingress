@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"os"
 	"reflect"
@@ -51,6 +52,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 		NginxManager:            manager,
 		StaticCfgParams:         createTestStaticConfigParams(),
 		Config:                  NewDefaultConfigParams(context.Background(), false),
+		MGMTCfgParams:           NewDefaultMGMTConfigParams(context.Background()),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      templateExecutorV2,
 		LatencyCollector:        nil,
@@ -101,7 +103,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomMainTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		MainTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +121,7 @@ func TestConfiguratorUpdatesConfigWithCustomMainTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		MainTemplate: &customTestMainTemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +143,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomIngressTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		IngressTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +161,7 @@ func TestConfiguratorUpdatesConfigWithCustomIngressTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		IngressTemplate: &customTestIngressTemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +183,7 @@ func TestConfigratorUpdatesConfigWithCustomVStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		VirtualServerTemplate: &customTestVStemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +205,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomVSemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		VirtualServerTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +223,7 @@ func TestConfigratorUpdatesConfigWithCustomTStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		TransportServerTemplate: &customTestTStemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,7 +245,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomTStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		TransportServerTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,6 +254,31 @@ func TestConfiguratorUpdatesConfigWithNilCustomTStemplate(t *testing.T) {
 	}
 	if cnf.CfgParams.TransportServerTemplate != nil {
 		t.Errorf("Want nil TransportServer template, got %+v\n", cnf.CfgParams.TransportServerTemplate)
+	}
+}
+
+func TestAddOrUpdateLicenseSecret(t *testing.T) {
+	t.Parallel()
+	cnf := createTestConfigurator(t)
+	cnf.MgmtCfgParams.Secrets.License = "default/license-token"
+	license := api_v1.Secret{
+		TypeMeta: meta_v1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "license-token",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"license.jwt": []byte(base64.StdEncoding.EncodeToString([]byte("license-token"))),
+		},
+		Type: "nginx.com/license",
+	}
+
+	err := cnf.AddOrUpdateLicenseSecret(&license)
+	if err != nil {
+		t.Errorf("AddOrUpdateLicenseSecret returned:  \n%v, but expected: \n%v", err, nil)
 	}
 }
 

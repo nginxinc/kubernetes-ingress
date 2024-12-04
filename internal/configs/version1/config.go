@@ -189,6 +189,11 @@ type Location struct {
 	MinionIngress *Ingress
 }
 
+// MGMTConfig is tbe configuration for the MGMT block.
+type MGMTConfig struct {
+	EnforceInitialReport *bool
+}
+
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
 	AccessLog                          string
@@ -207,6 +212,7 @@ type MainConfig struct {
 	LogFormat                          []string
 	LogFormatEscaping                  string
 	MainSnippets                       []string
+	MGMTConfig                         MGMTConfig
 	NginxStatus                        bool
 	NginxStatusAllowCIDRs              []string
 	NginxStatusPort                    int
