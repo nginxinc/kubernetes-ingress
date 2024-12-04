@@ -247,7 +247,7 @@ Build the args for the service binary.
 - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxWorkers }}
 - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
 {{ end }}
-- -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
+- -nginx-configmap=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.nginxplus }}
 - -mgmt-configmap=$(POD_NAMESPACE)/{{ include "nginx-ingress.mgmtConfigName" . }}
 {{- end }}

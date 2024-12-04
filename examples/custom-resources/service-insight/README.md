@@ -59,7 +59,7 @@ spec:
         ...
         args:
           - -nginx-plus
-          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+          - -nginx-configmap=$(POD_NAMESPACE)/nginx-config
         ...
           - -enable-service-insight
 
@@ -348,7 +348,7 @@ spec:
         ...
         args:
           - -nginx-plus
-          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+          - -nginx-configmap=$(POD_NAMESPACE)/nginx-config
         ...
           - -enable-service-insight
           - -service-insight-tls-secret=default/service-insight-secret
@@ -399,7 +399,7 @@ Containers:
     Host Ports:    0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP
     Args:
       -nginx-plus
-      -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+      -nginx-configmap=$(POD_NAMESPACE)/nginx-config
       ...
       -enable-service-insight
       -service-insight-tls-secret=default/service-insight-secret

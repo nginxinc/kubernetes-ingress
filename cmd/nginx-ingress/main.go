@@ -283,7 +283,7 @@ func main() {
 		IsLeaderElectionEnabled:      *leaderElectionEnabled,
 		LeaderElectionLockName:       *leaderElectionLockName,
 		WildcardTLSSecret:            *wildcardTLSSecret,
-		ConfigMaps:                   *nginxConfigMaps,
+		ConfigMaps:                   *nginxConfigMap,
 		MGMTConfigMap:                *mgmtConfigMap,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
@@ -956,14 +956,14 @@ func mustProcessGlobalConfiguration(ctx context.Context) {
 
 func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor, eventLog record.EventRecorder) *configs.ConfigParams {
 	l := nl.LoggerFromContext(cfgParams.Context)
-	if *nginxConfigMaps != "" {
-		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
+	if *nginxConfigMap != "" {
+		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMap)
 		if err != nil {
-			nl.Fatalf(l, "Error parsing the nginx-configmaps argument: %v", err)
+			nl.Fatalf(l, "Error parsing the nginx-configmap argument: %v", err)
 		}
 		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
-			nl.Fatalf(l, "Error when getting %v: %v", *nginxConfigMaps, err)
+			nl.Fatalf(l, "Error when getting %v: %v", *nginxConfigMap, err)
 		}
 		cfgParams, _ = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough, eventLog)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {

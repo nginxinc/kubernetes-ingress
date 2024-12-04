@@ -50,7 +50,7 @@ var (
 	watchNamespaceLabel = flag.String("watch-namespace-label", "",
 		`Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with "watch-namespace". `)
 
-	nginxConfigMaps = flag.String("nginx-configmaps", "",
+	nginxConfigMap = flag.String("nginx-configmap", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
 	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
 	Format: <namespace>/<name>`)
