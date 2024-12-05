@@ -116,8 +116,8 @@ Expand the name of the configmap used for NGINX Agent.
 Expand the name of the mgmt configmap.
 */}}
 {{- define "nginx-ingress.mgmtConfigName" -}}
-{{- if .Values.controller.mgmt.customConfigMap -}}
-{{ .Values.controller.mgmt.customConfigMap }}
+{{- if .Values.controller.mgmt.configMapName -}}
+{{ .Values.controller.mgmt.configMapName }}
 {{- else -}}
 {{- default (printf "%s-mgmt" (include "nginx-ingress.fullname" .)) -}}
 {{- end -}}
@@ -127,7 +127,11 @@ Expand the name of the mgmt configmap.
 Expand license token secret name.
 */}}
 {{- define "nginx-ingress.licenseTokenSecretName" -}}
+{{- if hasKey .Values.controller.mgmt "licenseTokenSecretName" -}}
 {{- .Values.controller.mgmt.licenseTokenSecretName -}}
+{{- else }}
+{{- fail "Error: When using Nginx Plus, 'controller.mgmt.licenseTokenSecretName' must be set." }}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -393,7 +397,6 @@ volumeMounts:
 {{ include "nginx-ingress.volumeMountEntries" . }}
 {{- end -}}
 {{- end -}}
-
 {{- define "nginx-ingress.volumeMountEntries" -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - mountPath: /etc/nginx

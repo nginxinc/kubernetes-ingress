@@ -101,9 +101,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomMainTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		MainTemplate: nil,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	warnings, err := cnf.UpdateConfig(&ConfigParams{MainTemplate: nil}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,9 +139,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomIngressTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		IngressTemplate: nil,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	warnings, err := cnf.UpdateConfig(&ConfigParams{IngressTemplate: nil}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,9 +155,7 @@ func TestConfiguratorUpdatesConfigWithCustomIngressTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		IngressTemplate: &customTestIngressTemplate,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	warnings, err := cnf.UpdateConfig(&ConfigParams{IngressTemplate: &customTestIngressTemplate}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
