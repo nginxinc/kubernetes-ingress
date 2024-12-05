@@ -830,9 +830,9 @@ func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthr
 // AddOrUpdateCASecret writes the secret content to disk returning the files added/updated
 func (cnf *Configurator) AddOrUpdateCASecret(secret *api_v1.Secret, crtFileName, crlFileName string) string {
 	crtData, crlData := GenerateCAFileContent(secret)
-	cnf.nginxManager.CreateSecret(crtFileName, crtData, nginx.ReadWriteOnlyFileMode) //nolint:errcheck,gosec
-	cnf.nginxManager.CreateSecret(crlFileName, crlData, nginx.ReadWriteOnlyFileMode) //nolint:errcheck,gosec
-	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
+	crtFilePath := cnf.nginxManager.CreateSecret(crtFileName, crtData, nginx.ReadWriteOnlyFileMode)
+	crlFilePath := cnf.nginxManager.CreateSecret(crlFileName, crlData, nginx.ReadWriteOnlyFileMode)
+	return fmt.Sprintf("%s %s", crtFilePath, crlFilePath)
 }
 
 func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
