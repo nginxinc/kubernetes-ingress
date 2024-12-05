@@ -368,6 +368,8 @@ Add `waf-enforcer` image to the `containers` section:
   env:
     - name: ENFORCER_PORT
       value: "50000"
+    - name: ENFORCER_CONFIG_TIMEOUT
+      value: "0"
   volumeMounts:
     - name: app-protect-bd-config
       mountPath: /opt/app_protect/bd_config
@@ -505,7 +507,8 @@ If you prefer not to build your own NGINX Ingress Controller image, you can use 
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | App Protect WAFv5 Version | Config Manager | Enforcer |
 | --- | --- | --- | --- |
-| {{< nic-version >}} | 32_5.144 | 5.3.0 | 5.3.0 |
+| {{< nic-version >}} | 33_5.210 | 5.4.0 | 5.4.0 |
+| 3.7.2 | 32_5.144 | 5.3.0 | 5.3.0 |
 | 3.6.2 | 32_5.48 | 5.2.0 | 5.2.0 |
 {{% /bootstrap-table %}}
 

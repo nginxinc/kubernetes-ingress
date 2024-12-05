@@ -285,6 +285,171 @@ func TestParseConfigMapAccessLogDefault(t *testing.T) {
 	}
 }
 
+func TestParseMGMTConfigMapError(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "",
+				},
+			},
+			msg: "Must have license-token-secret-name",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{},
+			},
+			msg: "Must have license-token-secret-name key",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			_, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+
+			if err == nil {
+				t.Errorf("Expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapWarnings(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "7",
+				},
+			},
+			msg: "enforce-initial-report is invalid",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "",
+				},
+			},
+			msg: "enforce-initial-report set empty",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			_, configWarnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Errorf("expected nil, got err: %v", err)
+			}
+			if !configWarnings {
+				t.Fatal("Expected warnings, got none")
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapLicense(t *testing.T) {
+	t.Parallel()
+	test := struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		configMap: &v1.ConfigMap{
+			Data: map[string]string{
+				"license-token-secret-name": "license-token",
+			},
+		},
+		want: &MGMTConfigParams{
+			Secrets: MGMTSecrets{
+				License: "license-token",
+			},
+		},
+		msg: "Has only license-token-secret-name",
+	}
+
+	t.Run(test.msg, func(t *testing.T) {
+		result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if warnings {
+			t.Fatal("Unexpected warnings")
+		}
+		if result.Secrets.License != test.want.Secrets.License {
+			t.Errorf("LicenseTokenSecretNane: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+		}
+	})
+}
+
+func TestParseMGMTConfigMapEnforceInitialReport(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "false",
+				},
+			},
+			want: &MGMTConfigParams{
+				EnforceInitialReport: BoolToPointerBool(false),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "enforce-initial-report set to false",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "true",
+				},
+			},
+			want: &MGMTConfigParams{
+				EnforceInitialReport: BoolToPointerBool(true),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "enforce-initial-report set to true",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.EnforceInitialReport == nil {
+				t.Errorf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
+			}
+			if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
+				t.Errorf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
+			}
+		})
+	}
+}
+
 func makeEventLogger() record.EventRecorder {
 	return record.NewFakeRecorder(1024)
 }

@@ -71,17 +71,24 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
 }
 
+func (lbc *LoadBalancerController) addMGMTConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
+	options := lbc.getConfigMapHandlerOptions(handlers, namespace)
+
+	lbc.mgmtConfigMapLister.Store, lbc.mgmtConfigMapController = cache.NewInformerWithOptions(options)
+	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.mgmtConfigMapController.HasSynced)
+}
+
 func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	key := task.Key
 	nl.Debugf(lbc.Logger, "Syncing configmap %v", key)
 
-	obj, configExists, err := lbc.configMapLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
 	switch key {
 	case lbc.nginxConfigMapName:
+		obj, configExists, err := lbc.configMapLister.GetByKey(key)
+		if err != nil {
+			lbc.syncQueue.Requeue(task, err)
+			return
+		}
 		if configExists {
 			lbc.configMap = obj.(*v1.ConfigMap)
 			externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
@@ -90,6 +97,17 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 			}
 		} else {
 			lbc.configMap = nil
+		}
+	case lbc.mgmtConfigMapName:
+		obj, configExists, err := lbc.mgmtConfigMapLister.GetByKey(key)
+		if err != nil {
+			lbc.syncQueue.Requeue(task, err)
+			return
+		}
+		if configExists {
+			lbc.mgmtConfigMap = obj.(*v1.ConfigMap)
+		} else {
+			lbc.mgmtConfigMap = nil
 		}
 	}
 
