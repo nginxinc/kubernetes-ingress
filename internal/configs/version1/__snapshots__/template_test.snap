@@ -268,11 +268,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    license_token /etc/nginx/secrets/license.jwt;
-    enforce_initial_report off;
-    deployment_context /etc/nginx/reporting/tracking.info;
-}
 
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
@@ -2426,11 +2421,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    license_token /etc/nginx/secrets/license.jwt;
-    enforce_initial_report off;
-    deployment_context /etc/nginx/reporting/tracking.info;
-}
 
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
@@ -2743,11 +2733,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    license_token /etc/nginx/secrets/license.jwt;
-    enforce_initial_report off;
-    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 mgmt {
