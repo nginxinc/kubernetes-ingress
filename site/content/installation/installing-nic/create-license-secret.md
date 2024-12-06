@@ -19,7 +19,7 @@ The JWT is required for validating your subscription and reporting telemetry dat
 
 ## Set up the JWT
 
-[Download the JWT from MyF5]({{< relref "installation/nic-images/get-image-using-jwt/#before-you-begin" >}})
+{{< include "installation/download-jwt.md" >}}
 
 The JWT needs to be configured before deploying NGINX Ingress Controller. The JWT will be stored in a Kubernetes Secret of type `nginx.com/license`, and can be created with the following command.
 
