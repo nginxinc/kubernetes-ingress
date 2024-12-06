@@ -1,8 +1,8 @@
 ---
-docs: DOCS-602
 title: Create a License Secret 
 toc: true
 weight: 100
+docs: DOCS-000
 ---
 
 This document explains how to create and use a license secret for NGINX Ingress Controller. 
@@ -15,7 +15,7 @@ This requirement is part of F5’s broader licensing program and aligns with ind
 
 The JWT is required for validating your subscription and reporting telemetry data. For environments connected to the internet, telemetry is automatically sent to F5’s licensing endpoint.  In offline environments, telemetry is routed through [NGINX Instance Manager](https://docs.nginx.com/nginx-instance-manager/). By default usage is reported every hour and also whenever NGINX is reloaded.
 
-{{< note >}}See [here](https://docs.nginx.com/solutions/about-subscription-licenses/#for-internet-connected-environments) for a list of IPs associated with F5's licensing endpoint (`product.connect.nginx.com`).{{</ note >}}
+{{< note >}} Read the [subscription licenses topic](https://docs.nginx.com/solutions/about-subscription-licenses/#for-internet-connected-environments) for a list of IPs associated with F5's licensing endpoint (`product.connect.nginx.com`). {{</ note >}}
 
 ## Set up the JWT
 
@@ -33,7 +33,8 @@ The Secret needs to be in the same Namespace as the NGINX Ingress Controller Pod
 {{</ note >}}
 
 {{< include "installation/jwt-password-note.md" >}}
-### Using the NGINX Plus License Secret
+
+### Use the NGINX Plus license Secret
 
 If using a name other than the default `license-token`, provide the name of this Secret when installing NGINX Ingress Controller:
 
@@ -43,7 +44,7 @@ If using a name other than the default `license-token`, provide the name of this
 
 Specify the Secret name using the `controller.mgmt.licenseTokenSecretName` helm value.
 
-For detailed guidance on creating the Management block via Helm, refer to the [Helm Configuration Documentation]({{< relref "installation/installing-nic/installation-with-helm/#configuration" >}}).
+For detailed guidance on creating the Management block via Helm, refer to the [Helm configuration documentation]({{< relref "installation/installing-nic/installation-with-helm/#configuration" >}}).
 
 {{% /tab %}}
 
@@ -60,7 +61,7 @@ For detailed guidance on creating the Management ConfigMap, refer to the [Manage
 **If you are reporting to the default licensing endpoint, then you can now proceed with [installing NGINX Ingress Controller]({{< relref "installation/installing-nic/" >}}). Otherwise, follow the steps below to configure reporting to NGINX Instance Manager.**
 
 
-### Reporting to NGINX Instance Manager {#nim}
+### Reports for NGINX Instance Manager {#nim}
 
 If you are deploying NGINX Ingress Controller in an "air-gapped" environment you will need to report to NGINX Instance Manager (NIM) instead of the default licensing endpoint.
 
@@ -82,17 +83,17 @@ Specify the endpoint in the `usage-report-endpoint` Management ConfigMap key.
 
 {{</tabs>}}
 
-#### Configuring SSL Certificates and SSL Trusted Certificates {#nim-cert}
+#### Configure SSL certificates and SSL trusted certificates {#nim-cert}
 
-To configure SSL Certificates and/or SSL Trusted Certificate, a few extra steps are needed.
+To configure SSL certificates or SSL trusted certificates, extra steps are necessary.
 
-To use Client Auth with NIM, first create a Secret of type `kubernetes.io/tls` in the Namespace that the NIC Pod(s) are in. 
+To use Client Auth with NGINX Instance Manager, first create a Secret of type `kubernetes.io/tls` in the same namespace as the NGINX Ingress Controller pods. 
 
 ```shell
 kubectl create secret tls ssl-certificate --cert=<path-to-your-client.pem> --key=<path-to-your-client.key> -n <Your Namespace>
 ```
 
-To provide a SSL Trusted Certificate, and an optional Certificate Revocation List, create a Secret of type `nginx.org/ca` in the Namespace that the NIC Pod(s) are in.
+To provide a SSL trusted certificate, and an optional Certificate Revocation List, create a Secret of type `nginx.org/ca` in the Namespace that the NIC Pod(s) are in.
 
 ```shell
 kubectl create secret generic ssl-trusted-certificate \
@@ -101,23 +102,23 @@ kubectl create secret generic ssl-trusted-certificate \
    --type=nginx.org/ca
 ```
 
-Providing an optional CRL will configure the [`ssl_crl`](https://nginx.org/en/docs/ngx_mgmt_module.html#ssl_crl) directive.
+Providing an optional CRL (certificate revocation list) will configure the [`ssl_crl`](https://nginx.org/en/docs/ngx_mgmt_module.html#ssl_crl) directive.
 
 {{<tabs name="nim-secret-install">}}
 
 {{%tab name="Helm"%}}
 
-Specify the SSL Certificate Secret name using the `controller.mgmt.sslCertificateSecretName` helm value. 
+Specify the SSL certificate Secret name using the `controller.mgmt.sslCertificateSecretName` Helm value. 
 
-Specify the SSL Trusted Certificate Secret name using the `controller.mgmt.sslTrustedCertificateSecretName` helm value.
+Specify the SSL trusted certificate Secret name using the `controller.mgmt.sslTrustedCertificateSecretName` Helm value.
 
 {{% /tab %}}
 
 {{%tab name="Manifests"%}}
 
-Specify the SSL Certificate Secret name in the `ssl-certificate-secret-name` Management ConfigMap key.
+Specify the SSL certificate Secret name in the `ssl-certificate-secret-name` management ConfigMap key.
 
-Specify the SSL Trusted Certificate Secret name in the `ssl-trusted-certificate-secret-name` Management ConfigMap key.
+Specify the SSL trusted certificate Secret name in the `ssl-trusted-certificate-secret-name` management ConfigMap key.
 
 {{% /tab %}}
 
@@ -125,7 +126,7 @@ Specify the SSL Trusted Certificate Secret name in the `ssl-trusted-certificate-
 
 <br>
 
-**Once these Secrets are created and configuration options are set, you can now [install NGINX Ingress Controller ]({{< relref "installation/installing-nic" >}}).**
+**Once these Secrets are created and configured, you can now [install NGINX Ingress Controller ]({{< relref "installation/installing-nic" >}}).**
 
 ## What’s reported and how it’s protected {#telemetry}
 
