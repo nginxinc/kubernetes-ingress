@@ -17,9 +17,12 @@ The JWT is required for validating your subscription and reporting telemetry dat
 
 {{< note >}} Read the [subscription licenses topic](https://docs.nginx.com/solutions/about-subscription-licenses/#for-internet-connected-environments) for a list of IPs associated with F5's licensing endpoint (`product.connect.nginx.com`). {{</ note >}}
 
-## Set up the JWT
+## Set up your NGINX Plus License 
 
+### Download the JWT
 {{< include "installation/download-jwt.md" >}}
+
+### Create the Secret 
 
 The JWT needs to be configured before deploying NGINX Ingress Controller. The JWT will be stored in a Kubernetes Secret of type `nginx.com/license`, and can be created with the following command.
 
@@ -63,9 +66,9 @@ For detailed guidance on creating the Management ConfigMap, refer to the [Manage
 
 ### Reports for NGINX Instance Manager {#nim}
 
-If you are deploying NGINX Ingress Controller in an "air-gapped" environment you will need to report to NGINX Instance Manager (NIM) instead of the default licensing endpoint.
+If you are deploying NGINX Ingress Controller in an "air-gapped" environment you will need to report to [NGINX Instance Manager](https://docs.nginx.com/nginx-instance-manager/) instead of the default licensing endpoint.
 
-First, you must specify the endpoint of your NGINX Instance Manager:
+First, you must specify the endpoint of your NGINX Instance Manager.
 
 {{<tabs name="nim-endpoint">}}
 
