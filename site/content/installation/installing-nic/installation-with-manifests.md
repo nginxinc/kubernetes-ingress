@@ -11,6 +11,8 @@ This guide explains how to use Manifests to install F5 NGINX Ingress Controller,
 
 ## Before you start
 
+If you are using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "installation/installing-nic/create-license-secret/" >}}).
+
 ### Get the NGINX Controller Image
 
 {{< note >}} Always use the latest stable release listed on the [releases page]({{< relref "releases.md" >}}). {{< /note >}}

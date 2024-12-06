@@ -153,6 +153,15 @@ func main() {
 		if err := processLicenseSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
 			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
 		}
+
+		if err := processTrustedCertSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+
+		if err := processClientAuthSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+
 	}
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
@@ -204,7 +213,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	mustProcessNginxConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
+	mustWriteNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -321,6 +330,44 @@ func main() {
 		nl.Info(l, "Waiting for the controller to exit...")
 		time.Sleep(30 * time.Second)
 	}
+}
+
+func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
+	if mgmtCfgParams.Secrets.ClientAuth == "" {
+		return nil
+	}
+
+	clientAuthSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.ClientAuth
+
+	secret, err := getAndValidateSecret(kubeClient, clientAuthSecretNsName, api_v1.SecretTypeTLS)
+	if err != nil {
+		return fmt.Errorf("error trying to get the client auth secret %v: %w", clientAuthSecretNsName, err)
+	}
+
+	bytes := configs.GenerateCertAndKeyFileContent(secret)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.ClientAuthCertSecretFileName), bytes, nginx.ReadWriteOnlyFileMode)
+	return nil
+}
+
+func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
+	if mgmtCfgParams.Secrets.TrustedCert == "" {
+		return nil
+	}
+
+	trustedCertSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.TrustedCert
+
+	secret, err := getAndValidateSecret(kubeClient, trustedCertSecretNsName, secrets.SecretTypeCA)
+	if err != nil {
+		return fmt.Errorf("error trying to get the trusted cert secret %v: %w", trustedCertSecretNsName, err)
+	}
+
+	caBytes, crlBytes := configs.GenerateCAFileContent(secret)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), caBytes, nginx.ReadWriteOnlyFileMode)
+	if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
+		mgmtCfgParams.Secrets.TrustedCRL = secret.Name
+		nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrlKey), crlBytes, nginx.ReadWriteOnlyFileMode)
+	}
+	return nil
 }
 
 func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernetes.Clientset) {
@@ -666,9 +713,9 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
-// mustProcessNginxConfig calls internally os.Exit
+// mustWriteNginxMainConfig calls internally os.Exit
 // if can't generate a valid NGINX config.
-func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+func mustWriteNginxMainConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
 	l := nl.LoggerFromContext(cfgParams.Context)
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
@@ -701,7 +748,6 @@ func getSocketClient(sockPath string) *http.Client {
 }
 
 // getAndValidateSecret gets and validates a secret.
-// nolint:unparam
 func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string, secretType api_v1.SecretType) (secret *api_v1.Secret, err error) {
 	ns, name, err := k8s.ParseNamespaceName(secretNsName)
 	if err != nil {
@@ -722,7 +768,13 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string,
 		if err != nil {
 			return nil, err
 		}
+	case secrets.SecretTypeCA:
+		err = secrets.ValidateCASecret(secret)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return secret, nil
 }
 

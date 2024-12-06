@@ -22,6 +22,31 @@ controller:
     ## Enables the 180-day grace period for sending the initial usage report
     # enforceInitialReport: false
 
+    # usageReport:
+    #   endpoint: "product.connect.nginx.com" # Endpoint for usage report
+    #   interval: 1h
+
+    ## Configures the ssl_verify directive in the mgmt block
+    # sslVerify: true
+
+    ## Configures the resolver directive in the mgmt block
+    # resolver:
+    #   ipv6: true
+    #   valid: 1s
+    #   addresses:
+    #     - kube-dns.kube-system.svc.cluster.local
+
+    ## Secret containing TLS client certificate
+    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
+
+    ## Secret containing trusted CA certificate
+    # sslTrustedCertificateSecretName: ssl-trusted-cert
+
+    # configMapName allows changing the name of the MGMT config map
+    # the name should not include a namespace
+    # configMapName: ""
+
+
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
@@ -674,6 +675,35 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 	}
 	mgmtCfgParams.Secrets.License = trimmedLicense
 
+	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
+		if err != nil {
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			configWarnings = true
+		} else {
+			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
+		}
+	}
+
+	if resolverAddresses, exists := GetMapKeyAsStringSlice(cfgm.Data, "resolver-addresses", cfgm, ","); exists {
+		mgmtCfgParams.ResolverAddresses = resolverAddresses
+	}
+
+	if resolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "resolver-ipv6", cfgm); exists {
+		if err != nil {
+			nl.Error(l, err)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			configWarnings = true
+		} else {
+			mgmtCfgParams.ResolverIPV6 = BoolToPointerBool(resolverIpv6)
+		}
+	}
+
+	if resolverValid, exists := cfgm.Data["resolver-valid"]; exists {
+		mgmtCfgParams.ResolverValid = resolverValid
+	}
+
 	if enforceInitialReport, exists, err := GetMapKeyAsBool(cfgm.Data, "enforce-initial-report", cfgm); exists {
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
@@ -684,6 +714,36 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
 	}
+	if endpoint, exists := cfgm.Data["usage-report-endpoint"]; exists {
+		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
+	}
+	if interval, exists := cfgm.Data["usage-report-interval"]; exists {
+		i := strings.TrimSpace(interval)
+		t, err := time.ParseDuration(i)
+		if err != nil {
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the interval key: got %q: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			configWarnings = true
+		}
+		if t.Seconds() < minimumInterval {
+			errorText := fmt.Sprintf("Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			configWarnings = true
+			mgmtCfgParams.Interval = ""
+		} else {
+			mgmtCfgParams.Interval = i
+		}
+
+	}
+	if trustedCertSecretName, exists := cfgm.Data["ssl-trusted-certificate-secret-name"]; exists {
+		mgmtCfgParams.Secrets.TrustedCert = strings.TrimSpace(trustedCertSecretName)
+	}
+
+	if clientAuthSecretName, exists := cfgm.Data["ssl-certificate-secret-name"]; exists {
+		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecretName)
+	}
 
 	return mgmtCfgParams, configWarnings, nil
 }
@@ -693,9 +753,19 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 	var mgmtConfig version1.MGMTConfig
 	if mgmtCfgParams != nil {
 		mgmtConfig = version1.MGMTConfig{
+			SSLVerify:            mgmtCfgParams.SSLVerify,
+			ResolverAddresses:    mgmtCfgParams.ResolverAddresses,
+			ResolverIPV6:         mgmtCfgParams.ResolverIPV6,
+			ResolverValid:        mgmtCfgParams.ResolverValid,
 			EnforceInitialReport: mgmtCfgParams.EnforceInitialReport,
+			Endpoint:             mgmtCfgParams.Endpoint,
+			Interval:             mgmtCfgParams.Interval,
+			TrustedCert:          mgmtCfgParams.Secrets.TrustedCert != "",
+			TrustedCRL:           mgmtCfgParams.Secrets.TrustedCRL != "",
+			ClientAuth:           mgmtCfgParams.Secrets.ClientAuth != "",
 		}
 	}
+
 	nginxCfg := &version1.MainConfig{
 		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,

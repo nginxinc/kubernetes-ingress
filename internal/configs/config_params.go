@@ -177,13 +177,22 @@ type Listener struct {
 
 // MGMTSecrets holds mgmt block secret names
 type MGMTSecrets struct {
-	License string
+	License     string
+	ClientAuth  string
+	TrustedCert string
+	TrustedCRL  string
 }
 
 // MGMTConfigParams holds mgmt block parameters.
 type MGMTConfigParams struct {
 	Context              context.Context
+	SSLVerify            *bool
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
 	EnforceInitialReport *bool
+	Endpoint             string
+	Interval             string
 	Secrets              MGMTSecrets
 }
 
@@ -236,6 +245,7 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
 	return &MGMTConfigParams{
 		Context:              ctx,
+		SSLVerify:            nil,
 		EnforceInitialReport: nil,
 		Secrets:              MGMTSecrets{},
 	}

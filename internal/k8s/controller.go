@@ -106,6 +106,8 @@ type specialSecrets struct {
 	defaultServerSecret string
 	wildcardTLSSecret   string
 	licenseSecret       string
+	clientAuthSecret    string
+	trustedCertSecret   string
 }
 
 type controllerMetadata struct {
@@ -250,6 +252,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 	if input.IsNginxPlus {
 		specialSecrets.licenseSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.License)
+		specialSecrets.clientAuthSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.ClientAuth)
+		specialSecrets.trustedCertSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.TrustedCert)
 	}
 	lbc := &LoadBalancerController{
 		client:                       input.KubeClient,
@@ -887,6 +891,16 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 		mgmtCfgParams, mgmtConfigHasWarnings, mgmtErr = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.recorder)
 		if mgmtErr != nil {
 			nl.Errorf(lbc.Logger, "configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
+		}
+		// update special CA secret in mgmtConfigParams
+		if mgmtCfgParams.Secrets.TrustedCert != "" {
+			secret, err := lbc.client.CoreV1().Secrets(lbc.mgmtConfigMap.GetNamespace()).Get(context.TODO(), mgmtCfgParams.Secrets.TrustedCert, meta_v1.GetOptions{})
+			if err != nil {
+				nl.Errorf(lbc.Logger, "secret %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), mgmtCfgParams.Secrets.TrustedCert, err)
+			}
+			if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
+				mgmtCfgParams.Secrets.TrustedCRL = secret.Name
+			}
 		}
 	}
 
@@ -1786,6 +1800,10 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 		return true
 	case lbc.specialSecrets.licenseSecret:
 		return true
+	case lbc.specialSecrets.clientAuthSecret:
+		return true
+	case lbc.specialSecrets.trustedCertSecret:
+		return true
 	default:
 		return false
 	}
@@ -1837,7 +1855,6 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		return
 	}
 
-	lbc.writeSpecialSecrets(secret, secretNsName, specialTLSSecretsToUpdate)
 	if ok := lbc.writeSpecialSecrets(secret, secretNsName, specialTLSSecretsToUpdate); !ok {
 		// if not ok bail early
 		return
@@ -1851,6 +1868,15 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		}
 	case lbc.specialSecrets.defaultServerSecret, lbc.specialSecrets.wildcardTLSSecret:
 		if ok := lbc.performDynamicSSLReload(secret); !ok {
+			return
+		}
+	case lbc.specialSecrets.clientAuthSecret:
+		if ok := lbc.performNGINXReload(secret); !ok {
+			return
+		}
+	case lbc.specialSecrets.trustedCertSecret:
+		lbc.updateAllConfigs()
+		if ok := lbc.performNGINXReload(secret); !ok {
 			return
 		}
 	}
@@ -1868,6 +1894,8 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, se
 			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "the license Secret %v was updated, but not applied: %v", secretNsName, err)
 			return false
 		}
+	case secrets.SecretTypeCA:
+		lbc.configurator.AddOrUpdateCASecret(secret, fmt.Sprintf("mgmt/%s", configs.CACrtKey), fmt.Sprintf("mgmt/%s", configs.CACrlKey))
 	case api_v1.SecretTypeTLS:
 		lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
 	}
@@ -1889,6 +1917,17 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 			return false
 		}
 	}
+	if secretNsName == lbc.specialSecrets.trustedCertSecret {
+		err := secrets.ValidateCASecret(secret)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			return false
+		}
+	}
+	if secretNsName == lbc.specialSecrets.clientAuthSecret {
+		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, specialTLSSecretsToUpdate)
+	}
 	return true
 }
 
@@ -1903,7 +1942,7 @@ func (lbc *LoadBalancerController) performNGINXReload(secret *api_v1.Secret) boo
 	secretNsName := generateSecretNSName(secret)
 	if err := lbc.configurator.Reload(false); err != nil {
 		nl.Errorf(lbc.Logger, "error when reloading NGINX when updating the special Secrets: %v", err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return false
 	}
 	return true
