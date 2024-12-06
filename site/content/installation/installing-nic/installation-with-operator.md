@@ -11,6 +11,8 @@ This document explains how to use NGINX Ingress Operator to install NGINX Ingres
 
 ## Before you start
 
+If you're using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "installation/installing-nic/create-license-secret/" >}}).
+
 {{< note >}} We recommend the most recent stable version of NGINX Ingress Controller, available on the GitHub repository's [releases page]({{< relref "releases.md" >}}). {{< /note >}}
 
 1. Make sure you have access to the NGINX Ingress Controller image:

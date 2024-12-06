@@ -56,6 +56,9 @@ const WildcardSecretFileName = "wildcard"
 // LicenseSecretFileName is the filename of the Secret for the NGINX PLUS License
 const LicenseSecretFileName = "license.jwt"
 
+// ClientAuthCertSecretFileName is the filename of the Secret with a TLS cert and a key for the MGMT block for client authentication certificates.
+const ClientAuthCertSecretFileName = "client"
+
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
@@ -824,14 +827,12 @@ func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthr
 	return &cfg
 }
 
-func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
-	name := objectMetaToFileName(&secret.ObjectMeta)
+// AddOrUpdateCASecret writes the secret content to disk returning the files added/updated
+func (cnf *Configurator) AddOrUpdateCASecret(secret *api_v1.Secret, crtFileName, crlFileName string) string {
 	crtData, crlData := GenerateCAFileContent(secret)
-	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
-	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
-	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.ReadWriteOnlyFileMode)
-	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.ReadWriteOnlyFileMode)
-	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
+	crtFilePath := cnf.nginxManager.CreateSecret(crtFileName, crtData, nginx.ReadWriteOnlyFileMode)
+	crlFilePath := cnf.nginxManager.CreateSecret(crlFileName, crlData, nginx.ReadWriteOnlyFileMode)
+	return fmt.Sprintf("%s %s", crtFilePath, crlFilePath)
 }
 
 func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
@@ -1999,7 +2000,10 @@ func (cnf *Configurator) AddInternalRouteConfig() error {
 func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	switch secret.Type {
 	case secrets.SecretTypeCA:
-		return cnf.addOrUpdateCASecret(secret)
+		name := objectMetaToFileName(&secret.ObjectMeta)
+		crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
+		crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
+		return cnf.AddOrUpdateCASecret(secret, crtSecretName, crlSecretName)
 	case secrets.SecretTypeJWK:
 		return cnf.addOrUpdateJWKSecret(secret)
 	case secrets.SecretTypeHtpasswd:

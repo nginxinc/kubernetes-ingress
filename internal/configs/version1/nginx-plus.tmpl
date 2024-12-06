@@ -152,7 +152,8 @@ http {
     {{- if .OpenTracingLoadModule}}
     opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
     {{- end}}
-    {{ makeResolver .ResolverAddresses .ResolverValid .ResolverIPV6 }}
+    {{ $resolverIPV6HTTPBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6HTTPBool }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
 
     {{- if .OIDC}}
@@ -315,7 +316,8 @@ stream {
 
     {{- range $value := .StreamSnippets}}
     {{$value}}{{end}}
-    {{ makeResolver .ResolverAddresses .ResolverValid .ResolverIPV6 }}
+    {{ $resolverIPV6StreamBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6StreamBool }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
 
     map_hash_max_size {{.MapHashMaxSize}};
@@ -353,7 +355,27 @@ stream {
 }
 
 mgmt {
+    {{- if or (ne .MGMTConfig.Endpoint "") (ne .MGMTConfig.Interval "") }}
+    usage_report
+    {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
+    {{- end }}
     license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
     enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
+    {{ if .MGMTConfig.SSLVerify -}}
+    ssl_verify {{ makeOnOffFromBool .MGMTConfig.SSLVerify }};
+    {{ end -}}
+    {{ if .MGMTConfig.ResolverAddresses -}}
+    {{ makeResolver .MGMTConfig.ResolverAddresses .MGMTConfig.ResolverValid .MGMTConfig.ResolverIPV6 }}
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCert -}}
+    ssl_trusted_certificate {{ printf "%s/mgmt/ca.crt" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCRL -}}
+    ssl_crl {{ printf "%s/mgmt/ca.crl" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.ClientAuth -}}
+    ssl_certificate {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    ssl_certificate_key {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    {{ end -}}
     deployment_context /etc/nginx/reporting/tracking.info;
 }

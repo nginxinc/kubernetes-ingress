@@ -109,6 +109,42 @@
                 "license"
               ]
             },
+            "sslCertificateSecretName": {
+              "type": "string",
+              "default": "",
+              "title": "The sslCertificateSecretName Schema",
+              "examples": [
+                "ssl-certificate"
+              ]
+            },
+            "usageReport": {
+              "type": "object",
+              "default": {},
+              "title": "The usageReport Schema",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "title": "The endpoint of the usageReport",
+                  "default": "",
+                  "examples": [
+                    "",
+                    "product.connect.nginx.com",
+                    "nginx-mgmt.local"
+                  ]
+                },
+                "interval": {
+                  "type": "string",
+                  "pattern": "^[0-9]+[mhd]$",
+                  "default": "1h",
+                  "title": "The usage report interval Schema",
+                  "examples": [
+                    "1m",
+                    "1h",
+                    "24h"
+                  ]
+                }
+              }
+            },
             "enforceInitialReport": {
               "type": "boolean",
               "default": false,
@@ -116,6 +152,58 @@
               "examples": [
                 true,
                 false
+              ]
+            },
+            "sslVerify": {
+              "type": "boolean",
+              "default": true,
+              "title": "The sslVerify Schema",
+              "examples": [
+                true,
+                false
+              ]
+            },
+            "resolver": {
+              "type": "object",
+              "default": {},
+              "title": "The resolver Schema",
+              "properties": {
+                "addresses": {
+                  "type": "array",
+                  "default": [],
+                  "title": "List of resolver addresses/fqdns"
+                },
+                "valid": {
+                  "type": "string",
+                  "pattern": "^[0-9]+[smhdwMy]$",
+                  "title": "A valid nginx time",
+                  "examples": [
+                    "1m",
+                    "5d"
+                  ]
+                },
+                "ipv6": {
+                  "type": "boolean",
+                  "title": "turn on or off ipv6 support",
+                  "default": false
+                }
+              }
+            },
+            "sslTrustedCertificateSecretName": {
+              "type": "string",
+              "default": "ssl-trusted-cert",
+              "title": "The sslTrustedCertificateSecretName Schema",
+              "examples": [
+                "ssl-trusted-cert",
+                "certificate-secret"
+              ]
+            },
+            "configMapName": {
+              "type": "string",
+              "default": "",
+              "title": "The configMap Schema",
+              "examples": [
+                ""
               ]
             }
           },
