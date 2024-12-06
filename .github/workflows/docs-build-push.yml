@@ -17,14 +17,17 @@ on:
         required: false
         default: ''
         type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        type: string
   pull_request:
     branches:
       - "*"
     paths:
       - "site/**"
-  push:
-    branches:
-      - "release-3.7"
 
 permissions:
   contents: read
@@ -43,8 +46,6 @@ jobs:
       doc_type: "hugo"
       environment: ${{ inputs.environment }}
       force_hugo_theme_version: ${{inputs.hugo_theme_override}}
-      auto_deploy_branch: "release-3.7"
-      auto_deploy_env: "prod"
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS_DOCS }}
       AZURE_KEY_VAULT: ${{ secrets.AZURE_KEY_VAULT_DOCS }}
