@@ -154,6 +154,9 @@ jobs:
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image "${{ matrix.image }}:${{ matrix.tag }}" --name ${{ github.run_id }}
 
+      - name: Create Plus Secret
+        run: kubectl create secret generic license-token --from-literal=license.jwt="${{ secrets.PLUS_JWT }}" --type="nginx.com/license"
+
       - name: Install Chart
         run: >
           helm install
