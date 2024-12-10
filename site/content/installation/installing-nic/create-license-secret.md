@@ -17,7 +17,7 @@ The JWT is required for validating your subscription and reporting telemetry dat
 
 {{< note >}} Read the [subscription licenses topic](https://docs.nginx.com/solutions/about-subscription-licenses/#for-internet-connected-environments) for a list of IPs associated with F5's licensing endpoint (`product.connect.nginx.com`). {{</ note >}}
 
-## Set up your NGINX Plus License 
+## Set up your NGINX Plus license 
 
 ### Download the JWT
 {{< include "installation/download-jwt.md" >}}
