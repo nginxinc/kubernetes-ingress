@@ -883,7 +883,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	var isNGINXConfigValid bool
 	var mgmtConfigHasWarnings bool
 	var mgmtErr error
-	reloadNginx := false
+	var reloadNginx bool
 
 	if lbc.configMap != nil {
 		cfgParams, isNGINXConfigValid = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled, lbc.recorder)
