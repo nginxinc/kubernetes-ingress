@@ -1,7 +1,7 @@
 ---
 description: Guide on upgrading to v4 and above
 docs: DOCS-000
-title: Guild on Upgrading to v4 and above
+title: Guide on upgrading to NGINX Ingress Controller 4.0.0
 toc: true
 weight: 2100
 headless: true
@@ -10,7 +10,7 @@ headless: true
 {{< note >}}
 If you are using NGINX Ingress Controller version `v3.3.2` (Helm Chart `v1.0.2`) or earlier, please upgrade to `v3.7.2` (Helm Chart `v1.4.2`), and convert your TransportServer and GlobalConfiguration resources to `apiVersion` `k8s.nginx.org/v1`.
 {{</ note >}}
-1. If using NGINX Ingress Controller resources with an `apiVersion` of `k8s.nginx.org/v1alpha1`, prior to upgrading to `v4.x` (Helm Chart `v2.x`) , **please ensure** that they are updated to `apiVersion: k8s.nginx.org/v1`
+1. If using NGINX Ingress Controller custom resources with an `apiVersion` of `k8s.nginx.org/v1alpha1`, prior to upgrading to `v4.x` (Helm Chart `v2.x`) , **please ensure** that they are updated to `apiVersion: k8s.nginx.org/v1`
 {{< important >}}
 If a resource of `kind: GlobalConfiguration`, `kind: Policy` or `kind: TransportServer` is deployed as `apiVersion: k8s.nginx.org/v1alpha1`, it will be **deleted** during the upgrade process
 {{</ important >}}
