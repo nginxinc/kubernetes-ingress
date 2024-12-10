@@ -931,7 +931,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, mgmtCfgParams, resourceExes) // reload happens here
+	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, mgmtCfgParams, resourceExes)
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
 	eventWarningMessage := ""
