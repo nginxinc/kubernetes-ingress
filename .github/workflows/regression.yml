@@ -99,7 +99,7 @@ jobs:
         run: make cover
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@015f24e6818733317a2da2edd6290ab26238649a # v5.0.7
+        uses: codecov/codecov-action@7f8b4b4bde536c465e797be725718b88c5d95e0e # v5.1.1
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -153,6 +153,9 @@ jobs:
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image "${{ matrix.image }}:${{ matrix.tag }}" --name ${{ github.run_id }}
+
+      - name: Create Plus Secret
+        run: kubectl create secret generic license-token --from-literal=license.jwt="${{ secrets.PLUS_JWT }}" --type="nginx.com/license"
 
       - name: Install Chart
         run: >
