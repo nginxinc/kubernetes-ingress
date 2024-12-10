@@ -61,6 +61,7 @@ IC_HTTPS_PORT=<port number>
 Create the secure app deployment and service:
 
 ```console
+kubectl apply -f app-tls-secret.yaml
 kubectl apply -f secure-app.yaml
 ```
 
