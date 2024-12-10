@@ -1850,22 +1850,19 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes, !lbc.configurator.DynamicSSLReloadEnabled())
 	if addOrUpdateErr != nil {
 		nl.Errorf(lbc.Logger, "Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
 }
 
-func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Secret, secretName string, secretList *[]string) {
-	secretNsName := generateSecretNSName(secret)
-
+func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Secret, secretName string, secretList *[]string) error {
 	err := secrets.ValidateTLSSecret(secret)
 	if err != nil {
-		nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
-		return
+		return err
 	}
 	*secretList = append(*secretList, secretName)
+	return nil
 }
 
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret, reload bool) {
@@ -1932,10 +1929,20 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, se
 
 func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate *[]string) bool {
 	if secretNsName == lbc.specialSecrets.defaultServerSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
+		err := lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			return false
+		}
 	}
 	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
+		err := lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			return false
+		}
 	}
 	if secretNsName == lbc.specialSecrets.licenseSecret {
 		err := secrets.ValidateLicenseSecret(secret)
@@ -1954,7 +1961,12 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		}
 	}
 	if secretNsName == lbc.specialSecrets.clientAuthSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, specialTLSSecretsToUpdate)
+		err := lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, specialTLSSecretsToUpdate)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			return false
+		}
 	}
 	return true
 }
