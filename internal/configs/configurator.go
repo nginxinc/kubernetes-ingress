@@ -953,6 +953,12 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 	}
 }
 
+// AddOrUpdateMGMTClientAuthSecret adds or updates the MGMT Client Auth Secret file with a TLS cert and key.
+func (cnf *Configurator) AddOrUpdateMGMTClientAuthSecret(secret *api_v1.Secret) {
+	data := GenerateCertAndKeyFileContent(secret)
+	cnf.nginxManager.CreateSecret("mgmt/client", data, nginx.ReadWriteOnlyFileMode)
+}
+
 // GenerateCertAndKeyFileContent generates a pem file content from the TLS secret.
 func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 	var res bytes.Buffer
@@ -1324,8 +1330,6 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 //
 //gocyclo:ignore
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MGMTConfigParams, resources ExtendedResources) (Warnings, error) {
-	cnf.CfgParams = cfgParams
-	cnf.MgmtCfgParams = mgmtCfgParams
 	allWarnings := newWarnings()
 	allWeightUpdates := []WeightUpdate{}
 
