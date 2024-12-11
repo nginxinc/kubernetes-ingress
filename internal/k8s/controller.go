@@ -933,7 +933,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	resources := lbc.configuration.GetResources()
 	nl.Debugf(lbc.Logger, "Updating %v resources", len(resources))
 	resourceExes := lbc.createExtendedResources(resources)
-	warnings, updateErr := lbc.configurator.UpdateConfig(lbc.configurator.CfgParams, lbc.configurator.MgmtCfgParams, resourceExes)
+	warnings, updateErr := lbc.configurator.UpdateConfig(resourceExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
