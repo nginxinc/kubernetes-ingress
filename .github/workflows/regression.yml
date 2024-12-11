@@ -99,7 +99,7 @@ jobs:
         run: make cover
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@968872560f81e7bdde9272853e65f2507c0eca7c # v5.0.0
+        uses: codecov/codecov-action@7f8b4b4bde536c465e797be725718b88c5d95e0e # v5.1.1
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -153,6 +153,9 @@ jobs:
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image "${{ matrix.image }}:${{ matrix.tag }}" --name ${{ github.run_id }}
+
+      - name: Create Plus Secret
+        run: kubectl create secret generic license-token --from-literal=license.jwt="${{ secrets.PLUS_JWT }}" --type="nginx.com/license"
 
       - name: Install Chart
         run: >
@@ -262,7 +265,7 @@ jobs:
 
       - name: Generate WAF v5 tgz from JSON
         run: |
-          docker run --rm --user root -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/tests/data/ap-waf-v5:/data gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nap/waf-compiler:5.3.0 -p /data/wafv5.json -o /data/wafv5.tgz
+          docker run --rm --user root -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/tests/data/ap-waf-v5:/data gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nap/waf-compiler:5.4.0 -p /data/wafv5.json -o /data/wafv5.tgz
         if: ${{ contains(matrix.images.image, 'nap-v5')}}
 
       - name: Run Regression Tests
@@ -278,6 +281,7 @@ jobs:
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
           registry-token: ${{ steps.auth.outputs.access_token }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
+          plus-jwt: ${{ secrets.PLUS_JWT }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3

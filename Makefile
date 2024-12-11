@@ -1,6 +1,6 @@
 # variables that should not be overridden by the user
 VER = $(shell grep IC_VERSION .github/data/version.txt | cut -d '=' -f 2)
-GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
+GIT_TAG = $(shell git describe --exact-match --tags || echo untagged)
 VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
@@ -71,11 +71,11 @@ staticcheck: ## Run staticcheck linter
 
 .PHONY: test
 test: ## Run GoLang tests
-	go test -tags=aws -shuffle=on -race -coverprofile=coverage.txt -covermode=atomic ./...
+	go test -tags=aws,helmunit -shuffle=on -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 .PHONY: test-update-snaps
 test-update-snaps:
-	UPDATE_SNAPS=true go test -tags=aws -shuffle=on -race ./...
+	UPDATE_SNAPS=true go test -tags=aws,helmunit -shuffle=on -race ./...
 
 cover: test ## Generate coverage report
 

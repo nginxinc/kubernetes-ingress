@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=R32
+ARG NGINX_PLUS_VERSION=R33
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
@@ -11,17 +11,17 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2@sha256:022d9c1e36caedfb502d6ac56b6b8e40977be73517f61f1b525686dec147355d AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2-alpine@sha256:7379ceee1ffc21669312a3e882ecd504e14a7f30bdc9bcfdc632030ea3777b0a AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.2@sha256:6288dc0ec71dfcacfbe3578bb0731c03e7e012956e5b01393d28650df54d9b9e AS ubi-ppc64le
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3@sha256:82aff3929e4020d186b49eb23d295cef3cf8a7bcde7886170395054313ac13c1 AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:ea31a90f556bc00f4fa243e2182e5a036c8126f9e63fc5ba0b4bccbeae022f74 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
-FROM redhat/ubi9-minimal@sha256:c0e70387664f30cd9cf2795b547e4a9a51002c44a4a86aa9335ab030134bf392 AS ubi-minimal
-FROM golang:1.23-alpine@sha256:09742590377387b931261cbeb72ce56da1b0d750a27379f7385245b2b058b63a AS golang-builder
+FROM redhat/ubi9-minimal:9.5@sha256:dee813b83663d420eb108983a1c94c614ff5d3fcb5159a7bd0324f0edbe7fca1 AS ubi-minimal
+FROM golang:1.23-alpine@sha256:6c5c9590f169f77c8046e45c611d3b28fe477789acd8d3762d23d4744de69812 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.27.2-alpine@sha256:2140dad235c130ac861018a4e13a6bc8aea3a35f3a40e20c1b060d51a7efd250 AS alpine
+FROM nginx:1.27.3-alpine@sha256:41523187cf7d7a2f2677a80609d9caa14388bf5c1fbca9c410ba3de602aaaab4 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -31,7 +31,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.27.2@sha256:28402db69fec7c17e179ea87882667f1e054391138f77ffaf0c3eb388efc3ffb AS debian
+FROM nginx:1.27.3@sha256:fb197595ebe76b9c0c14ab68159fd3c08bd067ec62300583543f0ebda353b5be AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -102,7 +102,7 @@ USER 101
 
 
 ############################################# Base image for Alpine with NGINX Plus ##############################################
-FROM alpine:3.20@sha256:beefdbd8a1da6d2915566fde36db9db0b524eb737fc57cd1367effd16dc0d06d AS alpine-plus
+FROM alpine:3.20@sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a AS alpine-plus
 ARG NGINX_PLUS_VERSION
 ARG PACKAGE_REPO
 
@@ -135,7 +135,7 @@ RUN --mount=type=bind,from=alpine-fips-3.20,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17@sha256:3451da08fc6ef554a100da3e2df5ac6d598c82f2a774d5f6ed465c3d80cd163a AS alpine-plus-nap-fips
+FROM alpine:3.17@sha256:8fc3dacfb6d69da8d44e42390de777e48577085db99aa4e4af35f483eb08b989 AS alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -172,7 +172,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAFv5 and FIPS #############################################
-FROM alpine:3.17@sha256:3451da08fc6ef554a100da3e2df5ac6d598c82f2a774d5f6ed465c3d80cd163a AS alpine-plus-nap-v5-fips
+FROM alpine:3.17@sha256:8fc3dacfb6d69da8d44e42390de777e48577085db99aa4e4af35f483eb08b989 AS alpine-plus-nap-v5-fips
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -198,7 +198,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect-module-plus~=32.5.144 \
+	&& apk add --no-cache app-protect-module-plus~=33.5.210 \
 	&& sed -i -e '/nginx.com/d' /etc/apk/repositories \
 	&& nap-waf.sh \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then \
@@ -207,7 +207,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22 AS debian-plus
+FROM debian:12-slim@sha256:1537a6a1cbc4b4fd401da800ee9480207e7dc1f23560c21259f681db56768f63 AS debian-plus
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
@@ -279,7 +279,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then nap-dos.sh; fi
 
-############################################# Base image for Debian with NGINX Plus and App Protect WAFv5/DoS #############################################
+############################################# Base image for Debian with NGINX Plus and App Protect WAFv5 #############################################
 FROM debian-plus AS debian-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
@@ -300,7 +300,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus=32+5.144*; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus=33+5.210*; \
 	rm -f /etc/apt/sources.list.d/app-protect.sources; \
 	nap-waf.sh; \
 	fi \
@@ -332,13 +332,7 @@ RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_s
 	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	--mount=type=bind,from=ubi-ppc64le,src=/,target=/ubi-bin/ \
 	ubi-setup.sh; \
-	if [ $(uname -p) != ppc64le ]; then \
-	printf "%s\n" "[nginx]" "name=nginx repo" \
-	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
-	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
-	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
-	&& rm /etc/yum.repos.d/nginx.repo; \
-	else \
+	if [ $(uname -p) = ppc64le ] || [ $(uname -p) = s390x ]; then \
 	rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-installed \
 	&& microdnf --nodocs --setopt=install_weak_deps=0 install -y diffutils dnf \
 	&& rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-new \
@@ -346,6 +340,12 @@ RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_s
 	&& dnf -q repoquery --resolve --requires --recursive --whatrequires nginx --queryformat "%{NAME}" > pkgs-nginx \
 	&& dnf --setopt=protected_packages= remove -y $(comm -13 pkgs-installed pkgs-new | comm -13 pkgs-nginx -) \
 	&& rm pkgs-installed pkgs-new pkgs-nginx; \
+	else \
+	printf "%s\n" "[nginx]" "name=nginx repo" \
+	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
+	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
+	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
+	&& rm /etc/yum.repos.d/nginx.repo; \
 	fi \
 	&& ubi-clean.sh
 
@@ -430,7 +430,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo \
-	&& microdnf --nodocs install -y app-protect-module-plus-32+5.144* \
+	&& microdnf --nodocs install -y app-protect-module-plus-33+5.210* \
 	&& nap-waf.sh \
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
@@ -439,7 +439,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAF #############################################
-FROM redhat/ubi8@sha256:8990388831e1b41c9a67389e4b691dae8b1283f77d5fb7263e1f4fc69c0a9d05 AS ubi-8-plus-nap
+FROM redhat/ubi8@sha256:79d46e7029c2b13a713b2089650fd235aadb3e6e449c79f6741d6c9381ab41a1 AS ubi-8-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -484,7 +484,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAFv5  #############################################
-FROM redhat/ubi8@sha256:8990388831e1b41c9a67389e4b691dae8b1283f77d5fb7263e1f4fc69c0a9d05 AS ubi-8-plus-nap-v5
+FROM redhat/ubi8@sha256:79d46e7029c2b13a713b2089650fd235aadb3e6e449c79f6741d6c9381ab41a1 AS ubi-8-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -517,7 +517,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect-module-plus-32+5.144*; \
+	dnf --nodocs install -y app-protect-module-plus-33+5.210*; \
 	fi \
 	&& subscription-manager unregister \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \

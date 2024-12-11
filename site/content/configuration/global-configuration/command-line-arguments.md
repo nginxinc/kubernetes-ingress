@@ -231,6 +231,16 @@ Format: `<namespace>/<name>`
 
 ---
 
+### -mgmt-configmap `<string>`
+
+The Management ConfigMap resource is used for customizing the NGINX mgmt block. If using NGINX Plus, a Management ConfigMap must be set. If NGINX Ingress Controller is not able to fetch it from Kubernetes API, NGINX Ingress Controller will fail to start.
+
+Format: `<namespace>/<name>`
+
+<a name="cmdoption-nginx-debug"></a>
+
+---
+
 ### -nginx-debug
 
 Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.

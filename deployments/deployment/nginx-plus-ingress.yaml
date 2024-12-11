@@ -33,7 +33,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx-plus-ingress:3.7.0
+      - image: nginx-plus-ingress:3.7.2
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -90,6 +90,7 @@ spec:
         args:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+          - -mgmt-configmap=$(POD_NAMESPACE)/nginx-config-mgmt
           - -report-ingress-status
           - -external-service=nginx-ingress
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
@@ -103,7 +104,7 @@ spec:
          #- -enable-service-insight
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
-#      - image: nginx/nginx-ingress:3.7.0
+#      - image: nginx/nginx-ingress:3.7.2
 #        imagePullPolicy: IfNotPresent
 #        name: init-nginx-ingress
 #        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']

@@ -152,11 +152,9 @@ http {
     {{- if .OpenTracingLoadModule}}
     opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
     {{- end}}
-
-    {{- if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
-    {{- if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{- end}}
+    {{ $resolverIPV6HTTPBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6HTTPBool }}
+    {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
 
     {{- if .OIDC}}
     include oidc/oidc_common.conf;
@@ -318,11 +316,9 @@ stream {
 
     {{- range $value := .StreamSnippets}}
     {{$value}}{{end}}
-
-    {{- if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{ $resolverIPV6StreamBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6StreamBool }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{- end}}
 
     map_hash_max_size {{.MapHashMaxSize}};
     {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
@@ -358,15 +354,28 @@ stream {
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
-{{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
-    usage_report endpoint=product.connect.nginx.com interval=1h;
-    uuid_file /var/lib/nginx/nginx.id;
-    license_token conf/license.jwt;
+    {{- if or (ne .MGMTConfig.Endpoint "") (ne .MGMTConfig.Interval "") }}
+    usage_report
+    {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
+    {{- end }}
+    license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
+    enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
+    {{ if .MGMTConfig.SSLVerify -}}
+    ssl_verify {{ makeOnOffFromBool .MGMTConfig.SSLVerify }};
+    {{ end -}}
+    {{ if .MGMTConfig.ResolverAddresses -}}
+    {{ makeResolver .MGMTConfig.ResolverAddresses .MGMTConfig.ResolverValid .MGMTConfig.ResolverIPV6 }}
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCert -}}
+    ssl_trusted_certificate {{ printf "%s/mgmt/ca.crt" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCRL -}}
+    ssl_crl {{ printf "%s/mgmt/ca.crl" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.ClientAuth -}}
+    ssl_certificate {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    ssl_certificate_key {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    {{ end -}}
     deployment_context /etc/nginx/reporting/tracking.info;
 }
-{{- else if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31" }}
-mgmt {
-    usage_report interval=0s;
-}
-{{- end }}

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - build/dependencies/Dockerfile.ubi-ppc64le
+      - build/dependencies/Dockerfile.ubi
   workflow_dispatch:
     inputs:
       nginx_version:
@@ -58,7 +58,7 @@ jobs:
           if [ -n "${{ inputs.nginx_version }}" ]; then
             nginx_v=${{ inputs.nginx_version }}
           else
-            nginx_v=$(grep -m1 'FROM nginx:' <build/dependencies/Dockerfile.ubi-ppc64le | cut -d '@' -f1 | awk -F'[: ]' '{print $3}')
+            nginx_v=$(grep -m1 'FROM nginx:' <build/dependencies/Dockerfile.ubi | cut -d '@' -f1 | awk -F'[: ]' '{print $3}')
           fi
           target_image=${{ env.IMAGE_NAME }}:nginx-${nginx_v}
           if docker manifest inspect ${target_image}; then
@@ -108,7 +108,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
         with:
           images: |
             name=${{ env.IMAGE_NAME }},enable=true
@@ -118,9 +118,9 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
-        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
-          file: ./build/dependencies/Dockerfile.ubi-ppc64le
+          file: ./build/dependencies/Dockerfile.ubi
           context: "."
           pull: true
           push: true

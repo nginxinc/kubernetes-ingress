@@ -18,7 +18,7 @@ import (
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
-	"github.com/nginxinc/nginx-plus-go-client/client"
+	"github.com/nginxinc/nginx-plus-go-client/v2/client"
 )
 
 const (
@@ -26,8 +26,8 @@ const (
 	ReloadForEndpointsUpdate = true
 	// ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
 	ReloadForOtherUpdate = false
-	// TLSSecretFileMode defines the default filemode for files with TLS Secrets.
-	TLSSecretFileMode = 0o600
+	// ReadWriteOnlyFileMode defines the default filemode for files with Secrets.
+	ReadWriteOnlyFileMode = 0o600
 	// JWKSecretFileMode defines the default filemode for files with JWK Secrets.
 	JWKSecretFileMode = 0o644
 	// HtpasswdSecretFileMode defines the default filemode for HTTP basic auth user files.
@@ -303,16 +303,9 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 // Start starts NGINX.
 func (lm *LocalManager) Start(done chan error) {
 	if lm.nginxPlus {
-		isR33OrGreater, versionErr := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
-		if versionErr != nil {
-			nl.Errorf(lm.logger, "Error determining whether nginx version is >= r33: %v", versionErr)
-		}
-		if isR33OrGreater {
-			ctx, cancel := context.WithCancel(context.Background())
-			nl.ContextWithLogger(ctx, lm.logger)
-			go lm.licenseReporter.Start(ctx)
-			lm.licenseReporterCancel = cancel
-		}
+		ctx, cancel := context.WithCancel(context.Background())
+		go lm.licenseReporter.Start(nl.ContextWithLogger(ctx, lm.logger))
+		lm.licenseReporterCancel = cancel
 	}
 
 	nl.Debug(lm.logger, "Starting nginx")
@@ -432,7 +425,7 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 		})
 	}
 
-	added, removed, updated, err := lm.plusClient.UpdateHTTPServers(upstream, upsServers)
+	added, removed, updated, err := lm.plusClient.UpdateHTTPServers(context.Background(), upstream, upsServers)
 	if err != nil {
 		nl.Debugf(lm.logger, "Couldn't update servers of %v upstream: %v", upstream, err)
 		return fmt.Errorf("error updating servers of %v upstream: %w", upstream, err)
@@ -487,7 +480,7 @@ func (lm *LocalManager) UpdateStreamServersInPlus(upstream string, servers []str
 		})
 	}
 
-	added, removed, updated, err := lm.plusClient.UpdateStreamServers(upstream, upsServers)
+	added, removed, updated, err := lm.plusClient.UpdateStreamServers(context.Background(), upstream, upsServers)
 	if err != nil {
 		nl.Debugf(lm.logger, "Couldn't update stream servers of %v upstream: %v", upstream, err)
 		return fmt.Errorf("error updating stream servers of %v upstream: %w", upstream, err)
@@ -699,7 +692,7 @@ func (lm *LocalManager) UpsertSplitClientsKeyVal(zoneName, key, value string) {
 	key = strings.Trim(key, "\"")
 	value = strings.Trim(value, "\"")
 
-	keyValPairs, err := lm.plusClient.GetKeyValPairs(zoneName)
+	keyValPairs, err := lm.plusClient.GetKeyValPairs(context.Background(), zoneName)
 	if err != nil {
 		lm.tryAddKeyValPair(zoneName, key, value)
 		return
@@ -713,7 +706,7 @@ func (lm *LocalManager) UpsertSplitClientsKeyVal(zoneName, key, value string) {
 }
 
 func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
-	err := lm.plusClient.AddKeyValPair(zoneName, key, value)
+	err := lm.plusClient.AddKeyValPair(context.Background(), zoneName, key, value)
 	if err != nil {
 		nl.Warnf(lm.logger, "Failed to add key value pair: %v", err)
 	} else {
@@ -722,7 +715,7 @@ func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
 }
 
 func (lm *LocalManager) tryModifyKeyValPair(zoneName, key, value string) {
-	err := lm.plusClient.ModifyKeyValPair(zoneName, key, value)
+	err := lm.plusClient.ModifyKeyValPair(context.Background(), zoneName, key, value)
 	if err != nil {
 		nl.Warnf(lm.logger, "Failed to modify key value pair: %v", err)
 	} else {

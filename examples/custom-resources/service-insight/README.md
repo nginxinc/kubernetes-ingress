@@ -32,7 +32,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.7.0
+      - image: nginx-plus-ingress:3.7.2
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -321,7 +321,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.7.0
+      - image: nginx-plus-ingress:3.7.2
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:

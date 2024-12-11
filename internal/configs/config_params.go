@@ -175,6 +175,27 @@ type Listener struct {
 	Protocol string
 }
 
+// MGMTSecrets holds mgmt block secret names
+type MGMTSecrets struct {
+	License     string
+	ClientAuth  string
+	TrustedCert string
+	TrustedCRL  string
+}
+
+// MGMTConfigParams holds mgmt block parameters.
+type MGMTConfigParams struct {
+	Context              context.Context
+	SSLVerify            *bool
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
+	EnforceInitialReport *bool
+	Endpoint             string
+	Interval             string
+	Secrets              MGMTSecrets
+}
+
 // NewDefaultConfigParams creates a ConfigParams with default values.
 func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 	upstreamZoneSize := "256k"
@@ -217,5 +238,15 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 		LimitReqZoneSize:              "10m",
 		LimitReqLogLevel:              "error",
 		LimitReqRejectCode:            429,
+	}
+}
+
+// NewDefaultMGMTConfigParams creates a ConfigParams with mgmt values.
+func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
+	return &MGMTConfigParams{
+		Context:              ctx,
+		SSLVerify:            nil,
+		EnforceInitialReport: nil,
+		Secrets:              MGMTSecrets{},
 	}
 }

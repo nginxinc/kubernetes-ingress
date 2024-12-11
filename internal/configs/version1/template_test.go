@@ -12,6 +12,8 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
 
+var fakeManager = nginx.NewFakeManager("/etc/nginx")
+
 func TestMain(m *testing.M) {
 	v := m.Run()
 
@@ -46,20 +48,6 @@ func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, mainCfg)
-	if err != nil {
-		t.Error(err)
-	}
-	snaps.MatchSnapshot(t, buf.String())
-	t.Log(buf.String())
-}
-
-func TestExecuteMainTemplateForNGINXPlusR31(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgR31)
 	if err != nil {
 		t.Error(err)
 	}
@@ -2017,6 +2005,7 @@ var (
 	}
 
 	mainCfg = MainConfig{
+		StaticSSLPath:                      fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:            80,
 		DefaultHTTPSListenerPort:           443,
 		ServerNamesHashMaxSize:             "512",
@@ -2039,7 +2028,7 @@ var (
 		KeepaliveRequests:                  100,
 		VariablesHashBucketSize:            256,
 		VariablesHashMaxSize:               1024,
-		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r30)"),
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AppProtectLoadModule:               true,
 		AppProtectV5LoadModule:             false,
 		AppProtectV5EnforcerAddr:           "",
@@ -2060,36 +2049,8 @@ var (
 		AccessLog:                      "/dev/stdout main",
 	}
 
-	mainCfgR31 = MainConfig{
-		DefaultHTTPListenerPort:  80,
-		DefaultHTTPSListenerPort: 443,
-		ServerNamesHashMaxSize:   "512",
-		ServerTokens:             "off",
-		WorkerProcesses:          "auto",
-		WorkerCPUAffinity:        "auto",
-		WorkerShutdownTimeout:    "1m",
-		WorkerConnections:        "1024",
-		WorkerRlimitNofile:       "65536",
-		LogFormat:                []string{"$remote_addr", "$remote_user"},
-		LogFormatEscaping:        "default",
-		StreamSnippets:           []string{"# comment"},
-		StreamLogFormat:          []string{"$remote_addr", "$remote_user"},
-		StreamLogFormatEscaping:  "none",
-		ResolverAddresses:        []string{"example.com", "127.0.0.1"},
-		ResolverIPV6:             false,
-		ResolverValid:            "10s",
-		ResolverTimeout:          "15s",
-		KeepaliveTimeout:         "65s",
-		KeepaliveRequests:        100,
-		VariablesHashBucketSize:  256,
-		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
-		AppProtectV5LoadModule:   true,
-		AppProtectV5EnforcerAddr: "enforcer.svc.local",
-		AccessLog:                "/dev/stdout main",
-	}
-
 	mainCfgHTTP2On = MainConfig{
+		StaticSSLPath:                      fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:            80,
 		DefaultHTTPSListenerPort:           443,
 		HTTP2:                              true,
@@ -2113,7 +2074,7 @@ var (
 		KeepaliveRequests:                  100,
 		VariablesHashBucketSize:            256,
 		VariablesHashMaxSize:               1024,
-		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AppProtectLoadModule:               true,
 		AppProtectV5LoadModule:             false,
 		AppProtectV5EnforcerAddr:           "",
@@ -2130,6 +2091,7 @@ var (
 	}
 
 	mainCfgCustomTLSPassthroughPort = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2152,11 +2114,12 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      8443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgWithoutTLSPassthrough = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2179,11 +2142,12 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          false,
 		TLSPassthroughPort:      8443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgDefaultTLSPassthroughPort = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2206,11 +2170,12 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPAndHTTPSListenerPorts = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  8083,
 		DefaultHTTPSListenerPort: 8443,
 		ServerNamesHashMaxSize:   "512",
@@ -2233,11 +2198,12 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPListenerPort = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  8083,
 		DefaultHTTPSListenerPort: 443,
 		ServerNamesHashMaxSize:   "512",
@@ -2260,11 +2226,12 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPSListenerPort = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  80,
 		DefaultHTTPSListenerPort: 8443,
 		ServerNamesHashMaxSize:   "512",
@@ -2287,7 +2254,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
