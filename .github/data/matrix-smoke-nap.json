@@ -1,7 +1,7 @@
 {
   "images": [
     {
-      "label": "AP_WAF 1/5",
+      "label": "AP_WAF 1/4",
       "image": "ubi-8-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
@@ -9,15 +9,7 @@
       "platforms": "linux/amd64"
     },
     {
-      "label": "AP_WAF 2/5",
-      "image": "alpine-plus-nap-fips",
-      "type": "plus",
-      "nap_modules": "waf",
-      "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow'",
-      "platforms": "linux/amd64"
-    },
-    {
-      "label": "AP_WAF 3/5",
+      "label": "AP_WAF 2/4",
       "image": "ubi-9-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
@@ -25,7 +17,7 @@
       "platforms": "linux/amd64"
     },
     {
-      "label": "AP_WAF 4/5",
+      "label": "AP_WAF 3/4",
       "image": "debian-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
@@ -33,8 +25,8 @@
       "platforms": "linux/amd64"
     },
     {
-      "label": "AP_WAF 5/5",
-      "image": "debian-plus-nap",
+      "label": "AP_WAF 4/4",
+      "image": "alpine-plus-nap-fips",
       "type": "plus",
       "nap_modules": "waf",
       "marker": "'appprotect_watch or appprotect_batch or appprotect_integration or appprotect_waf_policies_vsr'",
