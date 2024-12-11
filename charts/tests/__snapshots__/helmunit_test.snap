@@ -44,7 +44,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
-  ssl-trusted-certificate-secret-name: "ssl-trusted-cert"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -505,7 +504,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
-  ssl-trusted-certificate-secret-name: "ssl-trusted-cert"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -961,7 +959,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
-  ssl-trusted-certificate-secret-name: "ssl-trusted-cert"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
@@ -4047,7 +4044,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
-  ssl-trusted-certificate-secret-name: "ssl-trusted-cert"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-leader-election-configmap.yaml
 apiVersion: v1
