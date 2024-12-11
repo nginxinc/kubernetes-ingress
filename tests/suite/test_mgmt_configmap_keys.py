@@ -1,7 +1,10 @@
+import re
+
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
     create_license,
+    create_secret_from_yaml,
     ensure_connection_to_public_endpoint,
     get_events_for_object,
     get_first_pod_name,
@@ -162,13 +165,34 @@ class TestMGMTConfigMap:
 
         print("Step 2: get the current nginx config")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        mgmt_config_search = re.search("mgmt {(.|\n)*}", nginx_config)
+        assert mgmt_config_search is not None
+        mgmt_config = mgmt_config_search[0]
 
         print("Step 3: assert that unspecified options are not in the nginx.conf")
-        assert "ssl_verify" not in nginx_config
+        assert "usage_report" not in mgmt_config
+        assert "ssl_verify" not in mgmt_config
+        assert "resolver" not in mgmt_config
+        assert "ssl_trusted_certificate" not in mgmt_config
+        assert "ssl_crl" not in mgmt_config
+        assert "ssl_certificate_key" not in mgmt_config
+        assert "ssl_certificate" not in mgmt_config
 
         mgmt_configmap_name = "nginx-config-mgmt"
 
-        print("Step 4: update the mgmt config map with all options on")
+        print("Step 4: create ssl trusted certificate secret")
+        create_secret_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/mgmt-configmap-keys/ssl-trusted-cert.yaml",
+        )
+
+        print("Step 5: create ssl certificate secret")
+        create_secret_from_yaml(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, f"{TEST_DATA}/mgmt-configmap-keys/ssl-cert.yaml"
+        )
+
+        print("Step 6: update the mgmt config map with all options on")
         replace_configmap_from_yaml(
             kube_apis.v1,
             mgmt_configmap_name,
@@ -178,19 +202,28 @@ class TestMGMTConfigMap:
 
         wait_before_test()
 
-        print("Step 5: get the updated nginx config")
+        print("Step 7: get the updated nginx config")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        mgmt_config_search = re.search("mgmt {(.|\n)*}", nginx_config)
+        assert mgmt_config_search is not None
+        mgmt_config = mgmt_config_search[0]
 
-        print("Step 6: check that the nginx config contains ssl_verify")
-        assert "ssl_verify off;" in nginx_config
+        print("Step 8: check that the nginx config contains the expected params")
+        assert "usage_report endpoint=product.connect.nginx.com interval=2h;" in mgmt_config
+        assert "ssl_verify off;" in mgmt_config
+        assert "resolver 1.1.1.1 8.8.8.8 valid=1h ipv6=off;" in mgmt_config
+        assert "ssl_trusted_certificate /etc/nginx/secrets/mgmt/ca.crt;" in mgmt_config
+        assert "ssl_crl /etc/nginx/secrets/mgmt/ca.crl;" in mgmt_config
+        assert "ssl_certificate /etc/nginx/secrets/mgmt/client;" in mgmt_config
+        assert "ssl_certificate_key /etc/nginx/secrets/mgmt/client;" in mgmt_config
 
-        print("Step 7: check reload count has incremented")
+        print("Step 9: check reload count has incremented")
         wait_before_test()
         new_reload_count = get_reload_count(metrics_url)
         print("new_reload_count", new_reload_count)
         assert new_reload_count > reload_count
 
-        print("Step 8: check that the mgmt config map has been updated without error")
+        print("Step 10: check that the mgmt config map has been updated without error")
         config_events = get_events_for_object(
             kube_apis.v1, ingress_controller_prerequisites.namespace, mgmt_configmap_name
         )
