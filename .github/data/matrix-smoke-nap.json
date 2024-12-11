@@ -18,7 +18,7 @@
     },
     {
       "label": "AP_WAF 3/4",
-      "image": "debian-plus-nap",
+      "image": "alpine-plus-nap-fips",
       "type": "plus",
       "nap_modules": "waf",
       "marker": "appprotect_waf_policies_grpc",
@@ -26,7 +26,7 @@
     },
     {
       "label": "AP_WAF 4/4",
-      "image": "alpine-plus-nap-fips",
+      "image": "debian-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
       "marker": "'appprotect_watch or appprotect_batch or appprotect_integration or appprotect_waf_policies_vsr'",
