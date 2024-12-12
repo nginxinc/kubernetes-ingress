@@ -63,7 +63,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 					DosAccessLogDest: "bad&$%^logdest",
 				},
 			},
-			expectErr: "error validating DosProtectedResource:  invalid field: dosAccessLogDest err: invalid log destination: bad&$%^logdest, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			expectErr: "error validating DosProtectedResource:  invalid field: dosAccessLogDest err: invalid host: bad&$%^logdest, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
 			msg:       "invalid DosAccessLogDest specified",
 		},
 		{
@@ -105,7 +105,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 					DosSecurityLog:   &v1beta1.DosSecurityLog{},
 				},
 			},
-			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/dosLogDest err: invalid log destination: , must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/dosLogDest err: error parsing host: empty host, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
 			msg:       "empty DosSecurityLog specified",
 		},
 		{
@@ -191,9 +191,9 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"NotValid", "invalid log destination: NotValid, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
-		{"cluster.local", "invalid log destination: cluster.local, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
-		{"-cluster.local:514", "invalid log destination: -cluster.local:514, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"NotValid", "invalid host: NotValid, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"cluster.local", "invalid host: cluster.local, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"-cluster.local:514", "invalid host: -cluster.local:514, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
 		{"10.10.1.1:99999", "not a valid port number"},
 	}
 
@@ -446,36 +446,6 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 			if !strings.Contains(err.Error(), nTCase.msg) {
 				t.Errorf("got: \n%v\n expected to contain: \n%s", err, nTCase.msg)
 			}
-		}
-	}
-}
-
-func TestValidatePort_IsValidOnValidInput(t *testing.T) {
-	t.Parallel()
-
-	ports := []string{"1", "65535"}
-	for _, p := range ports {
-		if err := validatePort(p); err != nil {
-			t.Error(err)
-		}
-	}
-}
-
-func TestValidatePort_ErrorsOnInvalidString(t *testing.T) {
-	t.Parallel()
-
-	if err := validatePort(""); err == nil {
-		t.Error("want error, got nil")
-	}
-}
-
-func TestValidatePort_ErrorsOnInvalidRange(t *testing.T) {
-	t.Parallel()
-
-	ports := []string{"0", "-1", "65536"}
-	for _, p := range ports {
-		if err := validatePort(p); err == nil {
-			t.Error("want error, got nil")
 		}
 	}
 }

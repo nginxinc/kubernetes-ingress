@@ -722,8 +722,67 @@ func TestParseMGMTConfigMapResolverIPV6(t *testing.T) {
 			if result.ResolverIPV6 == nil {
 				t.Errorf("resolver-ipv6: want %v, got nil", *test.want.ResolverIPV6)
 			}
-			if *result.SSLVerify != *test.want.SSLVerify {
+			if *result.ResolverIPV6 != *test.want.ResolverIPV6 {
 				t.Errorf("resolver-ipv6: want %v, got %v", *test.want.ResolverIPV6, *result.ResolverIPV6)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapUsageReportEndpoint(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-endpoint":     "product.connect.nginx.com",
+				},
+			},
+			want: &MGMTConfigParams{
+				Endpoint: "product.connect.nginx.com",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report endpoint set to product.connect.nginx.com",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-endpoint":     "product.connect.nginx.com:80",
+				},
+			},
+			want: &MGMTConfigParams{
+				Endpoint: "product.connect.nginx.com:80",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report endpoint set to product.connect.nginx.com with port 80",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.Endpoint == "" {
+				t.Errorf("UsageReportEndpoint: want %s, got empty string", test.want.Endpoint)
+			}
+			if result.Endpoint != test.want.Endpoint {
+				t.Errorf("UsageReportEndpoint: want %v, got %v", test.want.Endpoint, result.Endpoint)
 			}
 		})
 	}

@@ -2,17 +2,14 @@ package validation
 
 import (
 	"fmt"
-	"net"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
-
+	k8svalidation "github.com/nginxinc/kubernetes-ingress/internal/validation"
 	validation2 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"net"
+	"net/url"
 )
 
 var appProtectDosPolicyRequiredFields = [][]string{
@@ -116,34 +113,13 @@ func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) (string, e
 	return warning, nil
 }
 
-var (
-	validDNSRegex       = regexp.MustCompile(`^([A-Za-z0-9][A-Za-z0-9-]{1,62}\.)([A-Za-z0-9-]{1,63}\.)*[A-Za-z]{2,6}:\d{1,5}$`)
-	validIPRegex        = regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$`)
-	validLocalhostRegex = regexp.MustCompile(`^localhost:\d{1,5}$`)
-)
-
 func validateAppProtectDosLogDest(dstAntn string) error {
 	if dstAntn == "stderr" {
 		return nil
 	}
-	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
-		chunks := strings.Split(dstAntn, ":")
-		err := validatePort(chunks[1])
-		if err != nil {
-			return fmt.Errorf("invalid log destination: %w", err)
-		}
-		return nil
-	}
-	return fmt.Errorf("invalid log destination: %s, must follow format: <ip-address | localhost | dns name>:<port> or stderr", dstAntn)
-}
-
-func validatePort(value string) error {
-	port, err := strconv.Atoi(value)
+	err := k8svalidation.ValidateHost(dstAntn)
 	if err != nil {
-		return fmt.Errorf("error parsing port number: %w", err)
-	}
-	if port > 65535 || port < 1 {
-		return fmt.Errorf("error parsing port: %v not a valid port number", port)
+		return fmt.Errorf("%w, must follow format: <ip-address | localhost | dns name>:<port> or stderr", err)
 	}
 	return nil
 }

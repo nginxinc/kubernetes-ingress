@@ -12,6 +12,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"github.com/nginxinc/kubernetes-ingress/internal/validation"
 )
 
 const (
@@ -714,9 +715,20 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
 	}
+
 	if endpoint, exists := cfgm.Data["usage-report-endpoint"]; exists {
-		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
+		endpoint := strings.TrimSpace(endpoint)
+		err := validation.ValidateHost(endpoint)
+		if err != nil {
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the usage-report-endpoint key: got %q: %v. Using default endpoint.", cfgm.GetNamespace(), cfgm.GetName(), endpoint, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			configWarnings = true
+		} else {
+			mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
+		}
 	}
+
 	if interval, exists := cfgm.Data["usage-report-interval"]; exists {
 		i := strings.TrimSpace(interval)
 		t, err := time.ParseDuration(i)
