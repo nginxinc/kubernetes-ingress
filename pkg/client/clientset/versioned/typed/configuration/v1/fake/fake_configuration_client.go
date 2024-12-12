@@ -13,23 +13,23 @@ type FakeK8sV1 struct {
 }
 
 func (c *FakeK8sV1) GlobalConfigurations(namespace string) v1.GlobalConfigurationInterface {
-	return &FakeGlobalConfigurations{c, namespace}
+	return newFakeGlobalConfigurations(c, namespace)
 }
 
 func (c *FakeK8sV1) Policies(namespace string) v1.PolicyInterface {
-	return &FakePolicies{c, namespace}
+	return newFakePolicies(c, namespace)
 }
 
 func (c *FakeK8sV1) TransportServers(namespace string) v1.TransportServerInterface {
-	return &FakeTransportServers{c, namespace}
+	return newFakeTransportServers(c, namespace)
 }
 
 func (c *FakeK8sV1) VirtualServers(namespace string) v1.VirtualServerInterface {
-	return &FakeVirtualServers{c, namespace}
+	return newFakeVirtualServers(c, namespace)
 }
 
 func (c *FakeK8sV1) VirtualServerRoutes(namespace string) v1.VirtualServerRouteInterface {
-	return &FakeVirtualServerRoutes{c, namespace}
+	return newFakeVirtualServerRoutes(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

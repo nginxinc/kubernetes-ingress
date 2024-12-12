@@ -3,7 +3,7 @@
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"

@@ -3,8 +3,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
 	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
