@@ -385,7 +385,7 @@ jobs:
   scan-docker-oss:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}
     runs-on: ubuntu-24.04
-    needs: [checks]
+    needs: [checks, tag-candidate]
     permissions:
       contents: read
       id-token: write
@@ -474,7 +474,7 @@ jobs:
   scan-docker-plus:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}
     runs-on: ubuntu-24.04
-    needs: [checks]
+    needs: [checks, tag-candidate]
     permissions:
       contents: read
       id-token: write
@@ -563,7 +563,7 @@ jobs:
   scan-docker-nap:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}-${{ matrix.nap_modules }}
     runs-on: ubuntu-24.04
-    needs: [checks]
+    needs: [checks, tag-candidate]
     permissions:
       contents: read
       id-token: write
