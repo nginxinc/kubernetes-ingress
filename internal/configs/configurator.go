@@ -953,6 +953,12 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 	}
 }
 
+// AddOrUpdateMGMTClientAuthSecret adds or updates the MGMT Client Auth Secret file with a TLS cert and key.
+func (cnf *Configurator) AddOrUpdateMGMTClientAuthSecret(secret *api_v1.Secret) {
+	data := GenerateCertAndKeyFileContent(secret)
+	cnf.nginxManager.CreateSecret("mgmt/client", data, nginx.ReadWriteOnlyFileMode)
+}
+
 // GenerateCertAndKeyFileContent generates a pem file content from the TLS secret.
 func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 	var res bytes.Buffer
@@ -1323,9 +1329,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 // UpdateConfig updates NGINX configuration parameters.
 //
 //gocyclo:ignore
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MGMTConfigParams, resources ExtendedResources) (Warnings, error) {
-	cnf.CfgParams = cfgParams
-	cnf.MgmtCfgParams = mgmtCfgParams
+func (cnf *Configurator) UpdateConfig(resources ExtendedResources) (Warnings, error) {
 	allWarnings := newWarnings()
 	allWeightUpdates := []WeightUpdate{}
 
@@ -1334,12 +1338,12 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MG
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when updating dhparams: %w", err)
 		}
-		cfgParams.MainServerSSLDHParam = fileName
+		cnf.CfgParams.MainServerSSLDHParam = fileName
 	}
 
 	// Apply custom main-template defined in ConfigMap obj
-	if cfgParams.MainTemplate != nil {
-		err := cnf.templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
+	if cnf.CfgParams.MainTemplate != nil {
+		err := cnf.templateExecutor.UpdateMainTemplate(cnf.CfgParams.MainTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the main template: %w", err)
 		}
@@ -1348,8 +1352,8 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MG
 		cnf.templateExecutor.UseOriginalMainTemplate()
 	}
 
-	if cfgParams.IngressTemplate != nil {
-		err := cnf.templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
+	if cnf.CfgParams.IngressTemplate != nil {
+		err := cnf.templateExecutor.UpdateIngressTemplate(cnf.CfgParams.IngressTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the ingress template: %w", err)
 		}
@@ -1358,8 +1362,8 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MG
 		cnf.templateExecutor.UseOriginalIngressTemplate()
 	}
 
-	if cfgParams.VirtualServerTemplate != nil {
-		err := cnf.templateExecutorV2.UpdateVirtualServerTemplate(cfgParams.VirtualServerTemplate)
+	if cnf.CfgParams.VirtualServerTemplate != nil {
+		err := cnf.templateExecutorV2.UpdateVirtualServerTemplate(cnf.CfgParams.VirtualServerTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the VirtualServer template: %w", err)
 		}
@@ -1368,8 +1372,8 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MG
 		cnf.templateExecutorV2.UseOriginalVStemplate()
 	}
 
-	if cfgParams.TransportServerTemplate != nil {
-		err := cnf.templateExecutorV2.UpdateTransportServerTemplate(cfgParams.TransportServerTemplate)
+	if cnf.CfgParams.TransportServerTemplate != nil {
+		err := cnf.templateExecutorV2.UpdateTransportServerTemplate(cnf.CfgParams.TransportServerTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the TransportServer template: %w", err)
 		}
@@ -1378,7 +1382,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MG
 		cnf.templateExecutorV2.UseOriginalTStemplate()
 	}
 
-	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams, mgmtCfgParams)
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.CfgParams, cnf.MgmtCfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
 		return allWarnings, fmt.Errorf("error when writing main Config")
