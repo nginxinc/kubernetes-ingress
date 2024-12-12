@@ -893,7 +893,13 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 		if mgmtErr != nil {
 			nl.Errorf(lbc.Logger, "configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
 		}
-		// update special license secret in mgmtConfigParams
+	}
+
+	lbc.configurator.CfgParams = cfgParams
+	lbc.configurator.MgmtCfgParams = mgmtCfgParams
+
+	// update special license secret in mgmtConfigParams
+	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
 		if mgmtCfgParams.Secrets.License != "" {
 			secret, err := lbc.client.CoreV1().Secrets(lbc.mgmtConfigMap.GetNamespace()).Get(context.TODO(), mgmtCfgParams.Secrets.License, meta_v1.GetOptions{})
 			if err != nil {
@@ -909,7 +915,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 				nl.Errorf(lbc.Logger, "secret %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), mgmtCfgParams.Secrets.TrustedCert, err)
 			}
 			if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
-				mgmtCfgParams.Secrets.TrustedCRL = secret.Name
+				lbc.configurator.MgmtCfgParams.Secrets.TrustedCRL = secret.Name
 			}
 			lbc.specialSecrets.trustedCertSecret = fmt.Sprintf("%s/%s", secret.Namespace, secret.Name)
 			lbc.handleSpecialSecretUpdate(secret, reloadNginx)
@@ -924,14 +930,11 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 			lbc.handleSpecialSecretUpdate(secret, reloadNginx)
 		}
 	}
-
 	resources := lbc.configuration.GetResources()
-
 	nl.Debugf(lbc.Logger, "Updating %v resources", len(resources))
-
 	resourceExes := lbc.createExtendedResources(resources)
+	warnings, updateErr := lbc.configurator.UpdateConfig(resourceExes)
 
-	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, mgmtCfgParams, resourceExes)
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
 	eventWarningMessage := ""
@@ -1874,7 +1877,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		return
 	}
 
-	if ok := lbc.writeSpecialSecrets(secret, secretNsName, specialTLSSecretsToUpdate); !ok {
+	if ok := lbc.writeSpecialSecrets(secret, specialTLSSecretsToUpdate); !ok {
 		// if not ok bail early
 		return
 	}
@@ -1910,7 +1913,12 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 }
 
 // writeSpecialSecrets generates content and writes the secret to disk
-func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, secretNsName string, specialTLSSecretsToUpdate []string) bool {
+func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, specialTLSSecretsToUpdate []string) bool {
+	secretNsName := generateSecretNSName(secret)
+	var mgmtClientAuthNamespaceName string
+	if lbc.configurator.MgmtCfgParams != nil {
+		mgmtClientAuthNamespaceName = fmt.Sprintf("%s/%s", lbc.metadata.pod.Namespace, lbc.configurator.MgmtCfgParams.Secrets.ClientAuth)
+	}
 	switch secret.Type {
 	case secrets.SecretTypeLicense:
 		err := lbc.configurator.AddOrUpdateLicenseSecret(secret)
@@ -1922,7 +1930,12 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, se
 	case secrets.SecretTypeCA:
 		lbc.configurator.AddOrUpdateCASecret(secret, fmt.Sprintf("mgmt/%s", configs.CACrtKey), fmt.Sprintf("mgmt/%s", configs.CACrlKey))
 	case api_v1.SecretTypeTLS:
-		lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
+		// if the secret name matches the specified
+		if secretNsName == mgmtClientAuthNamespaceName {
+			lbc.configurator.AddOrUpdateMGMTClientAuthSecret(secret)
+		} else {
+			lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
+		}
 	}
 	return true
 }
@@ -1961,7 +1974,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		}
 	}
 	if secretNsName == lbc.specialSecrets.clientAuthSecret {
-		err := lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, specialTLSSecretsToUpdate)
+		err := secrets.ValidateTLSSecret(secret)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
 			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)

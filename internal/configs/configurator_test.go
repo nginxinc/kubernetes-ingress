@@ -101,7 +101,9 @@ func TestConfiguratorUpdatesConfigWithNilCustomMainTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{MainTemplate: nil}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{MainTemplate: nil}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,9 +119,9 @@ func TestConfiguratorUpdatesConfigWithCustomMainTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		MainTemplate: &customTestMainTemplate,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{MainTemplate: &customTestMainTemplate}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +141,9 @@ func TestConfiguratorUpdatesConfigWithNilCustomIngressTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{IngressTemplate: nil}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{IngressTemplate: nil}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +159,9 @@ func TestConfiguratorUpdatesConfigWithCustomIngressTemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{IngressTemplate: &customTestIngressTemplate}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{IngressTemplate: &customTestIngressTemplate}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,9 +181,9 @@ func TestConfigratorUpdatesConfigWithCustomVStemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		VirtualServerTemplate: &customTestVStemplate,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{VirtualServerTemplate: &customTestVStemplate}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,9 +203,9 @@ func TestConfiguratorUpdatesConfigWithNilCustomVSemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		VirtualServerTemplate: nil,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{VirtualServerTemplate: nil}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,9 +221,11 @@ func TestConfigratorUpdatesConfigWithCustomTStemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	cnf.CfgParams = &ConfigParams{
 		TransportServerTemplate: &customTestTStemplate,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,9 +245,9 @@ func TestConfiguratorUpdatesConfigWithNilCustomTStemplate(t *testing.T) {
 	t.Parallel()
 
 	cnf := createTestConfigurator(t)
-	warnings, err := cnf.UpdateConfig(&ConfigParams{
-		TransportServerTemplate: nil,
-	}, &MGMTConfigParams{}, ExtendedResources{})
+	cnf.CfgParams = &ConfigParams{TransportServerTemplate: nil}
+	cnf.MgmtCfgParams = &MGMTConfigParams{}
+	warnings, err := cnf.UpdateConfig(ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
