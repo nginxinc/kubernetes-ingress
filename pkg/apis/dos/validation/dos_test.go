@@ -214,6 +214,97 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 	}
 }
 
+func TestValidateAppProtectDosLogConf(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		logConf    *unstructured.Unstructured
+		expectErr  bool
+		expectWarn bool
+		msg        string
+	}{
+		{
+			logConf: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"filter": map[string]interface{}{},
+					},
+				},
+			},
+			expectErr:  false,
+			expectWarn: false,
+			msg:        "valid log conf",
+		},
+		{
+			logConf: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{},
+				},
+			},
+			expectErr:  true,
+			expectWarn: false,
+			msg:        "invalid log conf with no filter field",
+		},
+		{
+			logConf: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"something": map[string]interface{}{
+						"filter": map[string]interface{}{},
+					},
+				},
+			},
+			expectErr:  true,
+			expectWarn: false,
+			msg:        "invalid log conf with no spec field",
+		},
+		{
+			logConf: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"content": map[string]interface{}{
+							"format": "user-defined",
+						},
+						"filter": map[string]interface{}{},
+					},
+				},
+			},
+			expectErr:  false,
+			expectWarn: true,
+			msg:        "Support only splunk format",
+		},
+		{
+			logConf: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"filter": map[string]interface{}{},
+						"content": map[string]interface{}{
+							"format": "user-defined",
+						},
+					},
+				},
+			},
+			expectErr:  false,
+			expectWarn: true,
+			msg:        "valid log conf with warning filter field",
+		},
+	}
+
+	for _, test := range tests {
+		warn, err := ValidateAppProtectDosLogConf(test.logConf)
+		if test.expectErr && err == nil {
+			t.Errorf("validateAppProtectDosLogConf() returned no error for the case of %s", test.msg)
+		}
+		if !test.expectErr && err != nil {
+			t.Errorf("validateAppProtectDosLogConf() returned unexpected error %v for the case of %s", err, test.msg)
+		}
+		if test.expectWarn && warn == "" {
+			t.Errorf("validateAppProtectDosLogConf() returned no warning for the case of %s", test.msg)
+		}
+		if !test.expectWarn && warn != "" {
+			t.Errorf("validateAppProtectDosLogConf() returned unexpected warning: %s, for the case of %s", warn, test.msg)
+		}
+	}
+}
+
 func TestValidateAppProtectDosPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
