@@ -1,14 +1,19 @@
 ---
-docs: DOCS-1445
-doctypes:
-- concept
 title: Enable Usage Reporting
 toc: true
 weight: 1800
+noindex: true
+headless: true
+type: how-to
+product: NIC
+docs: DOCS-1445
 ---
 
 {{< important >}}
-This page is only applicable to NGINX Ingress Controller versions 3.2.0 - 3.7.2
+This page is only applicable to NGINX Ingress Controller versions 3.2.0 - 3.7.2.
+
+For more recent versions of NGINX Ingress Controller, view the [Upgrade to NGINX Ingress Controller 4.0.0]({{< ref "/installation/install-nic/upgrade-to-v4.md" >}}) topic.
+
 {{< /important >}}
 
 This page describes how to enable Usage Reporting for F5 NGINX Ingress Controller and how to view usage data through the API.
