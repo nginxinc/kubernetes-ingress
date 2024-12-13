@@ -1,11 +1,10 @@
 ---
-description: 
-docs: DOCS-1453
-doctypes:
-- installation
 title: Build NGINX Ingress Controller
 toc: true
-weight: 200
+weight: 400
+type: how-to
+product: NIC
+docs: DOCS-1453
 ---
 
 This document describes how to build an F5 NGINX Ingress Controller image from source code and upload it to a private Docker registry. 
@@ -14,7 +13,7 @@ It also includes information on the Makefile targets and variables.
 
 {{<call-out "tip" "Pre-built image alternatives" >}} If you do not need to build a custom image, see the [pre-built image options](#pre-built-images) at the end of this guide. {{</call-out>}}
 
-## Before you start
+## Before you begin
 
 To get started, you need the following software installed on your machine:
 
@@ -24,7 +23,9 @@ To get started, you need the following software installed on your machine:
 - [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 - For NGINX Plus users, download the certificate (_nginx-repo.crt_) and key (_nginx-repo.key_) from [MyF5](https://my.f5.com).
 
-Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed. You can download the precompiled binary file or build NGINX Ingress Controller in a Docker container.
+Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed. 
+
+You can download the precompiled binary file or build NGINX Ingress Controller in a Docker container.
 
 ---
 
@@ -62,45 +63,45 @@ After setting up your environment, follow these steps to build the NGINX Ingress
 
 ### For NGINX
 
-1. Build the image. Replace `<my-docker-registry>` with your private registry's path.
+Build the image. Replace `<my-docker-registry>` with your private registry's path.
 
-    - For a Debian-based image:
+- For a Debian-based image:
 
-        ```shell
-        make debian-image PREFIX=<my-docker-registry>/nginx-ingress TARGET=download
-        ```
+    ```shell
+    make debian-image PREFIX=<my-docker-registry>/nginx-ingress TARGET=download
+    ```
 
-    - For an Alpine-based image:
+- For an Alpine-based image:
 
-        ```shell
-        make alpine-image PREFIX=<my-docker-registry>/nginx-ingress TARGET=download
-        ```
+    ```shell
+    make alpine-image PREFIX=<my-docker-registry>/nginx-ingress TARGET=download
+    ```
 
-    **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_](#makefile-details). This version number is used for tracking and deployment purposes.
+**What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_](#makefile-details). This version number is used for tracking and deployment purposes.
 
 ### For NGINX Plus
 
-1. Place your NGINX Plus license files (_nginx-repo.crt_ and _nginx-repo.key_) in the project's root folder. To verify they're in place, run:
+Place your NGINX Plus license files (_nginx-repo.crt_ and _nginx-repo.key_) in the project's root folder. To verify they're in place, run:
 
-    ```shell
-    ls nginx-repo.*
-    ```
+```shell
+ls nginx-repo.*
+```
 
-    You should see:
+You should see:
 
-    ```shell
-    nginx-repo.crt  nginx-repo.key
-    ```
+```text
+nginx-repo.crt  nginx-repo.key
+```
 
-2. Build the image. Replace `<my-docker-registry>` with your private registry's path.
+Build the image. Replace `<my-docker-registry>` with your private registry's path.
 
-    ```shell
-    make debian-image-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
-    ```
+```shell
+make debian-image-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
+```
 
-    <br>
+<br>
 
-     **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_](#makefile-details). This version number is used for tracking and deployment purposes.
+**What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_](#makefile-details). This version number is used for tracking and deployment purposes.
 
 {{<note>}} If a patch for NGINX Plus is released, make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the make command. {{</note>}}
 
@@ -112,19 +113,19 @@ Once you've successfully built the NGINX or NGINX Plus Ingress Controller image,
 
 ### For NGINX
 
-1. Upload the NGINX image. If you're using a custom tag, append `TAG=your-tag` to the command. Replace `<my-docker-registry>` with your private registry's path.
+Upload the NGINX image. If you're using a custom tag, append `TAG=your-tag` to the command. Replace `<my-docker-registry>` with your private registry's path.
 
-    ```shell
-    make push PREFIX=<my-docker-registry>/nginx-ingress
-    ```
+```shell
+make push PREFIX=<my-docker-registry>/nginx-ingress
+```
 
 ### For NGINX Plus
 
-1. Upload the NGINX Plus image. Like with the NGINX image, if you're using a custom tag, add `TAG=your-tag` to the end of the command. Replace `<my-docker-registry>` with your private registry's path.
+Upload the NGINX Plus image. Like with the NGINX image, if you're using a custom tag, add `TAG=your-tag` to the end of the command. Replace `<my-docker-registry>` with your private registry's path.
 
-    ```shell
-    make push PREFIX=<my-docker-registry>/nginx-plus-ingress
-    ```
+```shell
+make push PREFIX=<my-docker-registry>/nginx-plus-ingress
+```
 
 ---
 
@@ -159,6 +160,8 @@ Key targets include:
 | _ubi-image-dos-plus_          | Builds a UBI-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [OpenShift](https://www.openshift.com/) clusters.                                               |
 | _ubi-image-nap-dos-plus_      | <p>Builds a UBI-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [OpenShift](https://www.openshift.com/) clusters.</p> <p> **Important**: Save your RHEL organization and activation keys in a file named _rhel_license_ at the project root.</p> <p> For instance:</p> <pre>RHEL_ORGANIZATION=1111111<br />RHEL_ACTIVATION_KEY=your-key</pre>|
 {{</bootstrap-table>}}
+
+---
 
 ### Additional useful targets {#other-makefile-targets}
 
