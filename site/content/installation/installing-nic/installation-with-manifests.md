@@ -1,17 +1,17 @@
 ---
-docs: DOCS-603
-doctypes:
-- ''
 title: Installation with Manifests
 toc: true
 weight: 200
+type: how-to
+product: NIC
+docs: DOCS-603
 ---
 
 This guide explains how to use Manifests to install F5 NGINX Ingress Controller, then create both common and custom resources and set up role-based access control.
 
 ## Before you start
 
-If you are using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "installation/installing-nic/create-license-secret/" >}}).
+If you are using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "/installation/create-license-secret.md" >}}).
 
 ### Get the NGINX Controller Image
 
