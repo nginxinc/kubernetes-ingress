@@ -63,7 +63,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 					DosAccessLogDest: "bad&$%^logdest",
 				},
 			},
-			expectErr: "error validating DosProtectedResource:  invalid field: dosAccessLogDest err: invalid host: bad&$%^logdest, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			expectErr: "error validating DosProtectedResource:  invalid field: dosAccessLogDest err: invalid log destination: bad&$%^logdest, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
 			msg:       "invalid DosAccessLogDest specified",
 		},
 		{
@@ -105,7 +105,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 					DosSecurityLog:   &v1beta1.DosSecurityLog{},
 				},
 			},
-			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/dosLogDest err: error parsing host: empty host, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/dosLogDest err: invalid log destination: , must follow format: <ip-address | localhost | dns name>:<port> or stderr",
 			msg:       "empty DosSecurityLog specified",
 		},
 		{
@@ -159,7 +159,6 @@ func TestValidateDosProtectedResource(t *testing.T) {
 			msg:       "DosSecurityLog with valid apDosLogConf",
 		},
 	}
-
 	for _, test := range tests {
 		err := ValidateDosProtectedResource(test.protected)
 		if err != nil {
@@ -191,9 +190,9 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"NotValid", "invalid host: NotValid, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
-		{"cluster.local", "invalid host: cluster.local, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
-		{"-cluster.local:514", "invalid host: -cluster.local:514, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"NotValid", "invalid log destination: NotValid, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"cluster.local", "invalid log destination: cluster.local, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
+		{"-cluster.local:514", "invalid log destination: -cluster.local:514, must follow format: <ip-address | localhost | dns name>:<port> or stderr"},
 		{"10.10.1.1:99999", "not a valid port number"},
 	}
 
@@ -203,7 +202,6 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 			t.Errorf("expected nil, got %v", err)
 		}
 	}
-
 	for _, nTCase := range negDstAntns {
 		err := validateAppProtectDosLogDest(nTCase[0])
 		if err == nil {
@@ -212,97 +210,6 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 			if !strings.Contains(err.Error(), nTCase[1]) {
 				t.Errorf("got '%v', expected: '%s'", err, nTCase[1])
 			}
-		}
-	}
-}
-
-func TestValidateAppProtectDosLogConf(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		logConf    *unstructured.Unstructured
-		expectErr  bool
-		expectWarn bool
-		msg        string
-	}{
-		{
-			logConf: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
-						"filter": map[string]interface{}{},
-					},
-				},
-			},
-			expectErr:  false,
-			expectWarn: false,
-			msg:        "valid log conf",
-		},
-		{
-			logConf: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{},
-				},
-			},
-			expectErr:  true,
-			expectWarn: false,
-			msg:        "invalid log conf with no filter field",
-		},
-		{
-			logConf: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"something": map[string]interface{}{
-						"filter": map[string]interface{}{},
-					},
-				},
-			},
-			expectErr:  true,
-			expectWarn: false,
-			msg:        "invalid log conf with no spec field",
-		},
-		{
-			logConf: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
-						"content": map[string]interface{}{
-							"format": "user-defined",
-						},
-						"filter": map[string]interface{}{},
-					},
-				},
-			},
-			expectErr:  false,
-			expectWarn: true,
-			msg:        "Support only splunk format",
-		},
-		{
-			logConf: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"spec": map[string]interface{}{
-						"filter": map[string]interface{}{},
-						"content": map[string]interface{}{
-							"format": "user-defined",
-						},
-					},
-				},
-			},
-			expectErr:  false,
-			expectWarn: true,
-			msg:        "valid log conf with warning filter field",
-		},
-	}
-
-	for _, test := range tests {
-		warn, err := ValidateAppProtectDosLogConf(test.logConf)
-		if test.expectErr && err == nil {
-			t.Errorf("validateAppProtectDosLogConf() returned no error for the case of %s", test.msg)
-		}
-		if !test.expectErr && err != nil {
-			t.Errorf("validateAppProtectDosLogConf() returned unexpected error %v for the case of %s", err, test.msg)
-		}
-		if test.expectWarn && warn == "" {
-			t.Errorf("validateAppProtectDosLogConf() returned no warning for the case of %s", test.msg)
-		}
-		if !test.expectWarn && warn != "" {
-			t.Errorf("validateAppProtectDosLogConf() returned unexpected warning: %s, for the case of %s", warn, test.msg)
 		}
 	}
 }

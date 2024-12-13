@@ -39,20 +39,28 @@ func TestValidateHost(t *testing.T) {
 	t.Parallel()
 	// Positive test cases
 	posHosts := []string{
-		"10.10.1.1:514",
-		"localhost:514",
-		"dns.test.svc.cluster.local:514",
-		"cluster.local:514",
-		"dash-test.cluster.local:514",
+		"10.10.1.1:443",
+		"10.10.1.1",
+		"123.112.224.43:443",
+		"172.120.3.222",
+		"localhost:80",
+		"localhost",
+		"myhost:54321",
+		"myhost",
+		"my-host:54321",
+		"my-host",
+		"dns.test.svc.cluster.local:8443",
+		"cluster.local:8443",
 		"product.example.com",
+		"product.example.com:443",
 	}
 
 	// Negative test cases item, expected error message
 	negHosts := [][]string{
-		{"NotValid", "invalid host: NotValid"},
-		{"cluster.local", "invalid host: cluster.local"},
-		{"-cluster.local:514", "invalid host: -cluster.local:514"},
+		{"NotValid", "not a valid host"},
+		{"-cluster.local:514", "not a valid host"},
 		{"10.10.1.1:99999", "not a valid port number"},
+		{"333.333.333.333", "not a valid host"},
 	}
 
 	for _, tCase := range posHosts {
