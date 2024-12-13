@@ -1,17 +1,17 @@
 ---
-docs: DOCS-604
-doctypes:
-- ''
 title: Installation with NGINX Ingress Operator
 toc: true
 weight: 300
+type: how-to
+product: NIC
+docs: DOCS-604
 ---
 
-This document explains how to use NGINX Ingress Operator to install NGINX Ingress Controller.
+This document explains how to install F5 NGINX Ingress Controller using NGINX Ingress Operator.
 
 ## Before you start
 
-If you're using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "installation/installing-nic/create-license-secret/" >}}).
+If you're using NGINX Plus, get the NGINX Ingress Controller JWT and [create a license secret]({{< relref "/installation/create-license-secret.md" >}}).
 
 {{< note >}} We recommend the most recent stable version of NGINX Ingress Controller, available on the GitHub repository's [releases page]({{< relref "releases.md" >}}). {{< /note >}}
 
