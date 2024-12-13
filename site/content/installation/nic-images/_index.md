@@ -1,5 +1,4 @@
 ---
 title: NGINX Ingress Controller images
-description:
-weight: 300
+weight: 200
 ---
