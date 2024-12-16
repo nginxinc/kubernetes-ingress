@@ -14,7 +14,7 @@ weight: 2100
 
 ### <i class="fa-solid fa-bomb"></i> Breaking Changes
 - [6903](https://github.com/nginxinc/kubernetes-ingress/pull/6903) & [6921](https://github.com/nginxinc/kubernetes-ingress/pull/6921) Add support for NGINX Plus R33
-- [6520](https://github.com/nginxinc/kubernetes-ingress/pull/6520) & [6474](https://github.com/nginxinc/kubernetes-ingress/pull/6474) Add LogLevel & LogFormat flags
+- [6520](https://github.com/nginxinc/kubernetes-ingress/pull/6520) & [6474](https://github.com/nginxinc/kubernetes-ingress/pull/6474) Add structured logging
 - [6800](https://github.com/nginxinc/kubernetes-ingress/pull/6800) Deprecate v1alpha1 CRDs for GlobalConfiguration, Policy & TransportServer
 
 ### <i class="fa-solid fa-rocket"></i> Features
