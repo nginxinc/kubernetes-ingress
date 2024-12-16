@@ -46,6 +46,7 @@ weight: 2100
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 4.0.0 images from the F5 Container registry or build your own image using the 4.0.0 source code
 - For Helm, use version 2.0.0 of the chart.
+- [Upgrading to v4]({{< relref "installation/installing-nic/upgrade-to-v4" >}})
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
