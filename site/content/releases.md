@@ -13,16 +13,14 @@ weight: 2100
 16 Dec 2024
 
 ### <i class="fa-solid fa-bomb"></i> Breaking Changes
-- [6520](https://github.com/nginxinc/kubernetes-ingress/pull/6520) Add LogLevel & LogFormat flags
+- [6903](https://github.com/nginxinc/kubernetes-ingress/pull/6903) & [6921](https://github.com/nginxinc/kubernetes-ingress/pull/6921) Add support for NGINX Plus R33
+- [6520](https://github.com/nginxinc/kubernetes-ingress/pull/6520) & [6474](https://github.com/nginxinc/kubernetes-ingress/pull/6474) Add LogLevel & LogFormat flags
 - [6800](https://github.com/nginxinc/kubernetes-ingress/pull/6800) Deprecate v1alpha1 CRDs for GlobalConfiguration, Policy & TransportServer
-- [6903](https://github.com/nginxinc/kubernetes-ingress/pull/6903) Add license secret and mgmt config map
 
 ### <i class="fa-solid fa-rocket"></i> Features
-- [6474](https://github.com/nginxinc/kubernetes-ingress/pull/6474) Add glog slog handler
 - [6605](https://github.com/nginxinc/kubernetes-ingress/pull/6605) TransportServer SNI
 - [6819](https://github.com/nginxinc/kubernetes-ingress/pull/6819) Add events to configmap
 - [6878](https://github.com/nginxinc/kubernetes-ingress/pull/6878) Add events when special secrets update
-- [6921](https://github.com/nginxinc/kubernetes-ingress/pull/6921) Add additional mgmt config parameters
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
 - [6583](https://github.com/nginxinc/kubernetes-ingress/pull/6583) Generate valid yaml for ReadOnly FS
