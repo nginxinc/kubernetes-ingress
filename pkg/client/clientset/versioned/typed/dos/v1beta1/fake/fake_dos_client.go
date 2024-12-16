@@ -13,7 +13,7 @@ type FakeAppprotectdosV1beta1 struct {
 }
 
 func (c *FakeAppprotectdosV1beta1) DosProtectedResources(namespace string) v1beta1.DosProtectedResourceInterface {
-	return &FakeDosProtectedResources{c, namespace}
+	return newFakeDosProtectedResources(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
