@@ -13,7 +13,7 @@ type FakeExternaldnsV1 struct {
 }
 
 func (c *FakeExternaldnsV1) DNSEndpoints(namespace string) v1.DNSEndpointInterface {
-	return &FakeDNSEndpoints{c, namespace}
+	return newFakeDNSEndpoints(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
