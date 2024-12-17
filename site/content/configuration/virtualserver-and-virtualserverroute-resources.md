@@ -164,8 +164,6 @@ enable: true
 |``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. See [the ExternalDNS TTL documentation for provider-specific defaults](https://kubernetes-sigs.github.io/external-dns/v0.14.2/ttl/#providers) | ``int64`` | No |
 |``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
 |``targets`` | An optional list of IP addresses or hostnames to serve as DNS targets within the DNSEndpoint. All specified targets must be of the same record type (all IPv4, all IPv6, or all hostnames). | ``[]string`` | No |
-
-
 {{</bootstrap-table>}}
 
 ### VirtualServer.ExternalDNS.ProviderSpecific
