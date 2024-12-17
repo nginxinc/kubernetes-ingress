@@ -9,6 +9,7 @@ import (
 	"github.com/dlclark/regexp2"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	externaldns "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/validation"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -202,10 +203,19 @@ func (vsv *VirtualServerValidator) validateExternalDNS(ed *v1.ExternalDNS, field
 		// valid, externalDNS is not required
 		return nil
 	}
+	allErrs := field.ErrorList{}
 	if !vsv.isExternalDNSEnabled {
-		return field.ErrorList{field.Forbidden(fieldPath, "field requires externalDNS enablement")}
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires externalDNS enablement"))
 	}
-	return nil
+
+	if len(ed.Targets) > 0 {
+		_, _, err := externaldns.ValidateTargetsAndDetermineRecordType(ed.Targets)
+		if err != nil {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("targets"), err.Error()))
+		}
+	}
+
+	return allErrs
 }
 
 func validateTLSRedirect(redirect *v1.TLSRedirect, fieldPath *field.Path) field.ErrorList {

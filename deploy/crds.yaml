@@ -1415,6 +1415,11 @@ spec:
                     type: integer
                   recordType:
                     type: string
+                  targets:
+                    description: Targets stores an optional list of specified targets
+                    items:
+                      type: string
+                    type: array
                 type: object
               gunzip:
                 type: boolean

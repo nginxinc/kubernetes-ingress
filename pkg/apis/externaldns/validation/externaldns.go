@@ -10,7 +10,61 @@ import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	netutils "k8s.io/utils/net"
 )
+
+func ValidateTargetsAndDetermineRecordType(targets []string) ([]string, string, error) {
+	var recordA, recordAAAA, recordCNAME bool
+
+	for _, t := range targets {
+		if errMsg := validation.IsValidIP(field.NewPath(""), t); len(errMsg) == 0 {
+			ip := netutils.ParseIPSloppy(t)
+			if ip.To4() != nil {
+				recordA = true
+			} else {
+				recordAAAA = true
+			}
+		} else {
+			if err := isFullyQualifiedDomainName(t); err != nil {
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %v", ErrTypeInvalid, t, err)
+			}
+			recordCNAME = true
+		}
+	}
+
+	if err := isUnique(targets); err != nil {
+		return nil, "", err
+	}
+
+	count := 0
+	if recordA {
+		count++
+	}
+	if recordAAAA {
+		count++
+	}
+	if recordCNAME {
+		count++
+	}
+
+	if count > 1 {
+		return nil, "", errors.New("multiple record types (A, AAAA, CNAME) detected; must be homogeneous")
+	}
+
+	var recordType string
+	switch {
+	case recordA:
+		recordType = "A"
+	case recordAAAA:
+		recordType = "AAAA"
+	case recordCNAME:
+		recordType = "CNAME"
+	default:
+		return nil, "", errors.New("could not determine record type from targets")
+	}
+
+	return targets, recordType, nil
+}
 
 // ValidateDNSEndpoint validates if all DNSEndpoint fields are valid.
 func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
