@@ -74,6 +74,9 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | F5 Container Registry Image | Architectures |
 | ---| ---| --- | --- | --- |
 |Alpine-based image | ``alpine:3.20`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:{{< nic-version >}}-alpine` | arm64<br>amd64 |
+|Alpine-based image with FIPS inside | ``alpine:3.20`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog<br><br>FIPS module and OpenSSL configuration | `nginx-ic/nginx-plus-ingress:{{< nic-version >}}-alpine-fips` | arm64<br>amd64 |
+|Alpine-based image with NGINX App Protect WAF & FIPS inside | ``alpine:3.17`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog<br><br>FIPS module and OpenSSL configuration | `nginx-ic-nap/nginx-plus-ingress:{{< nic-version >}}-alpine-fips` | arm64<br>amd64 |
+|Alpine-based image with NGINX App Protect WAF v5 & FIPS inside | ``alpine:3.17`` | NGINX App Protect WAF v5<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog<br><br>FIPS module and OpenSSL configuration | `nginx-ic-nap-v5/nginx-plus-ingress:{{< nic-version >}}-alpine-fips` | arm64<br>amd64 |
 |Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:{{< nic-version >}}` | arm64<br>amd64 |
 |Debian-based image with NGINX App Protect WAF | ``debian:12-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | `nginx-ic-nap/nginx-plus-ingress:{{< nic-version >}}` | amd64 |
 |Debian-based image with NGINX App Protect WAF v5 | ``debian:12-slim`` | NGINX App Protect WAF v5<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | `nginx-ic-nap-v5/nginx-plus-ingress:{{< nic-version >}}` | amd64 |
@@ -84,47 +87,6 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Ubi-based image with NGINX App Protect WAF v5 | ``redhat/ubi9`` | NGINX App Protect WAF v5 and NGINX Plus JavaScript module | `nginx-ic-nap-v5/nginx-plus-ingress:{{< nic-version >}}-ubi` | amd64 |
 |Ubi-based image with NGINX App Protect DoS | ``redhat/ubi8`` | NGINX App Protect DoS and NGINX Plus JavaScript module | `nginx-ic-dos/nginx-plus-ingress:{{< nic-version >}}-ubi` | amd64 |
 |Ubi-based image with NGINX App Protect WAF and DoS | ``redhat/ubi8`` | NGINX App Protect WAF and DoS<br><br>NGINX Plus JavaScript module | `nginx-ic-nap-dos/nginx-plus-ingress:{{< nic-version >}}-ubi` | amd64 |
-{{% /bootstrap-table %}}
-
----
-
-#### **AWS Marketplace**
-
-NGINX Plus images are available through the AWS Marketplace. 
-
-View the [Use the AWS Marketplace Ingress Controller image]({{< relref "/installation/nic-images/use-aws-image.md" >}}) topic for details on how to set up the required IAM resources in your EKS cluster.
-
-{{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
-|<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | AWS Marketplace Link | Architectures |
-| ---| ---| --- | --- | --- |
-|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) | amd64 |
-|Debian-based image with NGINX App Protect WAF | ``debian:12-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller with F5 NGINX App Protect WAF](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) | amd64 |
-|Debian-based image with NGINX App Protect DoS | ``debian:12-slim`` | NGINX App Protect DoS<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller with F5 NGINX App Protect WAF and DoS](https://aws.amazon.com/marketplace/pp/prodview-yltaqwzwrnhco) | amd64 |
-|Debian-based image with NGINX App Protect WAF and DoS | ``debian:12-slim`` | NGINX App Protect WAF and DoS<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller with F5 NGINX App Protect DoS](https://aws.amazon.com/marketplace/pp/prodview-sghjw2csktega) | amd64 |
-{{% /bootstrap-table %}}
-
----
-
-#### **Google Cloud Marketplace**
-NGINX Plus images are available through the Google Cloud Marketplace. 
-
-View the [Use the GCP Marketplace NGINX Ingress Controller image]({{< relref "/installation/nic-images/use-gcp-image.md" >}}) topic for details on how to use them.
-
-{{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
-|<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |
-| ---| ---| --- | --- | --- |
-|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
-|Debian-based image with NGINX App Protect WAF | ``debian:12-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-nap) | amd64 |
-{{% /bootstrap-table %}}
-
-#### **Microsoft Azure Marketplace**
-NGINX Plus images are available through the Microsoft Azure Marketplace.
-
-{{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
-|<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | Azure Marketplace Link | Architectures |
-| ---| ---| --- | --- | --- |
-|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium) | amd64 |
-|Debian-based image with NGINX App Protect WAF | ``debian:12-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium_waf) | amd64 |
 {{% /bootstrap-table %}}
 
 ---

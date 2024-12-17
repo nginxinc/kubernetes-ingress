@@ -113,6 +113,28 @@ Expand the name of the configmap used for NGINX Agent.
 {{- end -}}
 
 {{/*
+Expand the name of the mgmt configmap.
+*/}}
+{{- define "nginx-ingress.mgmtConfigName" -}}
+{{- if .Values.controller.mgmt.configMapName -}}
+{{ .Values.controller.mgmt.configMapName }}
+{{- else -}}
+{{- default (printf "%s-mgmt" (include "nginx-ingress.fullname" .)) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Expand license token secret name.
+*/}}
+{{- define "nginx-ingress.licenseTokenSecretName" -}}
+{{- if hasKey .Values.controller.mgmt "licenseTokenSecretName" -}}
+{{- .Values.controller.mgmt.licenseTokenSecretName -}}
+{{- else }}
+{{- fail "Error: When using Nginx Plus, 'controller.mgmt.licenseTokenSecretName' must be set." }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Expand leader election lock name.
 */}}
 {{- define "nginx-ingress.leaderElectionName" -}}
@@ -226,6 +248,9 @@ Build the args for the service binary.
 - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
 {{ end }}
 - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
+{{- if .Values.controller.nginxplus }}
+- -mgmt-configmap=$(POD_NAMESPACE)/{{ include "nginx-ingress.mgmtConfigName" . }}
+{{- end }}
 {{- if .Values.controller.defaultTLS.secret }}
 - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
 {{ else if and (.Values.controller.defaultTLS.cert) (.Values.controller.defaultTLS.key) }}
@@ -372,7 +397,6 @@ volumeMounts:
 {{ include "nginx-ingress.volumeMountEntries" . }}
 {{- end -}}
 {{- end -}}
-
 {{- define "nginx-ingress.volumeMountEntries" -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - mountPath: /etc/nginx
@@ -423,6 +447,8 @@ volumeMounts:
   env:
     - name: ENFORCER_PORT
       value: "{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
+    - name: ENFORCER_CONFIG_TIMEOUT
+      value: "0"
   volumeMounts:
     - name: app-protect-bd-config
       mountPath: /opt/app_protect/bd_config

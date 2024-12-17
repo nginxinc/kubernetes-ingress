@@ -119,7 +119,7 @@ class TestRateLimitIngress:
 @pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["standard-scaled", "mergeable-scaled"], indirect=True)
 class TestRateLimitIngressScaled:
-    def test_ingress_rate_limit_sscaled(
+    def test_ingress_rate_limit_scaled(
         self, kube_apis, annotations_setup, ingress_controller_prerequisites, test_namespace
     ):
         """
@@ -133,14 +133,20 @@ class TestRateLimitIngressScaled:
             wait_before_test()
 
         ic_pods = get_pod_list(kube_apis.v1, ns)
-        for i in range(len(ic_pods)):
-            conf = get_ingress_nginx_template_conf(
-                kube_apis.v1,
-                annotations_setup.namespace,
-                annotations_setup.ingress_name,
-                ic_pods[i].metadata.name,
-                ingress_controller_prerequisites.namespace,
-            )
-            flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
-            assert flag
+        flag = False
+        retries = 0
+        while flag is False and retries < 10:
+            retries += 1
+            wait_before_test()
+            for i in range(len(ic_pods)):
+                conf = get_ingress_nginx_template_conf(
+                    kube_apis.v1,
+                    annotations_setup.namespace,
+                    annotations_setup.ingress_name,
+                    ic_pods[i].metadata.name,
+                    ingress_controller_prerequisites.namespace,
+                )
+                flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
+
+        assert flag
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)

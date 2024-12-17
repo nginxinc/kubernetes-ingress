@@ -838,71 +838,78 @@ func TestMakeResolver(t *testing.T) {
 		name              string
 		resolverAddresses []string
 		resolverValid     string
-		resolverIPV6      bool
+		resolverIPV6      *bool
 		expected          string
 	}{
 		{
 			name:              "No addresses",
 			resolverAddresses: []string{},
 			resolverValid:     "",
-			resolverIPV6:      true,
+			resolverIPV6:      boolToPointerBool(true),
 			expected:          "",
 		},
 		{
 			name:              "Single address, default options",
 			resolverAddresses: []string{"8.8.8.8"},
 			resolverValid:     "",
-			resolverIPV6:      true,
+			resolverIPV6:      boolToPointerBool(true),
 			expected:          "resolver 8.8.8.8;",
 		},
 		{
 			name:              "Multiple addresses, valid time, ipv6 on",
 			resolverAddresses: []string{"8.8.8.8", "8.8.4.4"},
 			resolverValid:     "30s",
-			resolverIPV6:      true,
+			resolverIPV6:      boolToPointerBool(true),
 			expected:          "resolver 8.8.8.8 8.8.4.4 valid=30s;",
 		},
 		{
 			name:              "Single address, ipv6 off",
 			resolverAddresses: []string{"8.8.8.8"},
 			resolverValid:     "",
-			resolverIPV6:      false,
+			resolverIPV6:      boolToPointerBool(false),
 			expected:          "resolver 8.8.8.8 ipv6=off;",
 		},
 		{
 			name:              "Multiple addresses, valid time, ipv6 off",
 			resolverAddresses: []string{"8.8.8.8", "8.8.4.4"},
 			resolverValid:     "30s",
-			resolverIPV6:      false,
+			resolverIPV6:      boolToPointerBool(false),
 			expected:          "resolver 8.8.8.8 8.8.4.4 valid=30s ipv6=off;",
 		},
 		{
 			name:              "No valid time, ipv6 off",
 			resolverAddresses: []string{"8.8.8.8"},
 			resolverValid:     "",
-			resolverIPV6:      false,
+			resolverIPV6:      boolToPointerBool(false),
 			expected:          "resolver 8.8.8.8 ipv6=off;",
 		},
 		{
 			name:              "Valid time only",
 			resolverAddresses: []string{"8.8.8.8"},
 			resolverValid:     "10s",
-			resolverIPV6:      true,
+			resolverIPV6:      boolToPointerBool(true),
 			expected:          "resolver 8.8.8.8 valid=10s;",
 		},
 		{
 			name:              "IPv6 only",
 			resolverAddresses: []string{"8.8.8.8"},
 			resolverValid:     "",
-			resolverIPV6:      false,
+			resolverIPV6:      boolToPointerBool(false),
 			expected:          "resolver 8.8.8.8 ipv6=off;",
 		},
 		{
 			name:              "All options",
 			resolverAddresses: []string{"8.8.8.8", "8.8.4.4", "1.1.1.1"},
 			resolverValid:     "60s",
-			resolverIPV6:      false,
+			resolverIPV6:      boolToPointerBool(false),
 			expected:          "resolver 8.8.8.8 8.8.4.4 1.1.1.1 valid=60s ipv6=off;",
+		},
+		{
+			name:              "All options, ipv6 nil",
+			resolverAddresses: []string{"8.8.8.8", "8.8.4.4", "1.1.1.1"},
+			resolverValid:     "60s",
+			resolverIPV6:      nil,
+			expected:          "resolver 8.8.8.8 8.8.4.4 1.1.1.1 valid=60s;",
 		},
 	}
 

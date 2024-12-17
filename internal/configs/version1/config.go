@@ -189,6 +189,20 @@ type Location struct {
 	MinionIngress *Ingress
 }
 
+// MGMTConfig is tbe configuration for the MGMT block.
+type MGMTConfig struct {
+	SSLVerify            *bool
+	EnforceInitialReport *bool
+	Endpoint             string
+	Interval             string
+	TrustedCert          bool
+	TrustedCRL           bool
+	ClientAuth           bool
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
+}
+
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
 	AccessLog                          string
@@ -207,6 +221,7 @@ type MainConfig struct {
 	LogFormat                          []string
 	LogFormatEscaping                  string
 	MainSnippets                       []string
+	MGMTConfig                         MGMTConfig
 	NginxStatus                        bool
 	NginxStatusAllowCIDRs              []string
 	NginxStatusPort                    int
