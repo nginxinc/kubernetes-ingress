@@ -13,6 +13,7 @@ import (
 	netutils "k8s.io/utils/net"
 )
 
+// ValidateTargetsAndDetermineRecordType validates chosen endpoints
 func ValidateTargetsAndDetermineRecordType(targets []string) ([]string, string, error) {
 	var recordA, recordAAAA, recordCNAME bool
 
@@ -25,14 +26,14 @@ func ValidateTargetsAndDetermineRecordType(targets []string) ([]string, string, 
 				recordAAAA = true
 			}
 		} else {
-			if err := isFullyQualifiedDomainName(t); err != nil {
+			if err := IsFullyQualifiedDomainName(t); err != nil {
 				return nil, "", fmt.Errorf("%w: target %q is invalid: %v", ErrTypeInvalid, t, err)
 			}
 			recordCNAME = true
 		}
 	}
 
-	if err := isUnique(targets); err != nil {
+	if err := IsUnique(targets); err != nil {
 		return nil, "", err
 	}
 
@@ -111,15 +112,16 @@ func validateTargets(targets v1.Targets) error {
 				return fmt.Errorf("%w: target %q is invalid: %s", ErrTypeInvalid, target, errMsg[0])
 			}
 		default:
-			if err := isFullyQualifiedDomainName(target); err != nil {
+			if err := IsFullyQualifiedDomainName(target); err != nil {
 				return fmt.Errorf("%w: target %q is invalid, it should be a valid IP address or hostname", ErrTypeInvalid, target)
 			}
 		}
 	}
-	return isUnique(targets)
+	return IsUnique(targets)
 }
 
-func isUnique(targets v1.Targets) error {
+// IsUnique takes a list of targets and makes an error if a target appears more than once
+func IsUnique(targets v1.Targets) error {
 	occurred := make(map[string]bool)
 	for _, target := range targets {
 		if occurred[target] {
@@ -144,7 +146,8 @@ func validateTTL(ttl v1.TTL) error {
 	return nil
 }
 
-func isFullyQualifiedDomainName(name string) error {
+// IsFullyQualifiedDomainName checks if a string will be valid for a cname dns record
+func IsFullyQualifiedDomainName(name string) error {
 	if name == "" {
 		return fmt.Errorf("%w: name not provided", ErrTypeInvalid)
 	}

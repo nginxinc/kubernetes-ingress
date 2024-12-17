@@ -17,6 +17,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
+	netutils "k8s.io/utils/net"
 )
 
 const (
@@ -48,7 +49,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 			return fmt.Errorf("failed to determine external endpoints")
 		}
 
-		targets, recordType, err := getValidTargets(ctx, vs.Status.ExternalEndpoints, vs.Spec.ExternalDNS.Targets)
+		targets, recordType, err := getValidTargets(vs.Status.ExternalEndpoints, vs.Spec.ExternalDNS.Targets)
 		if err != nil {
 			errorText := fmt.Sprintf("Invalid targets: %v", err)
 			nl.Error(l, errorText)
@@ -101,23 +102,52 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 	}
 }
 
-func getValidTargets(ctx context.Context, endpoints []vsapi.ExternalEndpoint, chosenTargets extdnsapi.Targets) (extdnsapi.Targets, string, error) {
-	var finalTargets []string
+func getValidTargets(endpoints []vsapi.ExternalEndpoint, chosenTargets extdnsapi.Targets) (extdnsapi.Targets, string, error) {
 	if len(chosenTargets) > 0 {
-		// if targets are defined on the vs.spec.externaldns.targets, use these
-		finalTargets = chosenTargets
-	} else {
-		// Otherwise, get targets from vs.Status.ExternalEndpoints
-		for _, e := range endpoints {
-			if e.IP != "" {
-				finalTargets = append(finalTargets, e.IP)
-			} else if e.Hostname != "" {
-				finalTargets = append(finalTargets, e.Hostname)
+		return externaldns_validation.ValidateTargetsAndDetermineRecordType(chosenTargets)
+	}
+
+	var ipv4Targets, ipv6Targets, cnameTargets []string
+	for _, e := range endpoints {
+		if e.IP != "" {
+			ip := netutils.ParseIPSloppy(e.IP)
+			if ip == nil {
+				continue
 			}
+			if ip.To4() != nil {
+				ipv4Targets = append(ipv4Targets, e.IP)
+			} else {
+				ipv6Targets = append(ipv6Targets, e.IP)
+			}
+		} else if e.Hostname != "" {
+			cnameTargets = append(cnameTargets, e.Hostname)
 		}
 	}
 
-	return externaldns_validation.ValidateTargetsAndDetermineRecordType(finalTargets)
+	//priority: prefer IPv4 > IPv6 > CNAME
+	if len(ipv4Targets) > 0 {
+		if err := externaldns_validation.IsUnique(ipv4Targets); err != nil {
+			return nil, "", err
+		}
+		return ipv4Targets, "A", nil
+	} else if len(ipv6Targets) > 0 {
+		if err := externaldns_validation.IsUnique(ipv6Targets); err != nil {
+			return nil, "", err
+		}
+		return ipv6Targets, "AAAA", nil
+	} else if len(cnameTargets) > 0 {
+		if err := externaldns_validation.IsUnique(cnameTargets); err != nil {
+			return nil, "", err
+		}
+		for _, h := range cnameTargets {
+			if err := externaldns_validation.IsFullyQualifiedDomainName(h); err != nil {
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %v", externaldns_validation.ErrTypeInvalid, h, err)
+			}
+		}
+		return cnameTargets, "CNAME", nil
+	}
+
+	return nil, "", fmt.Errorf("no valid external endpoints found")
 }
 
 func buildDNSEndpoint(ctx context.Context, extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (*extdnsapi.DNSEndpoint, *extdnsapi.DNSEndpoint, error) {
