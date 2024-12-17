@@ -98,7 +98,7 @@ spec:
                   recordType:
                     type: string
                   targets:
-                    description: Targets stores an optional list of specified targets
+                    description: Targets stores a list of specified targets
                     items:
                       type: string
                     type: array

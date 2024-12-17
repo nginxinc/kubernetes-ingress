@@ -27,7 +27,7 @@ func ValidateTargetsAndDetermineRecordType(targets []string) ([]string, string, 
 			}
 		} else {
 			if err := IsFullyQualifiedDomainName(t); err != nil {
-				return nil, "", fmt.Errorf("%w: target %q is invalid: %v", ErrTypeInvalid, t, err)
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %w", ErrTypeInvalid, t, err)
 			}
 			recordCNAME = true
 		}

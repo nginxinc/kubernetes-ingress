@@ -124,7 +124,7 @@ func getValidTargets(endpoints []vsapi.ExternalEndpoint, chosenTargets extdnsapi
 		}
 	}
 
-	//priority: prefer IPv4 > IPv6 > CNAME
+	// priority: prefer IPv4 > IPv6 > CNAME
 	if len(ipv4Targets) > 0 {
 		if err := externaldns_validation.IsUnique(ipv4Targets); err != nil {
 			return nil, "", err
@@ -141,7 +141,7 @@ func getValidTargets(endpoints []vsapi.ExternalEndpoint, chosenTargets extdnsapi
 		}
 		for _, h := range cnameTargets {
 			if err := externaldns_validation.IsFullyQualifiedDomainName(h); err != nil {
-				return nil, "", fmt.Errorf("%w: target %q is invalid: %v", externaldns_validation.ErrTypeInvalid, h, err)
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %w", externaldns_validation.ErrTypeInvalid, h, err)
 			}
 		}
 		return cnameTargets, "CNAME", nil
