@@ -119,7 +119,7 @@ run-tests-in-minikube: ## Run tests in Minikube
 
 .PHONY: create-mini-cluster
 create-mini-cluster: $(MINIKUBE_KUBE_CONFIG_FOLDER) ## Create a Minikube K8S cluster
-	@minikube start \
+	@minikube start --kubernetes-version=v$(K8S_CLUSTER_VERSION) \
 	&& KUBECONFIG=$(MINIKUBE_KUBE_CONFIG_FOLDER)/config minikube update-context \
 	&& KUBECONFIG=$(MINIKUBE_KUBE_CONFIG_FOLDER)/config kubectl config set-cluster minikube --server=https://minikube:8443
 
