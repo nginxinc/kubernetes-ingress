@@ -184,4 +184,4 @@ jobs:
           project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
           pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
           platforms: ""
-        if: ${{ ! inputs.dry_run || false }}
+          submit: ${{ ! inputs.dry_run || true }}
