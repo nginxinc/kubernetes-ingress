@@ -18,6 +18,10 @@ on:
         required: false
         type: string
         default: "1.11.1"
+      platforms:
+        description: A comma separated list of architectures in the image manifest to certify
+        required: false
+        default: "amd64,arm64,ppc64le,s390x"
   push:
     branches:
       - certify-updates
@@ -45,4 +49,4 @@ jobs:
           pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
           preflight_version: ${{ inputs.preflight_version || '1.11.1' }}
           submit: ${{ inputs.submit || true }}
-          platforms: "amd64,arm64,ppc64le,s390x"
+          platforms: ${{ inputs.platforms || 'amd64,arm64,ppc64le,s390x' }}
