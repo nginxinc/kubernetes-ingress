@@ -32,6 +32,10 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 
 {{< note >}} If you are installing the CRDs this way, ensure you have first cloned the repository. {{< /note >}}
 
+{{< note >}} Please make sure to read the steps outlined in [Upgrade to V4](https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/upgrade-to-v4/#update-custom-resource-apiversion) before running the CRD upgrade and perform the steps if applicable.
+{{< /note >}}
+
+
 ```shell
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualservers.yaml
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualserverroutes.yaml
