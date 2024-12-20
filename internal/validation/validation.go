@@ -24,7 +24,7 @@ func ValidatePort(value int) error {
 // ValidateUnprivilegedPort ensure port is in the 1024-65535 range
 func ValidateUnprivilegedPort(value int) error {
 	if value > 65535 || value < 1023 {
-		return fmt.Errorf("error parsing port: %d not a valid unprivileged port number", value)
+		return fmt.Errorf("port outside of valid port range [1024 - 65535]: %d", value)
 	}
 	return nil
 }
