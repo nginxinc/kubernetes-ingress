@@ -21,6 +21,7 @@ K8S_CLUSTER_NAME            ?= local ## The name used when creating/using a Kin
 K8S_CLUSTER_VERSION         ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPATH} | cut -d ':' -f 2 | sed -e 's/^v//' | cut -d '@' -f 1) ## The version used when creating a Kind Kubernetes cluster
 K8S_TIMEOUT                 ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
 AD_SECRET                   ?=
+PLUS_JWT                    ?=
 PYTEST_ARGS                 ?=
 ifeq (${REGISTRY},)
 BUILD_IMAGE                 := $(strip $(PREFIX)):$(strip $(TAG))
@@ -72,6 +73,7 @@ run-tests-in-kind: ## Run tests in Kind
  		--service=nodeport \
  		--node-ip=$(strip $(K8S_CLUSTER_NAME))-control-plane \
  		--show-ic-logs=$(SHOW_IC_LOGS) \
+		--plus-jwt=$(PLUS_JWT) \
  		$(PYTEST_ARGS)
 
 
@@ -114,6 +116,7 @@ run-tests-in-minikube: ## Run tests in Minikube
  		--service=nodeport \
  		--node-ip=minikube \
  		--show-ic-logs=$(SHOW_IC_LOGS) \
+		--plus-jwt=$(PLUS_JWT) \
  		$(PYTEST_ARGS)
 
 
