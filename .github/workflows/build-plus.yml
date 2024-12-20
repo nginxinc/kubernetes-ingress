@@ -183,7 +183,7 @@ jobs:
           load: false
           push: ${{ inputs.authenticated }}
           pull: true
-          sbom: ${{ inputs.authenticated }}
+          sbom: ${{ inputs.authenticated && !contains(inputs.target, 'aws') }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
