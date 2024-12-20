@@ -92,7 +92,9 @@ func main() {
 	podName := os.Getenv("POD_NAME")
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
-	mustValidateKubernetesVersionInfo(ctx, kubeClient)
+	if err := validateKubernetesVersionInfo(ctx, kubeClient); err != nil {
+		nl.Fatal(l, err)
+	}
 	pod, err := kubeClient.CoreV1().Pods(controllerNamespace).Get(context.TODO(), podName, meta_v1.GetOptions{})
 	if err != nil {
 		nl.Fatalf(l, "Failed to get pod: %v", err)
@@ -399,24 +401,25 @@ func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernet
 	return config, kubeClient
 }
 
-// mustValidateKubernetesVersionInfo calls internally os.Exit if
+// validateKubernetesVersionInfo returns an Error if
 // the k8s version can not be retrieved or the version is not supported.
-func mustValidateKubernetesVersionInfo(ctx context.Context, kubeClient kubernetes.Interface) {
+func validateKubernetesVersionInfo(ctx context.Context, kubeClient kubernetes.Interface) error {
 	l := nl.LoggerFromContext(ctx)
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
-		nl.Fatalf(l, "error retrieving k8s version: %v", err)
+		return fmt.Errorf("error retrieving k8s version: %w", err)
 	}
 	nl.Infof(l, "Kubernetes version: %v", k8sVersion)
 
 	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
-		nl.Fatalf(l, "unexpected error parsing minimum supported version: %v", err)
+		return fmt.Errorf("unexpected error parsing minimum supported version: %w", err)
 	}
 
 	if !k8sVersion.AtLeast(minK8sVersion) {
-		nl.Fatalf(l, "Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion)
+		return fmt.Errorf("versions of kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support", minK8sVersion)
 	}
+	return nil
 }
 
 // mustValidateIngressClass calls internally os.Exit
