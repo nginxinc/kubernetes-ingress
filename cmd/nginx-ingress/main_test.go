@@ -99,7 +99,7 @@ func TestK8sVersionValidationBad(t *testing.T) {
 		kubeVersion string
 	}{
 		{
-			name:        "Earliest version 1.21.0",
+			name:        "Before earliest version 1.21.0",
 			kubeVersion: "1.21.0",
 		},
 		{
