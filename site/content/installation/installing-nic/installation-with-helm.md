@@ -34,6 +34,9 @@ If you do not use the custom resources that require those CRDs (which correspond
 
 ### Upgrade the CRDs
 
+{{< note >}} Please make sure to read the steps outlined in [Upgrade to V4](https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/upgrade-to-v4/#update-custom-resource-apiversion) before running the CRD upgrade and perform the steps if applicable.
+{{< /note >}}
+
 To upgrade the CRDs, pull the chart sources as described in [Pull the Chart](#pull-the-chart) and then run:
 
 ```shell
