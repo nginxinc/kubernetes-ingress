@@ -372,6 +372,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	lbc.configuration = NewConfiguration(
+		lbc.Logger,
 		lbc.HasCorrectIngressClass,
 		input.IsNginxPlus,
 		input.AppProtectEnabled,
@@ -856,7 +857,7 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 		switch impl := r.(type) {
 		case *VirtualServerConfiguration:
 			vs := impl.VirtualServer
-			vsEx := lbc.createVirtualServerEx(vs, impl.VirtualServerRoutes)
+			vsEx := lbc.createVirtualServerEx(vs, impl.VirtualServerRoutes, impl.VirtualServerRouteSelectors)
 			result.VirtualServerExes = append(result.VirtualServerExes, vsEx)
 		case *IngressConfiguration:
 
@@ -1263,7 +1264,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 		if c.Op == AddOrUpdate {
 			switch impl := c.Resource.(type) {
 			case *VirtualServerConfiguration:
-				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
+				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes, impl.VirtualServerRouteSelectors)
 
 				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateVirtualServer(vsEx)
 				lbc.updateVirtualServerStatusAndEvents(impl, warnings, addOrUpdateErr)
@@ -2339,13 +2340,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	return ingEx
 }
 
-func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.VirtualServer, virtualServerRoutes []*conf_v1.VirtualServerRoute) *configs.VirtualServerEx {
+func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.VirtualServer, virtualServerRoutes []*conf_v1.VirtualServerRoute, selectorMap map[string][]string) *configs.VirtualServerEx {
 	virtualServerEx := configs.VirtualServerEx{
-		VirtualServer:  virtualServer,
-		SecretRefs:     make(map[string]*secrets.SecretReference),
-		ApPolRefs:      make(map[string]*unstructured.Unstructured),
-		LogConfRefs:    make(map[string]*unstructured.Unstructured),
-		DosProtectedEx: make(map[string]*configs.DosEx),
+		VirtualServer:               virtualServer,
+		VirtualServerSelectorRoutes: selectorMap,
+		SecretRefs:                  make(map[string]*secrets.SecretReference),
+		ApPolRefs:                   make(map[string]*unstructured.Unstructured),
+		LogConfRefs:                 make(map[string]*unstructured.Unstructured),
+		DosProtectedEx:              make(map[string]*configs.DosEx),
 	}
 
 	resource := lbc.configuration.hosts[virtualServer.Spec.Host]
@@ -3587,7 +3589,7 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 		if c.Op == AddOrUpdate {
 			switch impl := c.Resource.(type) {
 			case *VirtualServerConfiguration:
-				vsEx = lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
+				vsEx = lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes, impl.VirtualServerRouteSelectors)
 				lbc.updateVirtualServerStatusAndEvents(impl, configs.Warnings{}, nil)
 			}
 		}
