@@ -14,13 +14,17 @@ var (
 )
 
 // ValidatePort ensure port matches rfc6335 https://www.rfc-editor.org/rfc/rfc6335.html
-func ValidatePort(value string) error {
-	port, err := strconv.Atoi(value)
-	if err != nil {
-		return fmt.Errorf("error parsing port number: %w", err)
+func ValidatePort(value int) error {
+	if value > 65535 || value < 1 {
+		return fmt.Errorf("error parsing port: %d not a valid port number", value)
 	}
-	if port > 65535 || port < 1 {
-		return fmt.Errorf("error parsing port: %v not a valid port number", port)
+	return nil
+}
+
+// ValidateUnprivilegedPort ensure port is in the 1024-65535 range
+func ValidateUnprivilegedPort(value int) error {
+	if value > 65535 || value < 1023 {
+		return fmt.Errorf("port outside of valid port range [1024 - 65535]: %d", value)
 	}
 	return nil
 }
@@ -34,7 +38,11 @@ func ValidateHost(host string) error {
 	if validIPRegex.MatchString(host) || validDNSRegex.MatchString(host) || validHostnameRegex.MatchString(host) {
 		chunks := strings.Split(host, ":")
 		if len(chunks) > 1 {
-			err := ValidatePort(chunks[1])
+			port, err := strconv.Atoi(chunks[1])
+			if err != nil {
+				return err
+			}
+			err = ValidatePort(port)
 			if err != nil {
 				return fmt.Errorf("invalid port: %w", err)
 			}
