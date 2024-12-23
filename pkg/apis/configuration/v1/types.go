@@ -68,6 +68,8 @@ type VirtualServerListener struct {
 type ExternalDNS struct {
 	Enable     bool   `json:"enable"`
 	RecordType string `json:"recordType,omitempty"`
+	// Targets stores a list of specified targets
+	Targets []string `json:"targets,omitempty"`
 	// TTL for the record
 	RecordTTL int64 `json:"recordTTL,omitempty"`
 	// Labels stores labels defined for the Endpoint
