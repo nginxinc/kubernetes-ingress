@@ -159,7 +159,6 @@ func TestValidateDosProtectedResource(t *testing.T) {
 			msg:       "DosSecurityLog with valid apDosLogConf",
 		},
 	}
-
 	for _, test := range tests {
 		err := ValidateDosProtectedResource(test.protected)
 		if err != nil {
@@ -203,7 +202,6 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 			t.Errorf("expected nil, got %v", err)
 		}
 	}
-
 	for _, nTCase := range negDstAntns {
 		err := validateAppProtectDosLogDest(nTCase[0])
 		if err == nil {
@@ -446,36 +444,6 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 			if !strings.Contains(err.Error(), nTCase.msg) {
 				t.Errorf("got: \n%v\n expected to contain: \n%s", err, nTCase.msg)
 			}
-		}
-	}
-}
-
-func TestValidatePort_IsValidOnValidInput(t *testing.T) {
-	t.Parallel()
-
-	ports := []string{"1", "65535"}
-	for _, p := range ports {
-		if err := validatePort(p); err != nil {
-			t.Error(err)
-		}
-	}
-}
-
-func TestValidatePort_ErrorsOnInvalidString(t *testing.T) {
-	t.Parallel()
-
-	if err := validatePort(""); err == nil {
-		t.Error("want error, got nil")
-	}
-}
-
-func TestValidatePort_ErrorsOnInvalidRange(t *testing.T) {
-	t.Parallel()
-
-	ports := []string{"0", "-1", "65536"}
-	for _, p := range ports {
-		if err := validatePort(p); err == nil {
-			t.Error("want error, got nil")
 		}
 	}
 }

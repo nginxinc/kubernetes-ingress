@@ -1,30 +1,32 @@
-SHELL                   = /bin/bash
-ROOT_DIR                = $(shell git rev-parse --show-toplevel)
-CONTEXT                 =
-PULL_POLICY             = IfNotPresent
-DEPLOYMENT_TYPE         = deployment
-SERVICE                 = nodeport
-NODE_IP                 =
-TEST_PREFIX             = test-runner
-KUBE_CONFIG_FOLDER      = ${HOME}/.kube
-KIND_KUBE_CONFIG_FOLDER = $(KUBE_CONFIG_FOLDER)/kind
-DOCKERFILEPATH          := ${ROOT_DIR}/tests/Dockerfile
-IP_FAMILY               = dual
-IC_TYPE                 ?= nginx-ingress ## The Ingress Controller type to use, "nginx-ingress" or "nginx-plus-ingress".  Defaults to "nginx-ingress"
-SHOW_IC_LOGS            ?= no ## Should the tests show the Ingress Controller logs on failure, "yes" or "no". Defaults to "no"
-TEST_TAG                ?= latest ## The Tag to use for the test image. e.g. commitsha
-REGISTRY                ?= docker.io ## The registry where the image is located. For example, docker.io
-PREFIX                  ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
-TAG                     ?= edge ## The tag of the image. For example, edge
-K8S_CLUSTER_NAME        ?= local ## The name used when creating/using a Kind Kubernetes cluster
-K8S_CLUSTER_VERSION     ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPATH} | cut -d ':' -f 2 | sed -e 's/^v//' | cut -d '@' -f 1) ## The version used when creating a Kind Kubernetes cluster
-K8S_TIMEOUT             ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
-AD_SECRET               ?=
-PYTEST_ARGS             ?=
+SHELL                       = /bin/bash
+ROOT_DIR                    = $(shell git rev-parse --show-toplevel)
+CONTEXT                     =
+PULL_POLICY                 = IfNotPresent
+DEPLOYMENT_TYPE             = deployment
+SERVICE                     = nodeport
+NODE_IP                     =
+TEST_PREFIX                 = test-runner
+KUBE_CONFIG_FOLDER          = ${HOME}/.kube
+KIND_KUBE_CONFIG_FOLDER     = $(KUBE_CONFIG_FOLDER)/kind
+MINIKUBE_KUBE_CONFIG_FOLDER = $(KUBE_CONFIG_FOLDER)/minikube
+DOCKERFILEPATH              := ${ROOT_DIR}/tests/Dockerfile
+IP_FAMILY                   = dual
+IC_TYPE                     ?= nginx-ingress ## The Ingress Controller type to use, "nginx-ingress" or "nginx-plus-ingress".  Defaults to "nginx-ingress"
+SHOW_IC_LOGS                ?= no ## Should the tests show the Ingress Controller logs on failure, "yes" or "no". Defaults to "no"
+TEST_TAG                    ?= latest ## The Tag to use for the test image. e.g. commitsha
+REGISTRY                    ?= docker.io ## The registry where the image is located. For example, docker.io
+PREFIX                      ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
+TAG                         ?= edge ## The tag of the image. For example, edge
+K8S_CLUSTER_NAME            ?= local ## The name used when creating/using a Kind Kubernetes cluster
+K8S_CLUSTER_VERSION         ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPATH} | cut -d ':' -f 2 | sed -e 's/^v//' | cut -d '@' -f 1) ## The version used when creating a Kind Kubernetes cluster
+K8S_TIMEOUT                 ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
+AD_SECRET                   ?=
+PLUS_JWT                    ?=
+PYTEST_ARGS                 ?=
 ifeq (${REGISTRY},)
-BUILD_IMAGE             := $(strip $(PREFIX)):$(strip $(TAG))
+BUILD_IMAGE                 := $(strip $(PREFIX)):$(strip $(TAG))
 else
-BUILD_IMAGE             := $(strip $(REGISTRY))/$(strip $(PREFIX)):$(strip $(TAG))
+BUILD_IMAGE                 := $(strip $(REGISTRY))/$(strip $(PREFIX)):$(strip $(TAG))
 endif
 
 .PHONY: help ## Show this help
@@ -42,6 +44,10 @@ $(KUBE_CONFIG_FOLDER):
 
 
 $(KIND_KUBE_CONFIG_FOLDER): $(KUBE_CONFIG_FOLDER)
+	@mkdir -p $@
+
+
+$(MINIKUBE_KUBE_CONFIG_FOLDER): $(KUBE_CONFIG_FOLDER)
 	@mkdir -p $@
 
 
@@ -67,6 +73,7 @@ run-tests-in-kind: ## Run tests in Kind
  		--service=nodeport \
  		--node-ip=$(strip $(K8S_CLUSTER_NAME))-control-plane \
  		--show-ic-logs=$(SHOW_IC_LOGS) \
+		--plus-jwt=$(PLUS_JWT) \
  		$(PYTEST_ARGS)
 
 
@@ -89,6 +96,46 @@ delete-kind-cluster: ## Delete a Kind K8S cluster
 .PHONY: image-load
 image-load: ## Load the image into the Kind K8S cluster
 	@kind load docker-image $(BUILD_IMAGE) --name $(K8S_CLUSTER_NAME)
+
+
+.PHONY: run-tests-in-minikube
+run-tests-in-minikube: ## Run tests in Minikube
+	docker run --network=minikube --rm \
+		-v $(MINIKUBE_KUBE_CONFIG_FOLDER):/root/.kube \
+		-v $(ROOT_DIR)/tests:/workspace/tests \
+		-v $$HOME/.minikube:$$HOME/.minikube \
+		-v $(ROOT_DIR)/examples/common-secrets:/workspace/examples/common-secrets \
+		-v $(ROOT_DIR)/deployments:/workspace/deployments \
+		-v $(ROOT_DIR)/config:/workspace/config \
+		-v $(ROOT_DIR)/pyproject.toml:/workspace/pyproject.toml \
+		$(TEST_PREFIX):$(TEST_TAG) \
+ 		--context=minikube \
+ 		--image=$(BUILD_IMAGE) --image-pull-policy=Never \
+ 		--deployment-type=$(DEPLOYMENT_TYPE) \
+ 		--ic-type=$(IC_TYPE) \
+ 		--service=nodeport \
+ 		--node-ip=minikube \
+ 		--show-ic-logs=$(SHOW_IC_LOGS) \
+		--plus-jwt=$(PLUS_JWT) \
+ 		$(PYTEST_ARGS)
+
+
+.PHONY: create-mini-cluster
+create-mini-cluster: $(MINIKUBE_KUBE_CONFIG_FOLDER) ## Create a Minikube K8S cluster
+	@minikube start --kubernetes-version=v$(K8S_CLUSTER_VERSION) \
+	&& KUBECONFIG=$(MINIKUBE_KUBE_CONFIG_FOLDER)/config minikube update-context \
+	&& KUBECONFIG=$(MINIKUBE_KUBE_CONFIG_FOLDER)/config kubectl config set-cluster minikube --server=https://minikube:8443
+
+
+.PHONY: delete-mini-cluster
+delete-mini-cluster: ## Delete a Minikube K8S cluster
+	@minikube delete
+	@rm -f $(MINIKUBE_KUBE_CONFIG_FOLDER)/config
+
+
+.PHONY: mini-image-load
+mini-image-load: ## Load the image into the Minikube K8S cluster
+	@minikube image load $(BUILD_IMAGE)
 
 
 .PHONY: test-lint

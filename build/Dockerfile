@@ -11,12 +11,12 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3@sha256:82aff3929e4020d186b49eb23d295cef3cf8a7bcde7886170395054313ac13c1 AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:ea31a90f556bc00f4fa243e2182e5a036c8126f9e63fc5ba0b4bccbeae022f74 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3@sha256:616b701245ec0605f928bb7dcb976eb4ccf678dbf2c7b375d30476b9f27bb1f8 AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:8def19bba4dd54cebe1b209b565510514986497e6ed2e7423d852e6ef346dd62 AS alpine-opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
-FROM redhat/ubi9-minimal:9.5@sha256:dee813b83663d420eb108983a1c94c614ff5d3fcb5159a7bd0324f0edbe7fca1 AS ubi-minimal
+FROM redhat/ubi9-minimal:9.5@sha256:daa61d6103e98bccf40d7a69a0d4f8786ec390e2204fd94f7cc49053e9949360 AS ubi-minimal
 FROM golang:1.23-alpine@sha256:6c5c9590f169f77c8046e45c611d3b28fe477789acd8d3762d23d4744de69812 AS golang-builder
 
 
@@ -439,7 +439,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAF #############################################
-FROM redhat/ubi8@sha256:7287624c777a5812893fb02e180acf7d85569858c217d9b1dfb5179bf4ae6ee1 AS ubi-8-plus-nap
+FROM redhat/ubi8@sha256:37cdac4ec130a64050d6df4e1f2ef3f53868bea55d11f623d141f139ee342bd8 AS ubi-8-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -484,7 +484,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAFv5  #############################################
-FROM redhat/ubi8@sha256:7287624c777a5812893fb02e180acf7d85569858c217d9b1dfb5179bf4ae6ee1 AS ubi-8-plus-nap-v5
+FROM redhat/ubi8@sha256:37cdac4ec130a64050d6df4e1f2ef3f53868bea55d11f623d141f139ee342bd8 AS ubi-8-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION

@@ -342,6 +342,78 @@ func TestParseMGMTConfigMapWarnings(t *testing.T) {
 			},
 			msg: "enforce-initial-report set empty",
 		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "",
+				},
+			},
+			msg: "usage-report-interval set empty",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "1s",
+				},
+			},
+			msg: "usage-report-interval set below allowed value",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "1s",
+				},
+			},
+			msg: "usage-report-interval set below allowed value",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"ssl-verify":                "10",
+				},
+			},
+			msg: "ssl-verify set to an invalid int",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"ssl-verify":                "test",
+				},
+			},
+			msg: "ssl-verify set to an invalid value",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"ssl-verify":                "",
+				},
+			},
+			msg: "ssl-verify set to an empty string",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"resolver-ipv6":             "",
+				},
+			},
+			msg: "resolver-ipv6 set to an empty string",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"resolver-ipv6":             "10",
+				},
+			},
+			msg: "resolver-ipv6 set to an invalid int",
+		},
 	}
 
 	for _, test := range tests {
@@ -445,6 +517,272 @@ func TestParseMGMTConfigMapEnforceInitialReport(t *testing.T) {
 			}
 			if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
 				t.Errorf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapSSLVerify(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"ssl-verify":                "false",
+				},
+			},
+			want: &MGMTConfigParams{
+				SSLVerify: BoolToPointerBool(false),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "ssl-verify set to false",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"ssl-verify":                "true",
+				},
+			},
+			want: &MGMTConfigParams{
+				SSLVerify: BoolToPointerBool(true),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "ssl-verify set to true",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.SSLVerify == nil {
+				t.Errorf("ssl-verify: want %v, got nil", *test.want.SSLVerify)
+			}
+			if *result.SSLVerify != *test.want.SSLVerify {
+				t.Errorf("ssl-verify: want %v, got %v", *test.want.SSLVerify, *result.SSLVerify)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapUsageReportInterval(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "120s",
+				},
+			},
+			want: &MGMTConfigParams{
+				Interval: "120s",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report interval set to 120s",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "20m",
+				},
+			},
+			want: &MGMTConfigParams{
+				Interval: "20m",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report interval set to 20m",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "1h",
+				},
+			},
+			want: &MGMTConfigParams{
+				Interval: "1h",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report interval set to 1h",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-interval":     "24h",
+				},
+			},
+			want: &MGMTConfigParams{
+				Interval: "24h",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report interval set to 24h",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.Interval == "" {
+				t.Errorf("UsageReportInterval: want %s, got empty string", test.want.Interval)
+			}
+			if result.Interval != test.want.Interval {
+				t.Errorf("UsageReportInterval: want %v, got %v", test.want.Interval, result.Interval)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapResolverIPV6(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"resolver-ipv6":             "false",
+				},
+			},
+			want: &MGMTConfigParams{
+				ResolverIPV6: BoolToPointerBool(false),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "resolver-ipv6 set to false",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"resolver-ipv6":             "true",
+				},
+			},
+			want: &MGMTConfigParams{
+				ResolverIPV6: BoolToPointerBool(true),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "resolver-ipv6 set to true",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.ResolverIPV6 == nil {
+				t.Errorf("resolver-ipv6: want %v, got nil", *test.want.ResolverIPV6)
+			}
+			if *result.ResolverIPV6 != *test.want.ResolverIPV6 {
+				t.Errorf("resolver-ipv6: want %v, got %v", *test.want.ResolverIPV6, *result.ResolverIPV6)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMapUsageReportEndpoint(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-endpoint":     "product.connect.nginx.com",
+				},
+			},
+			want: &MGMTConfigParams{
+				Endpoint: "product.connect.nginx.com",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report endpoint set to product.connect.nginx.com",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"usage-report-endpoint":     "product.connect.nginx.com:80",
+				},
+			},
+			want: &MGMTConfigParams{
+				Endpoint: "product.connect.nginx.com:80",
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "usage report endpoint set to product.connect.nginx.com with port 80",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if warnings {
+				t.Error("Unexpected warnings")
+			}
+
+			if result.Endpoint == "" {
+				t.Errorf("UsageReportEndpoint: want %s, got empty string", test.want.Endpoint)
+			}
+			if result.Endpoint != test.want.Endpoint {
+				t.Errorf("UsageReportEndpoint: want %v, got %v", test.want.Endpoint, result.Endpoint)
 			}
 		})
 	}
