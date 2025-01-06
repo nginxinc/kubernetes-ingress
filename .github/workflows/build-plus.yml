@@ -100,7 +100,7 @@ jobs:
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
         env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: ${{ contains(inputs.target, 'aws') && 'manifest' || 'manifest,index' }}
 
       - name: Set base name variable
         id: base_name
