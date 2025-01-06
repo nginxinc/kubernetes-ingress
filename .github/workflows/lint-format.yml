@@ -63,7 +63,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: reviewdog/action-actionlint@08ef4afa963243489a457cca426f705ce4e0d1a5 # v1.60.0
+      - uses: reviewdog/action-actionlint@534eb894142bcf31616e5436cbe4214641c58101 # v1.61.0
         with:
           actionlint_flags: -shellcheck ""
 
@@ -84,7 +84,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: DavidAnson/markdownlint-cli2-action@eb5ca3ab411449c66620fe7f1b3c9e10547144b0 # v18.0.0
+      - uses: DavidAnson/markdownlint-cli2-action@a23dae216ce3fee4db69da41fed90d2a4af801cf # v19.0.0
         with:
           config: .markdownlint-cli2.yaml
           globs: "**/*.md"
