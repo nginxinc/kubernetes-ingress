@@ -24,7 +24,7 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 We value community input and would love to see you at the next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
-**Microsoft Teams Link**: [KIC - GitHub Issues Triage](https://teams.microsoft.com/l/meetup-join/19%3ameeting_OTRhZjFhMDMtZTQwOC00NDA4LWJiOGItZjhhMmE5NzgyMDY0%40thread.v2/0?context=%7b%22Tid%22%3a%22dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50%22%2c%22Oid%22%3a%22ea616cee-2e02-45f5-8e4c-c24967346491%22%7d)  
+**Microsoft Teams Link**: [NIC - GitHub Issues Triage](https://teams.microsoft.com/l/meetup-join/19%3ameeting_OTRhZjFhMDMtZTQwOC00NDA4LWJiOGItZjhhMmE5NzgyMDY0%40thread.v2/0?context=%7b%22Tid%22%3a%22dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50%22%2c%22Oid%22%3a%22ea616cee-2e02-45f5-8e4c-c24967346491%22%7d)  
 
 **Meeting ID:** `298 140 979 789`
 
@@ -35,12 +35,12 @@ We value community input and would love to see you at the next community call. A
 
 | **Community Call Dates** |
 | ------------------------ |
-| **2024-10-07**           |
-| **2024-10-21**           |
-| **2024-11-05**           |
-| **2024-11-18**           |
-| **2024-12-02**           |
-| **2024-12-16**           |
+| **2025-01-13**           |
+| **2025-01-27**           |
+| **2025-02-10**           |
+| **2025-02-24**           |
+| **2025-03-11**           |
+| **2025-03-24**           |
 
 ---
 
