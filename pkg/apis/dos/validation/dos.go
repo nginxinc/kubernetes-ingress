@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	internalValidation "github.com/nginxinc/kubernetes-ingress/internal/validation"
@@ -128,7 +129,11 @@ func validateAppProtectDosLogDest(dstAntn string) error {
 	}
 	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
-		err := internalValidation.ValidatePort(chunks[1])
+		port, err := strconv.Atoi(chunks[1])
+		if err != nil {
+			return err
+		}
+		err = internalValidation.ValidatePort(port)
 		if err != nil {
 			return fmt.Errorf("invalid log destination: %w", err)
 		}
