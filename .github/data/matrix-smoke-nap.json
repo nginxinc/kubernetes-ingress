@@ -50,7 +50,7 @@
     },
     {
       "label": "AP_DOS 2/3",
-      "image": "alpine-plus-nap",
+      "image": "debian-plus-nap",
       "type": "plus",
       "nap_modules": "dos",
       "marker": "'dos_ingress and not dos_learning'",
