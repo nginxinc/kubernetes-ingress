@@ -72,7 +72,7 @@
     },
     {
       "label": "TS",
-      "image": "ubi",
+      "image": "debian",
       "type": "oss",
       "marker": "ts",
       "platforms": "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
