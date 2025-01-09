@@ -192,10 +192,13 @@ data:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
+|``suppliedIn`` | `header` or `query`. | | Yes |
 |``suppliedIn.header`` | An array of headers that the API Key may appear in. | ``string[]`` | No |
 |``suppliedIn.query`` | An array of query params that the API Key may appear in. | ``string[]`` | No |
 |``clientSecret`` | The name of the Kubernetes secret that stores the API Key(s). It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/apikey``, and the API Key(s) must be stored in a key: val format where each key is a unique clientID and each value is a unique base64 encoded API Key  | ``string`` | Yes |
 {{% /table %}}
+
+{{<important>}}An APIKey Policy must include a minimum of one of the `suppliedIn.header` or `suppliedIn.query` parameters.  Both can also be supplied.{{</important>}}
 
 #### APIKey Merging Behavior
 
