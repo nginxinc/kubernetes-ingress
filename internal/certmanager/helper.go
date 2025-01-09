@@ -41,6 +41,7 @@ var (
 	issuerKindCmField          = "tls.cert-manager.issuer-kind"
 	renewBeforeCmField         = "tls.cert-manager.renew-before"
 	usagesCmField              = "tls.cert-manager.usages"
+	certMgrTempCertAnnotation  = "cert-manager.io/issue-temporary-certificate"
 )
 
 // translateVsSpec updates the Certificate spec using the VS TLS Cert-Manager
@@ -115,6 +116,14 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 		}
 		crt.Spec.Usages = newUsages
 	}
+
+	if vsCmSpec.IssueTempCert {
+		if crt.ObjectMeta.Annotations == nil {
+			crt.ObjectMeta.Annotations = make(map[string]string)
+		}
+		crt.ObjectMeta.Annotations[certMgrTempCertAnnotation] = "true"
+	}
+
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, ", "))
 	}

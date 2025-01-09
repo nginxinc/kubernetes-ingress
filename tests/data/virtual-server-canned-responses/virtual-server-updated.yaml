@@ -17,3 +17,6 @@ spec:
         code: 201
         type: "user-type"
         body: "line1\\nline2"
+        headers:
+        - name: coffee-test-header
+          value: latte

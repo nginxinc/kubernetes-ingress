@@ -4,17 +4,16 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	networking "k8s.io/api/networking/v1"
 )
 
 type resourceReferenceChecker interface {
 	IsReferencedByIngress(namespace string, name string, ing *networking.Ingress) bool
 	IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool
-	IsReferencedByVirtualServer(namespace string, name string, vs *v1.VirtualServer) bool
-	IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool
-	IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool
+	IsReferencedByVirtualServer(namespace string, name string, vs *conf_v1.VirtualServer) bool
+	IsReferencedByVirtualServerRoute(namespace string, name string, vsr *conf_v1.VirtualServerRoute) bool
+	IsReferencedByTransportServer(namespace string, name string, ts *conf_v1.TransportServer) bool
 }
 
 type secretReferenceChecker struct {
@@ -75,7 +74,7 @@ func (rc *secretReferenceChecker) IsReferencedByMinion(secretNamespace string, s
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByVirtualServer(secretNamespace string, secretName string, vs *v1.VirtualServer) bool {
+func (rc *secretReferenceChecker) IsReferencedByVirtualServer(secretNamespace string, secretName string, vs *conf_v1.VirtualServer) bool {
 	if vs.Namespace != secretNamespace {
 		return false
 	}
@@ -87,11 +86,19 @@ func (rc *secretReferenceChecker) IsReferencedByVirtualServer(secretNamespace st
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *v1.VirtualServerRoute) bool {
+func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *conf_v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *secretReferenceChecker) IsReferencedByTransportServer(secretNamespace string, secretName string, ts *conf_v1.TransportServer) bool {
+	if ts.Namespace != secretNamespace {
+		return false
+	}
+
+	if ts.Spec.TLS != nil && ts.Spec.TLS.Secret == secretName {
+		return true
+	}
+
 	return false
 }
 
@@ -131,7 +138,7 @@ func (rc *serviceReferenceChecker) IsReferencedByMinion(svcNamespace string, svc
 	return rc.IsReferencedByIngress(svcNamespace, svcName, ing)
 }
 
-func (rc *serviceReferenceChecker) IsReferencedByVirtualServer(svcNamespace string, svcName string, vs *v1.VirtualServer) bool {
+func (rc *serviceReferenceChecker) IsReferencedByVirtualServer(svcNamespace string, svcName string, vs *conf_v1.VirtualServer) bool {
 	if vs.Namespace != svcNamespace {
 		return false
 	}
@@ -140,7 +147,7 @@ func (rc *serviceReferenceChecker) IsReferencedByVirtualServer(svcNamespace stri
 		if rc.hasClusterIP && u.UseClusterIP {
 			continue
 		}
-		if u.Service == svcName {
+		if u.Service == svcName || u.Backup == svcName {
 			return true
 		}
 	}
@@ -148,7 +155,7 @@ func (rc *serviceReferenceChecker) IsReferencedByVirtualServer(svcNamespace stri
 	return false
 }
 
-func (rc *serviceReferenceChecker) IsReferencedByVirtualServerRoute(svcNamespace string, svcName string, vsr *v1.VirtualServerRoute) bool {
+func (rc *serviceReferenceChecker) IsReferencedByVirtualServerRoute(svcNamespace string, svcName string, vsr *conf_v1.VirtualServerRoute) bool {
 	if vsr.Namespace != svcNamespace {
 		return false
 	}
@@ -165,13 +172,13 @@ func (rc *serviceReferenceChecker) IsReferencedByVirtualServerRoute(svcNamespace
 	return false
 }
 
-func (rc *serviceReferenceChecker) IsReferencedByTransportServer(svcNamespace string, svcName string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *serviceReferenceChecker) IsReferencedByTransportServer(svcNamespace string, svcName string, ts *conf_v1.TransportServer) bool {
 	if ts.Namespace != svcNamespace {
 		return false
 	}
 
 	for _, u := range ts.Spec.Upstreams {
-		if u.Service == svcName {
+		if u.Service == svcName || u.Backup == svcName {
 			return true
 		}
 	}
@@ -193,7 +200,7 @@ func (rc *policyReferenceChecker) IsReferencedByMinion(_ string, _ string, _ *ne
 	return false
 }
 
-func (rc *policyReferenceChecker) IsReferencedByVirtualServer(policyNamespace string, policyName string, vs *v1.VirtualServer) bool {
+func (rc *policyReferenceChecker) IsReferencedByVirtualServer(policyNamespace string, policyName string, vs *conf_v1.VirtualServer) bool {
 	if isPolicyReferenced(vs.Spec.Policies, vs.Namespace, policyNamespace, policyName) {
 		return true
 	}
@@ -207,7 +214,7 @@ func (rc *policyReferenceChecker) IsReferencedByVirtualServer(policyNamespace st
 	return false
 }
 
-func (rc *policyReferenceChecker) IsReferencedByVirtualServerRoute(policyNamespace string, policyName string, vsr *v1.VirtualServerRoute) bool {
+func (rc *policyReferenceChecker) IsReferencedByVirtualServerRoute(policyNamespace string, policyName string, vsr *conf_v1.VirtualServerRoute) bool {
 	for _, r := range vsr.Spec.Subroutes {
 		if isPolicyReferenced(r.Policies, vsr.Namespace, policyNamespace, policyName) {
 			return true
@@ -217,7 +224,7 @@ func (rc *policyReferenceChecker) IsReferencedByVirtualServerRoute(policyNamespa
 	return false
 }
 
-func (rc *policyReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *policyReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
 	return false
 }
 
@@ -247,19 +254,19 @@ func (rc *appProtectResourceReferenceChecker) IsReferencedByMinion(_ string, _ s
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(_ string, _ string, _ *v1.VirtualServer) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(_ string, _ string, _ *conf_v1.VirtualServer) bool {
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *v1.VirtualServerRoute) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *conf_v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
 	return false
 }
 
-func isPolicyReferenced(policies []v1.PolicyReference, resourceNamespace string, policyNamespace string, policyName string) bool {
+func isPolicyReferenced(policies []conf_v1.PolicyReference, resourceNamespace string, policyNamespace string, policyName string) bool {
 	for _, p := range policies {
 		namespace := p.Namespace
 		if namespace == "" {
@@ -294,7 +301,7 @@ func (rc *dosResourceReferenceChecker) IsReferencedByMinion(_ string, _ string, 
 	return false
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, vs *v1.VirtualServer) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, vs *conf_v1.VirtualServer) bool {
 	if vs.Spec.Dos == namespace+"/"+name || (namespace == vs.Namespace && vs.Spec.Dos == name) {
 		return true
 	}
@@ -306,7 +313,7 @@ func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServer(namespace str
 	return false
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *conf_v1.VirtualServerRoute) bool {
 	for _, route := range vsr.Spec.Subroutes {
 		if route.Dos == namespace+"/"+name || (namespace == vsr.Namespace && route.Dos == name) {
 			return true
@@ -315,6 +322,34 @@ func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespac
 	return false
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
+	return false
+}
+
+type ratelimitScalingAnnotationChecker struct{}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByIngress(_ string, _ string, ing *networking.Ingress) bool {
+	for key, value := range ing.Annotations {
+		if key == "nginx.org/limit-req-scale" && value == "true" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByMinion(svcNamespace string, svcName string, ing *networking.Ingress) bool {
+	return rc.IsReferencedByIngress(svcNamespace, svcName, ing)
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServer(_ string, _ string, _ *conf_v1.VirtualServer) bool {
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *conf_v1.VirtualServerRoute) bool {
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
 	return false
 }

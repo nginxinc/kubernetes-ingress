@@ -33,27 +33,6 @@ func TestValidateDosProtectedResource(t *testing.T) {
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
-				},
-			},
-			expectErr: "error validating DosProtectedResource:  missing value for field: dosAccessLogDest",
-			msg:       "only name specified",
-		},
-		{
-			protected: &v1beta1.DosProtectedResource{
-				Spec: v1beta1.DosProtectedResourceSpec{
-					Name: "name",
-					ApDosMonitor: &v1beta1.ApDosMonitor{
-						URI: "example.com",
-					},
-				},
-			},
-			expectErr: "error validating DosProtectedResource:  missing value for field: dosAccessLogDest",
-			msg:       "name and apDosMonitor specified",
-		},
-		{
-			protected: &v1beta1.DosProtectedResource{
-				Spec: v1beta1.DosProtectedResourceSpec{
-					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
 						URI: "exabad-$%^$-example.com",
 					},
@@ -180,7 +159,6 @@ func TestValidateDosProtectedResource(t *testing.T) {
 			msg:       "DosSecurityLog with valid apDosLogConf",
 		},
 	}
-
 	for _, test := range tests {
 		err := ValidateDosProtectedResource(test.protected)
 		if err != nil {
@@ -224,7 +202,6 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 			t.Errorf("expected nil, got %v", err)
 		}
 	}
-
 	for _, nTCase := range negDstAntns {
 		err := validateAppProtectDosLogDest(nTCase[0])
 		if err == nil {
@@ -416,6 +393,11 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 			Protocol: "grpc",
 			Timeout:  10,
 		},
+		{
+			URI:      "https://example.com/good_path",
+			Protocol: "websocket",
+			Timeout:  10,
+		},
 	}
 	negDstAntns := []struct {
 		apDosMonitor v1beta1.ApDosMonitor
@@ -463,5 +445,134 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 				t.Errorf("got: \n%v\n expected to contain: \n%s", err, nTCase.msg)
 			}
 		}
+	}
+}
+
+func TestValidateAppProtectDosLogDest_ValidOnDestinationStdErr(t *testing.T) {
+	t.Parallel()
+
+	if err := validateAppProtectDosLogDest("stderr"); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestValidateAppProtectDosAllowList(t *testing.T) {
+	tests := []struct {
+		name      string
+		allowList []v1beta1.AllowListEntry
+		wantErr   bool
+	}{
+		{
+			name:      "Empty allow list",
+			allowList: []v1beta1.AllowListEntry{},
+			wantErr:   false,
+		},
+		{
+			name: "Single valid IPv4 entry",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "192.168.1.1/32"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Single valid IPv6 entry",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Multiple valid entries",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "192.168.1.1/32"},
+				{IPWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Invalid IPv4 entry",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "192.168.1.1445/32"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid IPv6 entry",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334:3454/128"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid subnet mask",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "192.168.1.1/abc"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid IPv6 subnet mask",
+			allowList: []v1beta1.AllowListEntry{
+				{IPWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334/199"},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateAppProtectDosAllowList(tt.allowList)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateAppProtectDosAllowList() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestIsValidIPWithMask(t *testing.T) {
+	tests := []struct {
+		name       string
+		ipWithMask string
+		want       bool
+	}{
+		{
+			name:       "Valid IPv4 address with mask",
+			ipWithMask: "192.168.1.1/32",
+			want:       true,
+		},
+		{
+			name:       "Valid IPv6 address with mask",
+			ipWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128",
+			want:       true,
+		},
+		{
+			name:       "Invalid IPv4 address with mask",
+			ipWithMask: "192.168.1.14444/33",
+			want:       false,
+		},
+		{
+			name:       "Invalid IPv6 address with mask",
+			ipWithMask: "2001:0db8:85a3:0000:0000:8a2e:0370:7334:343434/128",
+			want:       false,
+		},
+		{
+			name:       "Invalid subnet mask",
+			ipWithMask: "192.168.1.1/abc",
+			want:       false,
+		},
+		{
+			name:       "No subnet mask",
+			ipWithMask: "192.168.1.1",
+			want:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidIPWithMask(tt.ipWithMask)
+			if got != tt.want {
+				t.Errorf("isValidIPWithMask() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

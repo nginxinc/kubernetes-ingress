@@ -1,0 +1,109 @@
+name: Publish Helm Chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Release Helm chart from branch"
+        required: true
+        type: string
+      ic_version:
+        description: "Ingress Controller version"
+        required: true
+        type: string
+      chart_version:
+        description: "Helm Chart version"
+        required: true
+        type: string
+      nginx_helm_repo:
+        description: "Publish to the NGINX Helm repo"
+        required: true
+        type: boolean
+  workflow_call:
+    inputs:
+      branch:
+        description: "Release Helm chart from branch"
+        required: true
+        type: string
+      ic_version:
+        description: "Ingress Controller version"
+        required: true
+        type: string
+      chart_version:
+        description: "Helm Chart version"
+        required: true
+        type: string
+      nginx_helm_repo:
+        description: "Publish to the NGINX Helm repo"
+        required: true
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-publish-helm
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-helm:
+    name: Package and Publish Helm Chart
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: refs/heads/${{ inputs.branch }}
+          path: kic
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: DockerHub Login
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Package
+        id: package
+        run: |
+          helm_versions="--app-version ${{ inputs.ic_version }} --version ${{ inputs.chart_version }}"
+          output=$(helm package ${helm_versions} kic/charts/nginx-ingress)
+          echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
+
+      - name: Push to OCI registries
+        run: |
+          helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginxinc/charts
+          helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: nginxinc/helm-charts
+          fetch-depth: 1
+          token: ${{ secrets.NGINX_PAT }}
+          path: helm-charts
+        if: ${{ inputs.nginx_helm_repo }}
+
+      - name: Push Helm Chart to Helm Charts Repository
+        run: |
+          mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/stable/
+          cd ${{ github.workspace }}/helm-charts
+          helm repo index stable --url https://helm.nginx.com/stable
+          git add -A
+          git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
+          commit -m "NGINX Ingress Controller - Release ${{ inputs.chart_version }}"
+          git push -u origin master
+        if: ${{ inputs.nginx_helm_repo }}

@@ -89,16 +89,17 @@ def external_name_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up External-Name-Example:")
-        delete_namespace(kube_apis.v1, external_ns)
-        replace_configmap(
-            kube_apis.v1,
-            config_map_name,
-            ingress_controller_prerequisites.namespace,
-            ingress_controller_prerequisites.config_map,
-        )
-        delete_ingress(kube_apis.networking_v1, ingress_name, test_namespace)
-        delete_service(kube_apis.v1, svc_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up External-Name-Example:")
+            delete_namespace(kube_apis.v1, external_ns)
+            replace_configmap(
+                kube_apis.v1,
+                config_map_name,
+                ingress_controller_prerequisites.namespace,
+                ingress_controller_prerequisites.config_map,
+            )
+            delete_ingress(kube_apis.networking_v1, ingress_name, test_namespace)
+            delete_service(kube_apis.v1, svc_name, test_namespace)
 
     request.addfinalizer(fin)
 

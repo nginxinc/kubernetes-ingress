@@ -1,10 +1,21 @@
 import re
 import socket
+import ssl
+from datetime import datetime
 
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
-from suite.utils.resources_utils import get_ts_nginx_template_conf, scale_deployment, wait_before_test
+from suite.utils.resources_utils import (
+    create_secret_from_yaml,
+    delete_items_from_yaml,
+    get_reload_count,
+    get_ts_nginx_template_conf,
+    replace_secret,
+    scale_deployment,
+    wait_before_test,
+)
+from suite.utils.yaml_utils import get_secret_name_from_vs_or_ts_yaml
 
 
 @pytest.mark.ts
@@ -18,6 +29,8 @@ from suite.utils.resources_utils import get_ts_nginx_template_conf, scale_deploy
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
                     "-enable-leader-election=false",
+                    "-enable-prometheus-metrics",
+                    "-ssl-dynamic-reload=false",
                 ],
             },
             {"example": "transport-server-tcp-load-balance"},
@@ -173,7 +186,7 @@ class TestTransportServerTcpLoadBalance:
             response["status"]
             and response["status"]["reason"] == "Rejected"
             and response["status"]["state"] == "Warning"
-            and response["status"]["message"] == "Listener tcp-server is taken by another resource"
+            and response["status"]["message"] == "Listener tcp-server with host empty host is taken by another resource"
         )
 
         # Step 3, remove the default TransportServer with the same port
@@ -560,3 +573,136 @@ class TestTransportServerTcpLoadBalance:
         # Step 3 - restore
 
         self.restore_ts(kube_apis, transport_server_setup)
+
+    def test_secure_tcp_request_load_balanced(
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Sends requests to a TLS enabled load balanced TCP service.
+        """
+        src_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/tcp-tls-secret.yaml"
+        src_new_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/new-tls-secret.yaml"
+        create_secret_from_yaml(kube_apis.v1, transport_server_setup.namespace, src_sec_yaml)
+        patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/transport-server-tls.yaml"
+        patch_ts_from_yaml(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        wait_before_test()
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+
+        port = transport_server_setup.public_endpoint.tcp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        sec_name = get_secret_name_from_vs_or_ts_yaml(patch_src)
+        cert_name = f"{transport_server_setup.namespace}-{sec_name}"
+
+        assert f"listen 3333 ssl;" in result_conf
+        assert f"ssl_certificate /etc/nginx/secrets/{cert_name};" in result_conf
+        assert f"ssl_certificate_key /etc/nginx/secrets/{cert_name};" in result_conf
+
+        print(f"sending tcp requests to: {host}:{port}")
+
+        host = host.strip("[]")
+        with socket.create_connection((host, port)) as sock:
+            ctx = ssl.SSLContext()
+            ctx.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # only secure TLSv1_2+ is allowed
+            ssock = ctx.wrap_socket(sock)
+            print(ssock.version())
+            ssock.sendall(b"connect")
+            response = ssock.recv(4096)
+            endpoint = response.decode()
+            print(f"Connected securely to: {endpoint}")
+
+        # with -ssl-dynamic-reload=false, we expect
+        # replacing a secret to trigger a reload
+        count_before_replace = get_reload_count(transport_server_setup.metrics_url)
+        print(f"replacing: {sec_name} in {transport_server_setup.namespace}")
+        replace_secret(kube_apis.v1, sec_name, transport_server_setup.namespace, src_new_sec_yaml)
+        wait_before_test()
+        print(f"waited to {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        count_after = get_reload_count(transport_server_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 1
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
+
+        self.restore_ts(kube_apis, transport_server_setup)
+        delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
+
+
+@pytest.mark.ts
+@pytest.mark.skip_for_loadbalancer
+@pytest.mark.parametrize(
+    "crd_ingress_controller, transport_server_setup",
+    [
+        (
+            {
+                "type": "complete",
+                "extra_args": [
+                    "-global-configuration=nginx-ingress/nginx-configuration",
+                    "-enable-leader-election=false",
+                    "-enable-prometheus-metrics",
+                    "-log-level=debug",
+                ],
+            },
+            {"example": "transport-server-tcp-load-balance"},
+        )
+    ],
+    indirect=True,
+)
+class TestTransportServerTcpLoadBalanceDynamicReload:
+    def test_dynamic_reload(
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Updates a secret used by the transport server and verifies that NGINX is not reloaded.
+        """
+        src_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/tcp-tls-secret.yaml"
+        src_new_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/new-tls-secret.yaml"
+        create_secret_from_yaml(kube_apis.v1, transport_server_setup.namespace, src_sec_yaml)
+        patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/transport-server-tls.yaml"
+        patch_ts_from_yaml(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        wait_before_test()
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+
+        sec_name = get_secret_name_from_vs_or_ts_yaml(patch_src)
+        cert_name = f"{transport_server_setup.namespace}-{sec_name}"
+
+        assert f"listen 3333 ssl;" in result_conf
+        assert f"ssl_certificate $secret_dir_path/{cert_name};" in result_conf
+        assert f"ssl_certificate_key $secret_dir_path/{cert_name};" in result_conf
+
+        # for Plus with -ssl-dynamic-reload=true, we expect
+        # replacing a secret not to trigger a reload
+        count_before_replace = get_reload_count(transport_server_setup.metrics_url)
+        print(f"replacing: {sec_name} in {transport_server_setup.namespace}")
+        replace_secret(kube_apis.v1, sec_name, transport_server_setup.namespace, src_new_sec_yaml)
+        wait_before_test()
+        print(f"waited to {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+        count_after = get_reload_count(transport_server_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 0
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
+
+        delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)

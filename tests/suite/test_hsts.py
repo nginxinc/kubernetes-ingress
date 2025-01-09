@@ -61,9 +61,10 @@ def hsts_setup(
     ensure_response_from_backend(req_https_url, ingress_host)
 
     def fin():
-        print("Clean up HSTS Example:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml", test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up HSTS Example:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml", test_namespace)
 
     request.addfinalizer(fin)
 
@@ -77,6 +78,7 @@ def hsts_setup(
 
 
 @pytest.mark.ingresses
+@pytest.mark.hsts
 @pytest.mark.parametrize("hsts_setup", ["standard-tls", "mergeable-tls"], indirect=True)
 class TestTLSHSTSFlows:
     def test_headers(self, kube_apis, hsts_setup, ingress_controller_prerequisites):
@@ -114,6 +116,7 @@ class TestTLSHSTSFlows:
 
 
 @pytest.mark.ingresses
+@pytest.mark.hsts
 @pytest.mark.parametrize("hsts_setup", ["tls-no-secret"], indirect=True)
 class TestBrokenTLSHSTSFlows:
     def test_headers_without_secret(self, kube_apis, hsts_setup, ingress_controller_prerequisites):
@@ -128,6 +131,7 @@ class TestBrokenTLSHSTSFlows:
 
 
 @pytest.mark.ingresses
+@pytest.mark.hsts
 @pytest.mark.parametrize("hsts_setup", ["standard", "mergeable"], indirect=True)
 class TestNoTLSHSTS:
     def test_headers(self, kube_apis, hsts_setup, ingress_controller_prerequisites):

@@ -4,7 +4,6 @@ package fake
 
 import (
 	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	k8sv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +17,6 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
 var localSchemeBuilder = runtime.SchemeBuilder{
-	k8sv1alpha1.AddToScheme,
 	k8sv1.AddToScheme,
 	appprotectdosv1beta1.AddToScheme,
 	externaldnsv1.AddToScheme,

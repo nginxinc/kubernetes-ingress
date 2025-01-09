@@ -4,23 +4,30 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: read
+
 jobs:
   comment:
     name: Issue comment
     if: ${{ !github.event.issue.pull_request }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write # for actions/github-script to create comments
     steps:
       - name: text
         id: controller
         if: contains(github.event.issue.body, 'nginx.ingress.kubernetes.io')
         run: |
           text="\n\n I\'ve parsed the text of your issue and it looks like you might be mixing up the two Ingress Controllers, please take a look at this [page](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to see the differences between \`nginxinc/kubernetes-ingress\` (this repo) and \`kubernetes/ingress-nginx\`."
-          echo "::set-output name=text::$text"
+          echo "text=$text" >> $GITHUB_OUTPUT
+
       - name: Check if Issue author is Org member
         id: membercheck
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          retries: 3
           script: |
             let member
             try {
@@ -35,15 +42,16 @@ jobs:
               member = false
             }
             return member
+
       - name: Send message
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         if: steps.membercheck.outputs.result == 'false'
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          retries: 3
           script: |
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Hi @${{github.event.issue.user.login}} thanks for reporting! \n\n Be sure to check out the [docs](https://docs.nginx.com/nginx-ingress-controller) while you wait for a human to take a look at this :slightly_smiling_face:${{ steps.controller.outputs.text }}\n\n Cheers!'
+              body: 'Hi @${{github.event.issue.user.login}} thanks for reporting! \n\n Be sure to check out the [docs](https://docs.nginx.com/nginx-ingress-controller) and the [Contributing Guidelines](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md) while you wait for a human to take a look at this :slightly_smiling_face:${{ steps.controller.outputs.text }}\n\n Cheers!'
             })

@@ -2,13 +2,13 @@ from unittest import mock
 
 import pytest
 import requests
-from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.utils.resources_utils import create_secret_from_yaml, ensure_response_from_backend, wait_before_test
+from suite.utils.resources_utils import create_secret_from_yaml, wait_before_test
 from suite.utils.ssl_utils import create_sni_session
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_secrets
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
@@ -57,12 +57,13 @@ class TestVSRWatchSecretNamespacesValid:
             except requests.exceptions.SSLError as e:
                 exception = str(e)
                 print(f"SSL certificate exception: {exception}")
-            retry = +1
+            retry = retry + 1
 
         assert resp.status_code == 200
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_secrets
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [

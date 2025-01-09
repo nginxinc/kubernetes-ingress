@@ -64,11 +64,12 @@ def wildcard_tls_secret_setup(
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up Wildcard-Tls-Secret-Example:")
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml", test_namespace
-        )
-        delete_common_app(kube_apis, "simple", test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Wildcard-Tls-Secret-Example:")
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml", test_namespace
+            )
+            delete_common_app(kube_apis, "simple", test_namespace)
 
     request.addfinalizer(fin)
 
@@ -102,10 +103,11 @@ def wildcard_tls_secret_ingress_controller(
     )
 
     def fin():
-        print("Remove IC and wildcard secret:")
-        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
-        if is_secret_present(kube_apis.v1, secret_name, namespace):
-            delete_secret(kube_apis.v1, secret_name, namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Remove IC and wildcard secret:")
+            delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
+            if is_secret_present(kube_apis.v1, secret_name, namespace):
+                delete_secret(kube_apis.v1, secret_name, namespace)
 
     request.addfinalizer(fin)
     return IngressControllerWithSecret(secret_name)
@@ -113,6 +115,7 @@ def wildcard_tls_secret_ingress_controller(
 
 @pytest.mark.ingresses
 @pytest.mark.smoke
+@pytest.mark.wildcard_tls
 class TestTLSWildcardSecrets:
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200(self, wildcard_tls_secret_ingress_controller, wildcard_tls_secret_setup, path):
@@ -182,7 +185,7 @@ class TestTLSWildcardSecrets:
         )
         assert subject_dict[b"C"] == b"GB"
         assert subject_dict[b"ST"] == b"Cambridgeshire"
-        assert subject_dict[b"CN"] == b"cafe.example.com"
+        assert subject_dict[b"CN"] == b"example.com"
 
     def test_response_and_subject_remains_after_secret_delete(
         self,
@@ -208,4 +211,4 @@ class TestTLSWildcardSecrets:
         )
         assert subject_dict[b"C"] == b"GB"
         assert subject_dict[b"ST"] == b"Cambridgeshire"
-        assert subject_dict[b"CN"] == b"cafe.example.com"
+        assert subject_dict[b"CN"] == b"example.com"

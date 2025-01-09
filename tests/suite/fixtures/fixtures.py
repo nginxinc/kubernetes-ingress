@@ -16,13 +16,14 @@ from kubernetes.client import (
     RbacAuthorizationV1Api,
 )
 from kubernetes.client.rest import ApiException
-from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, DEPLOYMENTS, TEST_DATA
+from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, CRDS, DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.utils.resources_utils import (
     cleanup_rbac,
     configure_rbac,
     create_configmap_from_yaml,
+    create_license,
     create_namespace_with_name_from_yaml,
     create_ns_and_sa_from_yaml,
     create_secret_from_yaml,
@@ -85,6 +86,10 @@ class PublicEndpoint:
         metrics_port=9113,
         tcp_server_port=3333,
         udp_server_port=3334,
+        service_insight_port=9114,
+        custom_ssl_port=8443,
+        custom_http=8085,
+        custom_https=8445,
     ):
         self.public_ip = public_ip
         self.port = port
@@ -93,6 +98,10 @@ class PublicEndpoint:
         self.metrics_port = metrics_port
         self.tcp_server_port = tcp_server_port
         self.udp_server_port = udp_server_port
+        self.service_insight_port = service_insight_port
+        self.custom_ssl_port = custom_ssl_port
+        self.custom_http = custom_http
+        self.custom_https = custom_https
 
 
 class IngressControllerPrerequisites:
@@ -145,8 +154,9 @@ def delete_test_namespaces(kube_apis, request) -> None:
     """
 
     def fin():
-        print("------------------------- Delete All Test Namespaces -----------------------------------")
-        delete_testing_namespaces(kube_apis.v1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("------------------------- Delete All Test Namespaces -----------------------------------")
+            delete_testing_namespaces(kube_apis.v1)
 
     request.addfinalizer(fin)
 
@@ -171,10 +181,31 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
             namespace,
             f"{TEST_DATA}/common/service/nodeport-with-additional-ports.yaml",
         )
-        port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port = get_service_node_ports(
-            kube_apis.v1, service_name, namespace
+        (
+            port,
+            port_ssl,
+            api_port,
+            metrics_port,
+            tcp_server_port,
+            udp_server_port,
+            service_insight_port,
+            custom_ssl_port,
+            custom_http,
+            custom_https,
+        ) = get_service_node_ports(kube_apis.v1, service_name, namespace)
+        return PublicEndpoint(
+            public_ip,
+            port,
+            port_ssl,
+            api_port,
+            metrics_port,
+            tcp_server_port,
+            udp_server_port,
+            service_insight_port,
+            custom_ssl_port,
+            custom_http,
+            custom_https,
         )
-        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port)
     else:
         create_service_from_yaml(
             kube_apis.v1,
@@ -210,25 +241,35 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
         ]
     )
     config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+    mgmt_config_map_yaml = f"{DEPLOYMENTS}/common/plus-mgmt-configmap.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
+    mgmt_config_map_yaml = f"{DEPLOYMENTS}/common/plus-mgmt-configmap.yaml"
     with open(config_map_yaml) as f:
         config_map = yaml.safe_load(f)
-    create_secret_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml")
+
+    create_secret_from_yaml(kube_apis.v1, namespace, f"{TEST_DATA}/common/default-server-secret.yaml")
+    # setup Plus JWT configuration
+    if cli_arguments["ic-type"] == "nginx-plus-ingress":
+        print("Create Plus JWT License:")
+        license_name = create_license(kube_apis.v1, namespace, cli_arguments["plus-jwt"])
+        print(f"License created: {license_name}")
+        create_configmap_from_yaml(kube_apis.v1, namespace, mgmt_config_map_yaml)
 
     def fin():
-        print("Clean up prerequisites")
-        delete_namespace(kube_apis.v1, namespace)
-        print("Delete IngressClass resources:")
-        subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
-        subprocess.run(
-            [
-                "kubectl",
-                "delete",
-                "-f",
-                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
-            ]
-        )
-        cleanup_rbac(kube_apis.rbac_v1, rbac)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up prerequisites")
+            delete_namespace(kube_apis.v1, namespace)
+            print("Delete IngressClass resources:")
+            subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+            subprocess.run(
+                [
+                    "kubectl",
+                    "delete",
+                    "-f",
+                    f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
+                ]
+            )
+            cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
 
@@ -292,6 +333,9 @@ def cli_arguments(request) -> {}:
     result["ic-type"] = request.config.getoption("--ic-type")
     assert result["ic-type"] in ALLOWED_IC_TYPES, f"IC type {result['ic-type']} is not allowed"
     print(f"Tests will run against the IC of type: {result['ic-type']}")
+    if result["ic-type"] == "nginx-plus-ingress":
+        print(f"Tests will use the Plus JWT")
+        result["plus-jwt"] = request.config.getoption("--plus-jwt")
 
     result["replicas"] = request.config.getoption("--replicas")
     print(f"Number of pods spun up will be : {result['replicas']}")
@@ -304,6 +348,11 @@ def cli_arguments(request) -> {}:
         assert node_ip is not None and node_ip != "", f"Service 'nodeport' requires a node-ip"
         result["node-ip"] = node_ip
         print(f"Tests will use the node-ip: {result['node-ip']}")
+    result["skip-fixture-teardown"] = request.config.getoption("--skip-fixture-teardown")
+    assert result["skip-fixture-teardown"] == "yes" or result["skip-fixture-teardown"] == "no"
+    print(
+        f"All test fixtures be available for debugging: {result['skip-fixture-teardown']}, /// ONLY USE THIS OPTION FOR INDIVIDUAL TEST DEBUGGING ///"
+    )
     return result
 
 
@@ -319,38 +368,38 @@ def crds(kube_apis, request) -> None:
         'extra_args' list of IC cli arguments
     :return:
     """
-    vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
-    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml")
-    pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
-    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml")
-    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml")
+    vs_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_virtualservers.yaml")
+    vsr_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_virtualserverroutes.yaml")
+    pol_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_policies.yaml")
+    ts_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_transportservers.yaml")
+    gc_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_globalconfigurations.yaml")
 
     try:
         print("------------------------- Register CRDs -----------------------------------")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             vs_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml",
+            f"{CRDS}/k8s.nginx.org_virtualservers.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             vsr_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml",
+            f"{CRDS}/k8s.nginx.org_virtualserverroutes.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml",
+            f"{CRDS}/k8s.nginx.org_policies.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ts_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml",
+            f"{CRDS}/k8s.nginx.org_transportservers.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             gc_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml",
+            f"{CRDS}/k8s.nginx.org_globalconfigurations.yaml",
         )
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
@@ -363,11 +412,12 @@ def crds(kube_apis, request) -> None:
         pytest.fail("IC setup failed")
 
     def fin():
-        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
 
     request.addfinalizer(fin)
 
@@ -385,12 +435,13 @@ def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test
     """
 
     def fin():
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
 
     request.addfinalizer(fin)
 
@@ -436,8 +487,9 @@ def create_generic_from_yaml(file_path, request):
     subprocess.run(["kubectl", "apply", "-f", f"{file_path}"])
 
     def fin():
-        print("Clean up resources from {file_path}:")
-        subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up resources from {file_path}:")
+            subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
 
     request.addfinalizer(fin)
 

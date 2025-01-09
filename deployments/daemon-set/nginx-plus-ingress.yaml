@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         app: nginx-ingress
+        app.kubernetes.io/name: nginx-ingress
      #annotations:
        #prometheus.io/scrape: "true"
        #prometheus.io/port: "9113"
@@ -18,8 +19,20 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       automountServiceAccountToken: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+#      volumes:
+#      - name: nginx-etc
+#        emptyDir: {}
+#      - name: nginx-cache
+#        emptyDir: {}
+#      - name: nginx-lib
+#        emptyDir: {}
+#      - name: nginx-log
+#        emptyDir: {}
       containers:
-      - image: nginx-plus-ingress:2.4.1
+      - image: nginx-plus-ingress:4.0.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -46,13 +59,24 @@ spec:
          #  cpu: "1"
          #  memory: "1Gi"
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
+#          readOnlyRootFilesystem: true
           runAsUser: 101 #nginx
+          runAsNonRoot: true
           capabilities:
             drop:
             - ALL
             add:
             - NET_BIND_SERVICE
+#        volumeMounts:
+#        - mountPath: /etc/nginx
+#          name: nginx-etc
+#        - mountPath: /var/cache/nginx
+#          name: nginx-cache
+#        - mountPath: /var/lib/nginx
+#          name: nginx-lib
+#        - mountPath: /var/log/nginx
+#          name: nginx-log
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -65,12 +89,29 @@ spec:
         args:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
-         #- -include-year
+          - -mgmt-configmap=$(POD_NAMESPACE)/nginx-config-mgmt
+          - -report-ingress-status
+          - -external-service=nginx-ingress
+         #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -enable-app-protect
          #- -enable-app-protect-dos
-         #- -v=3 # Enables extensive logging. Useful for troubleshooting.
-         #- -report-ingress-status
-         #- -external-service=nginx-ingress
+         #- -log-level=debug # Enables extensive logging. Useful for troubleshooting. Options include: trace, debug, info, warning, error, fatal
+         #- -log-format=glog # Sets the log format. Options include: glog, json, text
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
+#      initContainers:
+#      - image: nginx/nginx-ingress:4.0.0
+#        imagePullPolicy: IfNotPresent
+#        name: init-nginx-ingress
+#        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
+#        securityContext:
+#          allowPrivilegeEscalation: false
+#          readOnlyRootFilesystem: true
+#          runAsUser: 101 #nginx
+#          runAsNonRoot: true
+#          capabilities:
+#            drop:
+#            - ALL
+#        volumeMounts:
+#        - mountPath: /mnt/etc
+#          name: nginx-etc

@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+  name: smoke-ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - smoke.example.com
+    secretName: smoke-secret
+  rules:
+  - host: smoke.example.com
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: backend1-svc
+            port:
+              number: 80

@@ -1,4 +1,3 @@
-
 name: Run Smoke Tests
 description: Run Smoke Tests for the project
 
@@ -10,110 +9,102 @@ inputs:
     description: Timeout to use
     default: 75s
     required: false
-  image:
-    description: Docker image to use
-    default: debian
+  image-type:
+    description: Image type to test
+    required: true
+  image-name:
+    description: Docker image name to test
+    required: true
+  tag:
+    description: Docker image tag to test
+    required: true
+  test-image:
+    description: Test Docker image to use
+    default: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:latest
     required: false
   marker:
     description: Marker to use
     required: false
-  nginx-key:
-    description: Nginx key to use
+  label:
+    description: Label for test
     required: false
-  nginx-crt:
-    description: Nginx cert to use
+  azure-ad-secret:
+    description: Azure Active Directory secret for JWKs
+    required: false
+  registry-token:
+    description: JWT token for accessing container registry
+    required: false
+  plus-jwt:
+    description: JWT for NGINX Plus
     required: false
 
 outputs:
   test-results-name:
     description: Test results name
-    value: tests-${{ steps.k8s.outputs.cluster }}
+    value: ${{ steps.k8s.outputs.test_name }}
+  test-results-path:
+    description: Test results full path
+    value: ${{ steps.k8s.outputs.test_output_path }}
 
 runs:
   using: composite
   steps:
-    - name: Fetch Cached Artifacts
-      uses: actions/cache@v3
-      with:
-        path: ${{ github.workspace }}/dist
-        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
-
-    - name: Ingress type
-      id: ingress-type
-      run: |
-        echo "name=nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
-        echo "tag=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-        echo "modules=${{ contains(inputs.marker, 'appprotect') && 'waf' || '' }}${{ contains(inputs.marker, 'dos') && 'dos' || '' }}" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Build ${{ inputs.image }} Container
-      uses: docker/build-push-action@v3
-      with:
-        file: build/Dockerfile
-        context: '.'
-        cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }},mode=max
-        target: goreleaser
-        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
-        load: true
-        pull: true
-        build-args: |
-          BUILD_OS=${{ inputs.image }}
-          IC_VERSION=CI
-          ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
-          ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
-        secrets: |
-          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
-          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
-
-    - name: Build Test-Runner Container
-      uses: docker/build-push-action@v3
-      with:
-        file: tests/docker/Dockerfile
-        context: '.'
-        cache-from: type=gha,scope=test-runner
-        cache-to: type=gha,scope=test-runner,mode=max
-        tags: test-runner:${{ github.sha }}
-        pull: true
-        load: true
-
     - name: Deploy Kubernetes
       id: k8s
       run: |
-        kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
-        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
-        marker="${{ inputs.marker }}"
-        sanitized_marker="${marker// /_}"
-        name="${sanitized_marker:-${{ inputs.k8s-version }}}"
-        echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
-        echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
+        make -f tests/Makefile create-kind-cluster K8S_CLUSTER_NAME=${{ github.run_id }} K8S_CLUSTER_VERSION=${{ inputs.k8s-version }} K8S_TIMEOUT=${{ inputs.k8s-timeout }}
+        make -f tests/Makefile image-load REGISTRY="" PREFIX=${{ inputs.image-name }} TAG=${{ inputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
+        label="${{ inputs.label }}"
+        nospaces="${label// /_}"
+        noslash="${nospaces//\//_}"
+        sanitized_marker="${noslash//\'/}"
+        name="${sanitized_marker}-${{ inputs.k8s-version }}"
+        cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
+        test_name=tests-nginx-${{ inputs.image-type }}-${name}.html
+        test_output_path=${{ github.workspace }}/tests/${test_name}
+        echo "cluster_ip=${cluster_ip}" >> $GITHUB_OUTPUT
+        echo "test_name=${test_name}" >> $GITHUB_OUTPUT
+        echo "test_output_path=${test_output_path}" >> $GITHUB_OUTPUT
+        echo "Output:"
+        echo "  cluster_ip=${cluster_ip}"
+        echo "  test_output_path=${test_output_path}"
       shell: bash
 
     - name: Setup Kubeconfig
       run: |
-        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' ~/.kube/kind/config
       shell: bash
 
     - name: Run Smoke Tests
+      id: smoke-tests
       run: |
-        touch tests-${{ steps.k8s.outputs.cluster }}.html
+        touch ${{ steps.k8s.outputs.test_output_path }}
         docker run --rm \
         --name test-runner-${{ github.run_id }} \
         --network=kind \
-        -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
-        -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
+        -v "/var/run/docker.sock:/var/run/docker.sock" \
+        -v ~/.docker:/root/.docker \
+        -v ${{ github.workspace }}/tests:/workspace/tests \
+        -v ${{ github.workspace }}/examples/common-secrets:/workspace/examples/common-secrets \
+        -v ${{ github.workspace }}/deployments:/workspace/deployments \
+        -v ${{ github.workspace }}/charts:/workspace/charts \
+        -v ${{ github.workspace }}/config:/workspace/config \
+        -v ${{ github.workspace }}/pyproject.toml:/workspace/pyproject.toml \
+        -v ${{ steps.k8s.outputs.test_output_path }}:${{ steps.k8s.outputs.test_output_path }} \
+        -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
+        --docker-registry-user=oauth2accesstoken \
+        --docker-registry-token=${{ inputs.registry-token }} \
         --context=kind-${{ github.run_id }} \
-        --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
+        --image=${{ inputs.image-name }}:${{ inputs.tag }} \
         --image-pull-policy=Never \
-        --ic-type=${{ steps.ingress-type.outputs.name }} \
+        --ic-type=nginx${{ contains(inputs.image-type, 'plus') && '-plus' || '' }}-ingress \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
-        --html=tests-${{ steps.k8s.outputs.cluster }}.html \
+        --html=${{ steps.k8s.outputs.test_output_path }} \
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
+        --ad-secret=${{ inputs.azure-ad-secret }} \
+        --plus-jwt=${{ inputs.plus-jwt }} \
         -m ${{ inputs.marker != '' && inputs.marker || '""' }}
       working-directory: ./tests
       shell: bash

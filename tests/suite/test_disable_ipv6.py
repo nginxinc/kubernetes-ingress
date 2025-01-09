@@ -21,6 +21,7 @@ from suite.utils.yaml_utils import get_name_from_yaml
 
 @pytest.mark.vs
 @pytest.mark.ts
+@pytest.mark.vs_ipv6
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup, transport_server_setup",
     [
@@ -110,10 +111,11 @@ def ingress_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up the Disable IPV6 Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
-        delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Disable IPV6 Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
+            delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 

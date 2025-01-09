@@ -2,11 +2,13 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 
+	internalValidation "github.com/nginxinc/kubernetes-ingress/internal/validation"
 	validation2 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,13 +28,11 @@ const maxNameLength = 63
 
 // ValidateDosProtectedResource validates a dos protected resource.
 func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error {
-	var err error
-
 	// name
 	if protected.Spec.Name == "" {
 		return fmt.Errorf("error validating DosProtectedResource: %v missing value for field: %v", protected.Name, "name")
 	}
-	err = validateAppProtectDosName(protected.Spec.Name)
+	err := validateAppProtectDosName(protected.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "name", err)
 	}
@@ -45,13 +45,19 @@ func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error
 		}
 	}
 
-	// dosAccessLogDest
-	if protected.Spec.DosAccessLogDest == "" {
-		return fmt.Errorf("error validating DosProtectedResource: %v missing value for field: %v", protected.Name, "dosAccessLogDest")
+	if protected.Spec.AllowList != nil {
+		err = ValidateAppProtectDosAllowList(protected.Spec.AllowList)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "allowList", err)
+		}
 	}
-	err = validateAppProtectDosLogDest(protected.Spec.DosAccessLogDest)
-	if err != nil {
-		return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "dosAccessLogDest", err)
+
+	// dosAccessLogDest
+	if protected.Spec.DosAccessLogDest != "" {
+		err = validateAppProtectDosLogDest(protected.Spec.DosAccessLogDest)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "dosAccessLogDest", err)
+		}
 	}
 
 	// apDosPolicy
@@ -92,13 +98,11 @@ func validateResourceReference(ref string) error {
 // checkAppProtectDosLogConfContentField check content field doesn't appear in dos log
 func checkAppProtectDosLogConfContentField(obj *unstructured.Unstructured) string {
 	_, found, err := unstructured.NestedMap(obj.Object, "spec", "content")
-	if err == nil && found {
-		unstructured.RemoveNestedField(obj.Object, "spec", "content")
-		msg := "the Content field is not supported, defaulting to splunk format."
-		return msg
+	if err != nil || !found {
+		return ""
 	}
-
-	return ""
+	unstructured.RemoveNestedField(obj.Object, "spec", "content")
+	return "the Content field is not supported, defaulting to splunk format."
 }
 
 // ValidateAppProtectDosLogConf validates LogConfiguration resource
@@ -120,27 +124,22 @@ var (
 )
 
 func validateAppProtectDosLogDest(dstAntn string) error {
+	if dstAntn == "stderr" {
+		return nil
+	}
 	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
-		err := validatePort(chunks[1])
+		port, err := strconv.Atoi(chunks[1])
+		if err != nil {
+			return err
+		}
+		err = internalValidation.ValidatePort(port)
 		if err != nil {
 			return fmt.Errorf("invalid log destination: %w", err)
 		}
 		return nil
 	}
-	if dstAntn == "stderr" {
-		return nil
-	}
-
 	return fmt.Errorf("invalid log destination: %s, must follow format: <ip-address | localhost | dns name>:<port> or stderr", dstAntn)
-}
-
-func validatePort(value string) error {
-	port, _ := strconv.Atoi(value)
-	if port > 65535 || port < 1 {
-		return fmt.Errorf("error parsing port: %v not a valid port number", port)
-	}
-	return nil
 }
 
 func validateAppProtectDosName(name string) error {
@@ -152,9 +151,10 @@ func validateAppProtectDosName(name string) error {
 }
 
 var validMonitorProtocol = map[string]bool{
-	"http1": true,
-	"http2": true,
-	"grpc":  true,
+	"http1":     true,
+	"http2":     true,
+	"grpc":      true,
+	"websocket": true,
 }
 
 func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
@@ -190,4 +190,20 @@ func ValidateAppProtectDosPolicy(policy *unstructured.Unstructured) error {
 	}
 
 	return nil
+}
+
+// ValidateAppProtectDosAllowList validates AllowList if all IP and Mask are correct
+func ValidateAppProtectDosAllowList(allowList []v1beta1.AllowListEntry) error {
+	for _, entry := range allowList {
+		ipValid := isValidIPWithMask(entry.IPWithMask)
+		if !ipValid {
+			return fmt.Errorf("invalid IP with subnet mask: %s", entry.IPWithMask)
+		}
+	}
+	return nil
+}
+
+func isValidIPWithMask(ipWithMask string) bool {
+	_, _, err := net.ParseCIDR(ipWithMask)
+	return err == nil
 }

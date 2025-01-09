@@ -18,6 +18,7 @@ spec:
       path: "invalid"
       interval: 1.5d
       jitter: invalid
+      keepalive-time: 1.3d
       fails: -5
       passes: -1
       port: -1
@@ -48,6 +49,7 @@ spec:
       path: "invalid"
       interval: 1.5d
       jitter: invalid
+      keepalive-time: 1.3d
       fails: -5
       passes: -1
       port: -1

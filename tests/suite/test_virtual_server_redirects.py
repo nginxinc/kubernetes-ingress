@@ -13,6 +13,7 @@ from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch
 
 
 @pytest.mark.vs
+@pytest.mark.vs_redirects
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [

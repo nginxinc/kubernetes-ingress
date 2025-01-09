@@ -116,9 +116,10 @@ def vsr_externalname_setup(
     ensure_response_from_backend(f"{req_url}{route.paths[0]}", vs_host)
 
     def fin():
-        print("Delete test namespaces")
-        delete_namespace(kube_apis.v1, external_ns)
-        delete_namespace(kube_apis.v1, ns_1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete test namespaces")
+            delete_namespace(kube_apis.v1, external_ns)
+            delete_namespace(kube_apis.v1, ns_1)
 
     request.addfinalizer(fin)
 
@@ -128,6 +129,7 @@ def vsr_externalname_setup(
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_external_name
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, vsr_externalname_setup",

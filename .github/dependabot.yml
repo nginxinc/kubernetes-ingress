@@ -1,38 +1,61 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "gomod"
-    directory: "/"
+    groups:
+      actions:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: gomod
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/build"
+    groups:
+      go:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: docker
+    directory: /build
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/tests/docker"
+    groups:
+      docker-images:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: docker
+    directory: /tests
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/tests"
+    groups:
+      docker-tests:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: pip
+    directory: /tests
     schedule:
-      interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/perf-tests"
+      interval: weekly
+    groups:
+      python:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: gomod
+    directory: /site
     schedule:
-      interval: daily
-    reviewers:
-      - "nginxinc/kic"
+      interval: weekly

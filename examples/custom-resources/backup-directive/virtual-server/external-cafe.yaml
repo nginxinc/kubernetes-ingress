@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-ns
+  namespace: external-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coffee-backup
+  namespace: external-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coffee-backup
+  template:
+    metadata:
+      labels:
+        app: coffee-backup
+    spec:
+      containers:
+      - name: coffee-backup
+        image: nginxdemos/nginx-hello:plain-text
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coffee-backup-svc
+  namespace: external-ns
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: coffee-backup

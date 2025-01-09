@@ -1,4 +1,5 @@
 """Describe methods to work with kubeconfig file."""
+
 import pytest
 import yaml
 

@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import re
 import subprocess
@@ -9,15 +8,14 @@ import pytest
 import requests
 import yaml
 from kubernetes.client import V1ContainerPort
-from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import (
+from settings import TEST_DATA
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_logconf,
     delete_ap_policy,
-    read_ap_crd,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress,
     create_ingress_with_ap_annotations,
@@ -26,16 +24,12 @@ from suite.resources_utils import (
     delete_items_from_yaml,
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
-    get_events,
-    get_file_contents,
-    get_first_pod_name,
-    get_ingress_nginx_template_conf,
+    get_resource_metrics,
     replace_ingress_with_ap_annotations,
     wait_before_test,
-    wait_for_event_increment,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 ap_policy = "dataguard-alarm"
 valid_resp_addr = "Server address:"
@@ -62,7 +56,6 @@ class AppProtectSetup:
 def enable_prometheus_port(
     cli_arguments, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap
 ) -> None:
-
     namespace = ingress_controller_prerequisites.namespace
     port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
     print("------------------------- Enable 9113 port in IC ----------------------------")
@@ -73,7 +66,9 @@ def enable_prometheus_port(
 
 
 @pytest.fixture(scope="class")
-def appprotect_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> AppProtectSetup:
+def appprotect_setup(
+    request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, test_namespace
+) -> AppProtectSetup:
     """
     Deploy simple application and all the AppProtect(dataguard-alarm) resources under test in one namespace.
 
@@ -108,6 +103,16 @@ def appprotect_setup(request, kube_apis, ingress_controller_endpoint, test_names
 
     def fin():
         print("Clean up:")
+        print("Collect resource usage metrics")
+        pod_metrics = get_resource_metrics(kube_apis.custom_objects, "pods", ingress_controller_prerequisites.namespace)
+        with open("ap_pod_metrics.json", "w+") as f:
+            json.dump(pod_metrics, f, ensure_ascii=False, indent=4)
+        node_metrics = get_resource_metrics(
+            kube_apis.custom_objects, "nodes", ingress_controller_prerequisites.namespace
+        )
+        with open("ap_node_metrics.json", "w+") as f:
+            json.dump(node_metrics, f, ensure_ascii=False, indent=4)
+
         delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "simple", test_namespace)

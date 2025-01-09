@@ -12,14 +12,20 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	HTTPSnippets  []string
-	LimitReqZones []LimitReqZone
-	Maps          []Map
-	Server        Server
-	SpiffeCerts   bool
-	SplitClients  []SplitClient
-	StatusMatches []StatusMatch
-	Upstreams     []Upstream
+	HTTPSnippets            []string
+	TwoWaySplitClients      []TwoWaySplitClients
+	KeyValZones             []KeyValZone
+	KeyVals                 []KeyVal
+	LimitReqZones           []LimitReqZone
+	Maps                    []Map
+	Server                  Server
+	SpiffeCerts             bool
+	SpiffeClientCerts       bool
+	SplitClients            []SplitClient
+	StatusMatches           []StatusMatch
+	Upstreams               []Upstream
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 // Upstream defines an upstream.
@@ -38,6 +44,7 @@ type Upstream struct {
 	SessionCookie    *SessionCookie
 	UpstreamLabels   UpstreamLabels
 	NTLM             bool
+	BackupServers    []UpstreamServer
 }
 
 // UpstreamServer defines an upstream server.
@@ -49,6 +56,13 @@ type UpstreamServer struct {
 type Server struct {
 	ServerName                string
 	StatusZone                string
+	CustomListeners           bool
+	HTTPIPv4                  string
+	HTTPIPv6                  string
+	HTTPSIPv4                 string
+	HTTPSIPv6                 string
+	HTTPPort                  int
+	HTTPSPort                 int
 	ProxyProtocol             bool
 	SSL                       *SSL
 	ServerTokens              string
@@ -68,16 +82,21 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	JWTAuthList               map[string]*JWTAuth
+	JWKSAuthEnabled           bool
 	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
+	APIKey                    *APIKey
+	APIKeyEnabled             bool
 	WAF                       *WAF
 	Dos                       *Dos
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
 	DisableIPV6               bool
+	Gunzip                    bool
 }
 
 // SSL defines SSL configuration for a server.
@@ -91,6 +110,7 @@ type SSL struct {
 // IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.
 type IngressMTLS struct {
 	ClientCert   string
+	ClientCrl    string
 	VerifyClient string
 	VerifyDepth  int
 }
@@ -111,20 +131,32 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint   string
-	ClientID       string
-	ClientSecret   string
-	JwksURI        string
-	Scope          string
-	TokenEndpoint  string
-	RedirectURI    string
-	ZoneSyncLeeway int
+	AuthEndpoint          string
+	ClientID              string
+	ClientSecret          string
+	JwksURI               string
+	Scope                 string
+	TokenEndpoint         string
+	EndSessionEndpoint    string
+	RedirectURI           string
+	PostLogoutRedirectURI string
+	ZoneSyncLeeway        int
+	AuthExtraArgs         string
+	AccessTokenEnable     bool
+}
+
+// APIKey holds API key configuration.
+type APIKey struct {
+	Header  []string
+	Query   []string
+	MapName string
 }
 
 // WAF defines WAF configuration.
 type WAF struct {
 	Enable              string
 	ApPolicy            string
+	ApBundle            string
 	ApSecurityLogEnable bool
 	ApLogConf           []string
 }
@@ -133,6 +165,7 @@ type WAF struct {
 type Dos struct {
 	Enable                 string
 	Name                   string
+	AllowListPath          string
 	ApDosPolicy            string
 	ApDosSecurityLogEnable bool
 	ApDosLogConf           string
@@ -180,6 +213,7 @@ type Location struct {
 	BasicAuth                *BasicAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
+	APIKey                   *APIKey
 	WAF                      *WAF
 	Dos                      *Dos
 	PoliciesErrorReturn      *Return
@@ -195,6 +229,7 @@ type ReturnLocation struct {
 	Name        string
 	DefaultType string
 	Return      Return
+	Headers     []Header
 }
 
 // SplitClient defines a split_clients.
@@ -257,6 +292,8 @@ type HealthCheck struct {
 	GRPCService         string
 	Mandatory           bool
 	Persistent          bool
+	KeepaliveTime       string
+	IsGRPC              bool
 }
 
 // TLSRedirect defines a redirect in a Server.
@@ -274,6 +311,7 @@ type SessionCookie struct {
 	Domain   string
 	HTTPOnly bool
 	Secure   bool
+	SameSite string
 }
 
 // Distribution maps weight to a value in a SplitClient.
@@ -350,13 +388,53 @@ func (rl LimitReqOptions) String() string {
 
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
-	Secret string
-	Realm  string
-	Token  string
+	Key      string
+	Secret   string
+	Realm    string
+	Token    string
+	KeyCache string
+	JwksURI  JwksURI
+}
+
+// JwksURI defines the components of a JwksURI
+type JwksURI struct {
+	JwksScheme string
+	JwksHost   string
+	JwksPort   string
+	JwksPath   string
 }
 
 // BasicAuth refers to basic HTTP authentication mechanism options
 type BasicAuth struct {
 	Secret string
 	Realm  string
+}
+
+// KeyValZone defines a keyval zone.
+type KeyValZone struct {
+	Name  string
+	Size  string
+	State string
+}
+
+// KeyVal defines a keyval.
+type KeyVal struct {
+	Key      string
+	Variable string
+	ZoneName string
+}
+
+// TwoWaySplitClients defines split clients for two way split
+type TwoWaySplitClients struct {
+	Key               string
+	Variable          string
+	ZoneName          string
+	Weights           []int
+	SplitClientsIndex int
+}
+
+// Variable defines an nginx variable.
+type Variable struct {
+	Name  string
+	Value string
 }

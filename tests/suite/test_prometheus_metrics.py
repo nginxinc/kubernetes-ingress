@@ -47,7 +47,8 @@ def prometheus_secret_setup(request, kube_apis, test_namespace):
     )
 
     def fin():
-        delete_secret(kube_apis.v1, prometheus_secret_name, "nginx-ingress")
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_secret(kube_apis.v1, prometheus_secret_name, "nginx-ingress")
 
     request.addfinalizer(fin)
 
@@ -68,10 +69,11 @@ def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
 
     def fin():
-        print("Clean up simple app")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
-        delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up simple app")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
+            delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -164,7 +166,7 @@ class TestPrometheusExporter:
                     "extra_args": [
                         "-enable-prometheus-metrics",
                         "-enable-latency-metrics",
-                        "-prometheus-tls-secret=nginx-ingress/prometheus-test-secret",
+                        "-prometheus-tls-secret=nginx-ingress/tls-secret",
                     ]
                 },
                 [
@@ -210,7 +212,8 @@ def ts_setup(request, kube_apis, crd_ingress_controller):
     gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
 
     def fin():
-        delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
 
     request.addfinalizer(fin)
 
@@ -295,3 +298,45 @@ class TestTransportServerMetrics:
         wait_before_test()
 
         assert_ts_total_metric(ingress_controller_endpoint, ts_type, 0)
+
+
+@pytest.mark.ingresses
+@pytest.mark.smoke
+@pytest.mark.skip_for_nginx_oss
+class TestPrometheusExporterPlus:
+    @pytest.mark.parametrize(
+        "ingress_controller, expected_metrics",
+        [
+            pytest.param(
+                {"extra_args": ["-enable-prometheus-metrics", "-enable-oidc"]},
+                [
+                    'nginx_ingress_nginxplus_cache_bypass_bytes{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_expired_bytes{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_hit_responses{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_miss_responses{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_size{class="nginx",zone="jwk"}',
+                    'nginxplus_worker_connection_accepted{class="nginx"',
+                    'nginxplus_worker_connection_active{class="nginx"',
+                    'nginxplus_worker_http_requests_total{class="nginx"',
+                ],
+            )
+        ],
+        indirect=["ingress_controller"],
+    )
+    def test_plus_metrics(
+        self,
+        ingress_controller_endpoint,
+        ingress_controller,
+        expected_metrics,
+        ingress_setup,
+    ):
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
+        resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
+        assert resp.status_code == 200
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        ensure_connection(req_url, 200)
+        resp = requests.get(req_url)
+        assert resp.status_code == 200, f"Expected 200 code for /metrics but got {resp.status_code}"
+        resp_content = resp.content.decode("utf-8")
+        for item in expected_metrics:
+            assert item in resp_content

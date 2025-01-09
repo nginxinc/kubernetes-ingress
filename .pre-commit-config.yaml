@@ -1,20 +1,23 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-exclude: (^docs/_vendor/|.*pb2.*)
+exclude: (^site/_vendor/|.*pb2.*)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: '(\.md|\.snap|\.avdl)$'
       - id: end-of-file-fixer
+        exclude: site/layouts/shortcodes/nic-.*.html
       - id: check-yaml
         args: [--allow-multiple-documents]
-        exclude: ^(deployments/helm-chart.*/templates|deployments/helm-chart/crds)
+        exclude: ^(charts/nginx-ingress/templates)
       - id: check-ast
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
+        exclude: '(\.snap)$'
       - id: check-symlinks
       - id: check-case-conflict
       - id: check-vcs-permalinks
@@ -29,6 +32,9 @@ repos:
       - id: no-commit-to-branch
       - id: requirements-txt-fixer
       - id: fix-byte-order-marker
+      - id: detect-private-key
+        exclude: ^(examples/|tests/|internal/k8s/secrets/)
+
   - repo: local
     hooks:
       - id: golang-diff
@@ -37,30 +43,65 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
+
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.50.1
+    rev: v1.63.4
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
+
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.0
+    rev: v3.19.1
     hooks:
       - id: pyupgrade
+
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.13.2
     hooks:
       - id: isort
+
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 24.10.0
     hooks:
       - id: black
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        files: tests/.*\.py$
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--remove-unused-variable",
+          ]
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.18.4
+    rev: 0.30.0
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
-        files: deployments/helm-chart/values.yaml
+        files: charts/nginx-ingress/values.yaml
         types: [yaml]
-        args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
+        args: ["--schemafile", "charts/nginx-ingress/values.schema.json"]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.17.1
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.6
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflow files
+        description: Runs actionlint to lint GitHub Actions workflow files
+        language: golang
+        types: ["yaml"]
+        files: ^\.github/workflows/
+        entry: actionlint
+        args: ["-shellcheck", ""]
+
 ci:
-  skip: [golang-diff, golangci-lint, check-jsonschema]
+  skip: [golang-diff, golangci-lint, check-jsonschema, markdownlint-cli2]

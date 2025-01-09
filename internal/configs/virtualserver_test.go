@@ -1,9 +1,12 @@
 package configs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -61,30 +64,42 @@ func TestVirtualServerExString(t *testing.T) {
 
 func TestGenerateEndpointsKey(t *testing.T) {
 	t.Parallel()
-	serviceNamespace := "default"
-	serviceName := "test"
-	var port uint16 = 80
 
 	tests := []struct {
-		subselector map[string]string
-		expected    string
+		serviceNamespace string
+		serviceName      string
+		port             uint16
+		subselector      map[string]string
+		expected         string
 	}{
 		{
-			subselector: nil,
-			expected:    "default/test:80",
+			serviceNamespace: "default",
+			serviceName:      "test",
+			port:             80,
+			subselector:      nil,
+			expected:         "default/test:80",
 		},
 		{
-			subselector: map[string]string{"version": "v1"},
-			expected:    "default/test_version=v1:80",
+			serviceNamespace: "default",
+			serviceName:      "test",
+			port:             80,
+			subselector:      map[string]string{"version": "v1"},
+			expected:         "default/test_version=v1:80",
+		},
+		{
+			serviceNamespace: "default",
+			serviceName:      "backup-svc",
+			port:             8090,
+			subselector:      nil,
+			expected:         "default/backup-svc:8090",
 		},
 	}
 
 	for _, test := range tests {
-		result := GenerateEndpointsKey(serviceNamespace, serviceName, test.subselector, port)
+		result := GenerateEndpointsKey(test.serviceNamespace, test.serviceName, test.subselector, test.port)
 		if result != test.expected {
 			t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, test.expected)
 		}
-
 	}
 }
 
@@ -96,7 +111,7 @@ func TestUpstreamNamerForVirtualServer(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	upstream := "test"
 
 	expected := "vs_default_cafe_test"
@@ -121,7 +136,7 @@ func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServerRoute(&virtualServer, &virtualServerRoute)
+	upstreamNamer := NewUpstreamNamerForVirtualServerRoute(&virtualServer, &virtualServerRoute)
 	upstream := "test"
 
 	expected := "vs_default_cafe_vsr_default_coffee_test"
@@ -143,7 +158,7 @@ func TestVariableNamerSafeNsName(t *testing.T) {
 
 	expected := "default_cafe_test"
 
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	if variableNamer.safeNsName != expected {
 		t.Errorf(
@@ -162,7 +177,7 @@ func TestVariableNamer(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	// GetNameForSplitClientVariable()
 	index := 0
@@ -194,6 +209,2202 @@ func TestVariableNamer(t *testing.T) {
 	result = variableNamer.GetNameForVariableForMatchesRouteMainMap(matchesIndex)
 	if result != expected {
 		t.Errorf("GetNameForVariableForMatchesRouteMainMap() returned %q but expected %q", result, expected)
+	}
+}
+
+func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          true,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithGunzipOn, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          false,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithGunzipOff, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          false,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithNoGunzip, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+// createPointerFromUInt16 is a helper that takes a uint16
+// and returns a pointer to the value. It is used for testing
+// BackupService configuration for Virtual and Transport Servers.
+func createPointerFromUInt16(n uint16) *uint16 {
+	return &n
+}
+
+// vsEx returns Virtual Server Ex config struct.
+// It's safe to modify returned config for parallel test execution.
+func vsEx() VirtualServerEx {
+	return VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := vsEx()
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = "backup-svc"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = createPointerFromUInt16(8090)
+	virtualServerEx.Endpoints = map[string][]string{
+		"default/tea-svc:80": {
+			"10.0.0.20:80",
+		},
+		"default/tea-svc_version=v1:80": {
+			"10.0.0.30:80",
+		},
+		"default/coffee-svc:80": {
+			"10.0.0.40:80",
+		},
+		"default/sub-tea-svc_version=v1:80": {
+			"10.0.0.50:80",
+		},
+		"default/backup-svc:8090": {
+			"clustertwo.corp.local:8090",
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+				BackupServers: []version2.UpstreamServer{
+					{
+						Address: "clustertwo.corp.local:8090",
+					},
+				},
+				LBMethod: "least_conn",
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			HTTPPort:        0,
+			HTTPSPort:       0,
+			CustomListeners: false,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	isPlus := true
+	isResolverConfigured := false
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		isPlus,
+		isResolverConfigured,
+		&StaticConfigParams{TLSPassthrough: true},
+		isWildcardEnabled,
+		&fakeBV,
+	)
+
+	sort.Slice(want.Upstreams, func(i, j int) bool {
+		return want.Upstreams[i].Name < want.Upstreams[j].Name
+	})
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := vsEx()
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = ""
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = createPointerFromUInt16(8090)
+	virtualServerEx.Endpoints = map[string][]string{
+		"default/tea-svc:80": {
+			"10.0.0.20:80",
+		},
+		"default/tea-svc_version=v1:80": {
+			"10.0.0.30:80",
+		},
+		"default/coffee-svc:80": {
+			"10.0.0.40:80",
+		},
+		"default/sub-tea-svc_version=v1:80": {
+			"10.0.0.50:80",
+		},
+		"default/backup-svc:8090": {
+			"clustertwo.corp.local:8090",
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+				LBMethod:  "least_conn",
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			HTTPPort:        0,
+			HTTPSPort:       0,
+			CustomListeners: false,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	isPlus := true
+	isResolverConfigured := false
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		isPlus,
+		isResolverConfigured,
+		&StaticConfigParams{TLSPassthrough: true},
+		isWildcardEnabled,
+		&fakeBV,
+	)
+
+	sort.Slice(want.Upstreams, func(i, j int) bool {
+		return want.Upstreams[i].Name < want.Upstreams[j].Name
+	})
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := vsEx()
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = "backup-svc"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = nil
+	virtualServerEx.Endpoints = map[string][]string{
+		"default/tea-svc:80": {
+			"10.0.0.20:80",
+		},
+		"default/tea-svc_version=v1:80": {
+			"10.0.0.30:80",
+		},
+		"default/coffee-svc:80": {
+			"10.0.0.40:80",
+		},
+		"default/sub-tea-svc_version=v1:80": {
+			"10.0.0.50:80",
+		},
+		"default/backup-svc:8090": {
+			"clustertwo.corp.local:8090",
+		},
+	}
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+				LBMethod:  "least_conn",
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			HTTPPort:        0,
+			HTTPSPort:       0,
+			CustomListeners: false,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	sort.Slice(want.Upstreams, func(i, j int) bool {
+		return want.Upstreams[i].Name < want.Upstreams[j].Name
+	})
+
+	isPlus := true
+	isResolverConfigured := false
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		isPlus,
+		isResolverConfigured,
+		&StaticConfigParams{TLSPassthrough: true},
+		isWildcardEnabled,
+		&fakeBV,
+	)
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAndNameForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := vsEx()
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = ""
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = nil
+	virtualServerEx.Endpoints = map[string][]string{
+		"default/tea-svc:80": {
+			"10.0.0.20:80",
+		},
+		"default/tea-svc_version=v1:80": {
+			"10.0.0.30:80",
+		},
+		"default/coffee-svc:80": {
+			"10.0.0.40:80",
+		},
+		"default/sub-tea-svc_version=v1:80": {
+			"10.0.0.50:80",
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+				LBMethod:  "least_conn",
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			HTTPPort:        0,
+			HTTPSPort:       0,
+			CustomListeners: false,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	isPlus := true
+	isResolverConfigured := false
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		isPlus,
+		isResolverConfigured,
+		&StaticConfigParams{TLSPassthrough: true},
+		isWildcardEnabled,
+		&fakeBV,
+	)
+
+	sort.Slice(want.Upstreams, func(i, j int) bool {
+		return want.Upstreams[i].Name < want.Upstreams[j].Name
+	})
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
 	}
 }
 
@@ -391,6 +2602,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -402,6 +2614,21 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "tea-svc",
@@ -435,11 +2662,11 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_coffee",
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -451,10 +2678,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserverroute",
-					ResourceName:      "coffee",
+					ResourceName:      "subcoffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -477,27 +2704,15 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				},
 				Keepalive: 16,
 			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "coffee-svc",
-					ResourceType:      "virtualserverroute",
-					ResourceName:      "subcoffee",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.40:80",
-					},
-				},
-				Keepalive: 16,
-			},
 		},
 		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
+			HTTPPort:        0,
+			HTTPSPort:       0,
+			CustomListeners: false,
 			VSNamespace:     "default",
 			VSName:          "cafe",
 			ProxyProtocol:   true,
@@ -643,6 +2858,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		},
 	}
 
+	sort.Slice(expected.Upstreams, func(i, j int) bool {
+		return expected.Upstreams[i].Name < expected.Upstreams[j].Name
+	})
+
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
@@ -652,9 +2871,365 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsListeners(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     true,
+			HTTPPort:        virtualServerExWithCustomHTTPAndHTTPSListeners.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPAndHTTPSListeners.HTTPSPort,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPAndHTTPSListeners,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     true,
+			HTTPPort:        virtualServerExWithCustomHTTPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPListener.HTTPSPort,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPSListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPSListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPSListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPSListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     true,
+			HTTPPort:        virtualServerExWithCustomHTTPSListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPSListener.HTTPSPort,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPSListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsIPListeners(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPAndHTTPSIPListeners,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPIPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpsIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPSIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPSIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPSIPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithNilListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithNilListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithNilListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithNilListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithNilListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     true,
+			HTTPPort:        virtualServerExWithNilListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithNilListener.HTTPSPort,
+			CustomListeners: false,
+			ProxyProtocol:   true,
+			ServerTokens:    baseCfgParams.ServerTokens,
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithNilListener,
+		nil,
+		nil)
+
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -712,24 +3287,10 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "tea-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_tea",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.20:80",
-					},
-				},
-			},
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
@@ -741,6 +3302,20 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
+					},
+				},
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
 					},
 				},
 			},
@@ -787,6 +3362,7 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		isResolverConfigured,
 		&StaticConfigParams{DisableIPV6: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
@@ -927,7 +3503,8 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
-		HTTP2: true,
+		Context: context.Background(),
+		HTTP2:   true,
 	}
 
 	expected := version2.VirtualServerConfig{
@@ -1153,7 +3730,7 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := true
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1200,6 +3777,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -1256,14 +3834,14 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 				},
 			},
 		},
-		SpiffeCerts: true,
+		SpiffeClientCerts: true,
 	}
 
 	isPlus := false
 	isResolverConfigured := false
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1272,6 +3850,234 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithInternalRoutes(t *testing.T) {
+	t.Parallel()
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+						TLS:     conf_v1.UpstreamTLS{Enable: false},
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+				},
+				InternalRoute: true,
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	expected := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+			},
+		},
+		SpiffeCerts:       true,
+		SpiffeClientCerts: false,
+	}
+
+	isPlus := false
+	isResolverConfigured := false
+	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true, EnableInternalRoutes: true}
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithInternalRoutesWarning(t *testing.T) {
+	t.Parallel()
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+						TLS:     conf_v1.UpstreamTLS{Enable: false},
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+				},
+				InternalRoute: true,
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	expected := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+			},
+		},
+		SpiffeCerts:       true,
+		SpiffeClientCerts: true,
+	}
+
+	isPlus := false
+	isResolverConfigured := false
+	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true, EnableInternalRoutes: false}
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+	if diff := cmp.Diff(expected, result); diff == "" {
+		t.Errorf("GenerateVirtualServerConfig() should not configure internal route")
+	}
+
+	if len(warnings) != 1 {
+		t.Errorf("GenerateVirtualServerConfig should return warning to enable internal routing")
 	}
 }
 
@@ -1380,7 +4186,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -1550,7 +4356,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1671,7 +4477,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -1869,7 +4675,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1894,6 +4700,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_coffee",
 		},
 		"/tea": {
 			AppProtectDosEnable:          "on",
@@ -1905,6 +4712,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_tea",
 		},
 		"/juice": {
 			AppProtectDosEnable:          "on",
@@ -1916,6 +4724,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_juice",
 		},
 	}
 
@@ -2081,7 +4890,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := []version2.Location{
 		{
@@ -2104,6 +4913,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_coffee",
 			},
 		},
 		{
@@ -2126,6 +4936,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_coffee",
 			},
 		},
 		{
@@ -2148,6 +4959,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_tea",
 			},
 		},
 		{
@@ -2165,6 +4977,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_juice",
 			},
 			ServiceName:  "juice-svc-v1",
 			IsVSR:        true,
@@ -2186,6 +4999,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_juice",
 			},
 			ServiceName:  "juice-svc-v2",
 			IsVSR:        true,
@@ -2196,7 +5010,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 
 	isPlus := false
 	isResolverConfigured := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{MainAppProtectDosLoadModule: true}, false)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{MainAppProtectDosLoadModule: true}, false, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, dosResources)
 	if diff := cmp.Diff(expected, result.Server.Locations); diff != "" {
@@ -2342,10 +5156,42 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "header-returns",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "example.com",
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/header/return",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{{Name: "return-header", Value: "value 1"}},
+									Body:    "hello 10",
+								},
+							},
+						},
+						{
+							Path: "/header/return-multiple",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{
+										{Name: "return-header", Value: "value 1"},
+										{Name: "return-header-2", Value: "value 2"},
+									},
+									Body: "hello 11",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Maps: []version2.Map{
@@ -2542,6 +5388,27 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						Text: "hello 9",
 					},
 				},
+				{
+					Name:        "@return_10",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 10",
+					},
+					Headers: []version2.Header{{Name: "return-header", Value: "value 1"}},
+				},
+				{
+					Name:        "@return_11",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 11",
+					},
+					Headers: []version2.Header{
+						{Name: "return-header", Value: "value 1"},
+						{Name: "return-header-2", Value: "value 2"},
+					},
+				},
 			},
 			Locations: []version2.Location{
 				{
@@ -2664,6 +5531,30 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					},
 					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
 				},
+				{
+					Path:                 "/header/return",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_10",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
+				{
+					Path:                 "/header/return-multiple",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_11",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
 			},
 		},
 	}
@@ -2671,7 +5562,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !reflect.DeepEqual(result, expected) {
@@ -2683,6 +5574,827 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	}
 }
 
+func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Policies: []conf_v1.PolicyReference{
+					{
+						Name: "jwt-policy",
+					},
+				},
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+						Policies: []conf_v1.PolicyReference{
+							{
+								Name: "jwt-policy-route",
+							},
+						},
+					},
+					{
+						Path: "/coffee",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						Policies: []conf_v1.PolicyReference{
+							{
+								Name: "jwt-policy-route",
+							},
+						},
+					},
+				},
+			},
+		},
+		Policies: map[string]*conf_v1.Policy{
+			"default/jwt-policy": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					JWTAuth: &conf_v1.JWTAuth{
+						Realm:    "Spec Realm API",
+						JwksURI:  "https://idp.spec.example.com:443/spec-keys",
+						KeyCache: "1h",
+					},
+				},
+			},
+			"default/jwt-policy-route": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwt-policy-route",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					JWTAuth: &conf_v1.JWTAuth{
+						Realm:    "Route Realm API",
+						JwksURI:  "http://idp.route.example.com:80/route-keys",
+						KeyCache: "1h",
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.30:80",
+			},
+		},
+	}
+
+	expected := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			JWTAuthList: map[string]*version2.JWTAuth{
+				"default/jwt-policy": {
+					Key:      "default/jwt-policy",
+					Realm:    "Spec Realm API",
+					KeyCache: "1h",
+					JwksURI: version2.JwksURI{
+						JwksScheme: "https",
+						JwksHost:   "idp.spec.example.com",
+						JwksPort:   "443",
+						JwksPath:   "/spec-keys",
+					},
+				},
+				"default/jwt-policy-route": {
+					Key:      "default/jwt-policy-route",
+					Realm:    "Route Realm API",
+					KeyCache: "1h",
+					JwksURI: version2.JwksURI{
+						JwksScheme: "http",
+						JwksHost:   "idp.route.example.com",
+						JwksPort:   "80",
+						JwksPath:   "/route-keys",
+					},
+				},
+			},
+			JWTAuth: &version2.JWTAuth{
+				Key:      "default/jwt-policy",
+				Realm:    "Spec Realm API",
+				KeyCache: "1h",
+				JwksURI: version2.JwksURI{
+					JwksScheme: "https",
+					JwksHost:   "idp.spec.example.com",
+					JwksPort:   "443",
+					JwksPath:   "/spec-keys",
+				},
+			},
+			JWKSAuthEnabled: true,
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			RealIPHeader:    "X-Real-IP",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+					JWTAuth: &version2.JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						KeyCache: "1h",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
+					},
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					JWTAuth: &version2.JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						KeyCache: "1h",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{TLSPassthrough: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigAPIKeyPolicy(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := VirtualServerEx{
+		SecretRefs: map[string]*secrets.SecretReference{
+			"default/api-key-secret-spec": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"clientSpec": []byte("password"),
+					},
+				},
+			},
+			"default/api-key-secret-route": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"clientRoute": []byte("password2"),
+					},
+				},
+			},
+		},
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Policies: []conf_v1.PolicyReference{
+					{
+						Name: "api-key-policy-spec",
+					},
+				},
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/coffee",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						Policies: []conf_v1.PolicyReference{
+							{
+								Name: "api-key-policy-route",
+							},
+						},
+					},
+				},
+			},
+		},
+		Policies: map[string]*conf_v1.Policy{
+			"default/api-key-policy-spec": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-spec",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Header: []string{"X-API-Key"},
+							Query:  []string{"apikey"},
+						},
+						ClientSecret: "api-key-secret-spec",
+					},
+				},
+			},
+			"default/api-key-policy-route": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-route",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Query: []string{"api-key"},
+						},
+						ClientSecret: "api-key-secret-route",
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.30:80",
+			},
+		},
+	}
+
+	expected := version2.VirtualServerConfig{
+		Maps: []version2.Map{
+			{
+				Source:   "$apikey_auth_token",
+				Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_route",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "default",
+						Result: `""`,
+					},
+					{
+						Value:  `"6cf615d5bcaac778352a8f1f3360d23f02f34ec182e259897fd6ce485d7870d4"`,
+						Result: `"clientRoute"`,
+					},
+				},
+			},
+			{
+				Source:   "$apikey_auth_token",
+				Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_spec",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "default",
+						Result: `""`,
+					},
+					{
+						Value:  `"5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"`,
+						Result: `"clientSpec"`,
+					},
+				},
+			},
+		},
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			JWTAuthList:     nil,
+			JWTAuth:         nil,
+			JWKSAuthEnabled: false,
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			RealIPHeader:    "X-Real-IP",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			APIKeyEnabled:   true,
+			APIKey: &version2.APIKey{
+				Header:  []string{"X-API-Key"},
+				Query:   []string{"apikey"},
+				MapName: "apikey_auth_client_name_default_cafe_api_key_policy_spec",
+			},
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					APIKey: &version2.APIKey{
+						MapName: "apikey_auth_client_name_default_cafe_api_key_policy_route",
+						Query:   []string{"api-key"},
+					},
+				},
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{TLSPassthrough: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+
+	sort.Slice(result.Maps, func(i, j int) bool {
+		return result.Maps[i].Variable < result.Maps[j].Variable
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := VirtualServerEx{
+		SecretRefs: map[string]*secrets.SecretReference{
+			"default/api-key-secret-1": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client1": []byte("password"),
+					},
+				},
+			},
+			"default/api-key-secret-2": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client2": []byte("password2"),
+					},
+				},
+			},
+		},
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/coffee",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+					},
+				},
+			},
+		},
+		Policies: map[string]*conf_v1.Policy{
+			"default/api-key-policy-1": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-1",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Header: []string{"X-API-Key"},
+							Query:  []string{"apikey"},
+						},
+						ClientSecret: "api-key-secret-1",
+					},
+				},
+			},
+			"default/api-key-policy-2": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-2",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Header: []string{"api-key"},
+						},
+						ClientSecret: "api-key-secret-2",
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.30:80",
+			},
+		},
+	}
+
+	expectedAPIKey1 := &version2.APIKey{
+		MapName: "apikey_auth_client_name_default_cafe_api_key_policy_1",
+		Header:  []string{"X-API-Key"},
+		Query:   []string{"apikey"},
+	}
+
+	expectedAPIKey2 := &version2.APIKey{
+		MapName: "apikey_auth_client_name_default_cafe_api_key_policy_2",
+		Header:  []string{"api-key"},
+	}
+
+	expectedMap1 := version2.Map{
+		Source:   "$apikey_auth_token",
+		Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_1",
+		Parameters: []version2.Parameter{
+			{
+				Value:  "default",
+				Result: `""`,
+			},
+			{
+				Value:  `"5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"`,
+				Result: `"client1"`,
+			},
+		},
+	}
+
+	expectedMap2 := version2.Map{
+		Source:   "$apikey_auth_token",
+		Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_2",
+		Parameters: []version2.Parameter{
+			{
+				Value:  "default",
+				Result: `""`,
+			},
+			{
+				Value:  `"6cf615d5bcaac778352a8f1f3360d23f02f34ec182e259897fd6ce485d7870d4"`,
+				Result: `"client2"`,
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{TLSPassthrough: true},
+		false,
+		&fakeBV,
+	)
+
+	tests := []struct {
+		specPolicies         []conf_v1.PolicyReference
+		route1Policies       []conf_v1.PolicyReference
+		route2Policies       []conf_v1.PolicyReference
+		expectedSpecAPIKey   *version2.APIKey
+		expectedRoute1APIKey *version2.APIKey
+		expectedRoute2APIKey *version2.APIKey
+		expectedMapList      []version2.Map
+		name                 string
+	}{
+		{
+			specPolicies: []conf_v1.PolicyReference{
+				{
+					Name: "api-key-policy-1",
+				},
+			},
+			route1Policies: []conf_v1.PolicyReference{
+				{
+					Name: "api-key-policy-2",
+				},
+			},
+			route2Policies:       nil,
+			expectedSpecAPIKey:   expectedAPIKey1,
+			expectedRoute1APIKey: expectedAPIKey2,
+			expectedRoute2APIKey: nil,
+			expectedMapList:      []version2.Map{expectedMap1, expectedMap2},
+			name:                 "policy in spec, route 1 and route 2",
+		},
+		{
+			specPolicies: nil,
+			route1Policies: []conf_v1.PolicyReference{
+				{
+					Name: "api-key-policy-1",
+				},
+			},
+			route2Policies:     nil,
+			expectedSpecAPIKey: nil,
+
+			expectedRoute1APIKey: expectedAPIKey1,
+			expectedRoute2APIKey: nil,
+			expectedMapList:      []version2.Map{expectedMap1},
+			name:                 "policy in route 1 only",
+		},
+		{
+			specPolicies: []conf_v1.PolicyReference{
+				{
+					Name: "api-key-policy-2",
+				},
+			},
+			route1Policies:       nil,
+			route2Policies:       nil,
+			expectedSpecAPIKey:   expectedAPIKey2,
+			expectedRoute1APIKey: nil,
+			expectedRoute2APIKey: nil,
+			expectedMapList:      []version2.Map{expectedMap2},
+			name:                 "policy in spec only",
+		},
+		{
+			specPolicies:         nil,
+			route1Policies:       nil,
+			route2Policies:       nil,
+			expectedRoute1APIKey: nil,
+			expectedRoute2APIKey: nil,
+			expectedMapList:      nil,
+			name:                 "no policies",
+		},
+	}
+
+	invalidTests := []struct {
+		specPolicies     []conf_v1.PolicyReference
+		teaPolicies      []conf_v1.PolicyReference
+		coffeePolicies   []conf_v1.PolicyReference
+		expectedMapList  []version2.Map
+		expectedWarnings Warnings
+		name             string
+	}{
+		{
+			specPolicies: []conf_v1.PolicyReference{
+				{
+					Name: "api-key-policy-3",
+				},
+			},
+			coffeePolicies: nil,
+			teaPolicies:    nil,
+			// expectedTeaPolicy:    expectedAPIKey2,
+			// expectedCoffeePolicy: expectedAPIKey1,
+			expectedMapList: nil,
+			expectedWarnings: Warnings{
+				nil: {
+					"Policy default/api-key-policy-3 is missing or invalid",
+				},
+			},
+			name: "policy does not exist",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			virtualServerEx.VirtualServer.Spec.Policies = tc.specPolicies
+			virtualServerEx.VirtualServer.Spec.Routes[0].Policies = tc.route1Policies
+			virtualServerEx.VirtualServer.Spec.Routes[1].Policies = tc.route2Policies
+			vsConf, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+
+			sort.Slice(vsConf.Maps, func(i, j int) bool {
+				return vsConf.Maps[i].Variable < vsConf.Maps[j].Variable
+			})
+
+			if !cmp.Equal(tc.expectedSpecAPIKey, vsConf.Server.APIKey) {
+				t.Error(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
+			}
+
+			if !cmp.Equal(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey) {
+				t.Error(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
+			}
+
+			if !cmp.Equal(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey) {
+				t.Error(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
+			}
+
+			if !cmp.Equal(tc.expectedMapList, vsConf.Maps) {
+				t.Error(cmp.Diff(tc.expectedMapList, vsConf.Maps))
+			}
+
+			if len(warnings) != 0 {
+				t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+			}
+		})
+
+		for _, tc := range invalidTests {
+			t.Run(tc.name, func(t *testing.T) {
+				virtualServerEx.VirtualServer.Spec.Policies = tc.specPolicies
+				virtualServerEx.VirtualServer.Spec.Routes[0].Policies = tc.teaPolicies
+				virtualServerEx.VirtualServer.Spec.Routes[1].Policies = tc.coffeePolicies
+				_, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+
+				if len(warnings) == 0 {
+					t.Errorf("GenerateVirtualServerConfig() does not return the expected error %v", tc.expectedWarnings)
+				}
+			})
+		}
+	}
+}
+
 func TestGeneratePolicies(t *testing.T) {
 	t.Parallel()
 	ownerDetails := policyOwnerDetails{
@@ -2691,7 +6403,9 @@ func TestGeneratePolicies(t *testing.T) {
 		vsNamespace:    "default",
 		vsName:         "test",
 	}
-	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret"
+	mTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
+	mTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
+	mTLSCertAndCrlPath := fmt.Sprintf("%s %s", mTLSCertPath, mTLSCrlPath)
 	policyOpts := policyOptions{
 		tls: true,
 		secretRefs: map[string]*secrets.SecretReference{
@@ -2699,7 +6413,16 @@ func TestGeneratePolicies(t *testing.T) {
 				Secret: &api_v1.Secret{
 					Type: secrets.SecretTypeCA,
 				},
-				Path: ingressMTLSCertPath,
+				Path: mTLSCertPath,
+			},
+			"default/ingress-mtls-secret-crl": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+					Data: map[string][]byte{
+						"ca.crl": []byte("base64crl"),
+					},
+				},
+				Path: mTLSCertAndCrlPath,
 			},
 			"default/egress-mtls-secret": {
 				Secret: &api_v1.Secret{
@@ -2712,6 +6435,12 @@ func TestGeneratePolicies(t *testing.T) {
 					Type: secrets.SecretTypeCA,
 				},
 				Path: "/etc/nginx/secrets/default-egress-trusted-ca-secret",
+			},
+			"default/egress-trusted-ca-secret-crl": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+				},
+				Path: mTLSCertAndCrlPath,
 			},
 			"default/jwt-secret": {
 				Secret: &api_v1.Secret{
@@ -2733,6 +6462,22 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+			"default/api-key-secret": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client1": []byte("password"),
+					},
+				},
+			},
+			"default/api-key-secret-2": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client2": []byte("password2"),
+					},
+				},
+			},
 		},
 		apResources: &appProtectResourcesForVS{
 			Policies: map[string]string{
@@ -2747,7 +6492,6 @@ func TestGeneratePolicies(t *testing.T) {
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
 		policies   map[string]*conf_v1.Policy
-		policyOpts policyOptions
 		context    string
 		expected   policiesCfg
 		msg        string
@@ -2927,6 +6671,47 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "rateLimitScale-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/rateLimitScale-policy": {
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							LogLevel: "notice",
+							Scale:    true,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "5r/s",
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "notice",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+			},
+			msg: "rate limit reference with scale",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "jwt-policy",
 					Namespace: "default",
 				},
@@ -2950,8 +6735,85 @@ func TestGeneratePolicies(t *testing.T) {
 					Secret: "/etc/nginx/secrets/default-jwt-secret",
 					Realm:  "My Test API",
 				},
+				JWKSAuthEnabled: false,
 			},
 			msg: "jwt reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/jwt-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
+							Realm:    "My Test API",
+							JwksURI:  "https://idp.example.com:443/keys",
+							KeyCache: "1h",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				JWTAuth: &version2.JWTAuth{
+					Key:   "default/jwt-policy-2",
+					Realm: "My Test API",
+					JwksURI: version2.JwksURI{
+						JwksScheme: "https",
+						JwksHost:   "idp.example.com",
+						JwksPort:   "443",
+						JwksPath:   "/keys",
+					},
+					KeyCache: "1h",
+				},
+				JWKSAuthEnabled: true,
+			},
+			msg: "Basic jwks example",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/jwt-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
+							Realm:    "My Test API",
+							JwksURI:  "https://idp.example.com/keys",
+							KeyCache: "1h",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				JWTAuth: &version2.JWTAuth{
+					Key:   "default/jwt-policy-2",
+					Realm: "My Test API",
+					JwksURI: version2.JwksURI{
+						JwksScheme: "https",
+						JwksHost:   "idp.example.com",
+						JwksPort:   "",
+						JwksPath:   "/keys",
+					},
+					KeyCache: "1h",
+				},
+				JWKSAuthEnabled: true,
+			},
+			msg: "Basic jwks example, no port in JwksURI",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3006,12 +6868,77 @@ func TestGeneratePolicies(t *testing.T) {
 			context: "spec",
 			expected: policiesCfg{
 				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   ingressMTLSCertPath,
+					ClientCert:   mTLSCertPath,
 					VerifyClient: "off",
 					VerifyDepth:  1,
 				},
 			},
 			msg: "ingressMTLS reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy-crl",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy-crl": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy-crl",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret-crl",
+							VerifyClient:     "off",
+						},
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   mTLSCertPath,
+					ClientCrl:    mTLSCrlPath,
+					VerifyClient: "off",
+					VerifyDepth:  1,
+				},
+			},
+			msg: "ingressMTLS reference with ca.crl field in secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy-crl",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy-crl": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy-crl",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret",
+							CrlFileName:      "default-ingress-mtls-secret-ca.crl",
+							VerifyClient:     "off",
+						},
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   mTLSCertPath,
+					ClientCrl:    mTLSCrlPath,
+					VerifyClient: "off",
+					VerifyDepth:  1,
+				},
+			},
+			msg: "ingressMTLS reference with crl field in policy",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3052,6 +6979,42 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "egress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/egress-mtls-policy": {
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
+							TLSSecret:         "egress-mtls-secret",
+							ServerName:        true,
+							SessionReuse:      createPointerFromBool(false),
+							TrustedCertSecret: "egress-trusted-ca-secret-crl",
+						},
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				EgressMTLS: &version2.EgressMTLS{
+					Certificate:    "/etc/nginx/secrets/default-egress-mtls-secret",
+					CertificateKey: "/etc/nginx/secrets/default-egress-mtls-secret",
+					Ciphers:        "DEFAULT",
+					Protocols:      "TLSv1 TLSv1.1 TLSv1.2",
+					ServerName:     true,
+					SessionReuse:   false,
+					VerifyDepth:    1,
+					VerifyServer:   false,
+					TrustedCert:    mTLSCertPath,
+					SSLName:        "$proxy_host",
+				},
+			},
+			msg: "egressMTLS with crt and crl",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "oidc-policy",
 					Namespace: "default",
 				},
@@ -3064,14 +7027,17 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							AuthEndpoint:   "http://example.com/auth",
-							TokenEndpoint:  "http://example.com/token",
-							JWKSURI:        "http://example.com/jwks",
-							ClientID:       "client-id",
-							ClientSecret:   "oidc-secret",
-							Scope:          "scope",
-							RedirectURI:    "/redirect",
-							ZoneSyncLeeway: createPointerFromInt(20),
+							AuthEndpoint:          "http://example.com/auth",
+							TokenEndpoint:         "http://example.com/token",
+							JWKSURI:               "http://example.com/jwks",
+							ClientID:              "client-id",
+							ClientSecret:          "oidc-secret",
+							Scope:                 "scope",
+							RedirectURI:           "/redirect",
+							ZoneSyncLeeway:        createPointerFromInt(20),
+							AccessTokenEnable:     true,
+							EndSessionEndpoint:    "http://example.com/logout",
+							PostLogoutRedirectURI: "/_logout",
 						},
 					},
 				},
@@ -3080,6 +7046,88 @@ func TestGeneratePolicies(t *testing.T) {
 				OIDC: true,
 			},
 			msg: "oidc reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				APIKey: &version2.APIKey{
+					Header:  []string{"X-API-Key"},
+					Query:   []string{"api-key"},
+					MapName: "apikey_auth_client_name_default_test_api_key_policy",
+				},
+				APIKeyEnabled:   true,
+				APIKeyClientMap: nil,
+				APIKeyClients: []apiKeyClient{
+					{
+						ClientID:  "client1",
+						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+					},
+				},
+			},
+			msg: "api key reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				APIKey: &version2.APIKey{
+					Header:  []string{"X-API-Key"},
+					Query:   []string{"api-key"},
+					MapName: "apikey_auth_client_name_default_test_api_key_policy",
+				},
+				APIKeyEnabled:   true,
+				APIKeyClientMap: nil,
+				APIKeyClients: []apiKeyClient{
+					{
+						ClientID:  "client1",
+						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+					},
+				},
+			},
+			msg: "api key same secrets for different policies",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3116,16 +7164,113 @@ func TestGeneratePolicies(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
+	// required to test the scaling of the ratelimit
+	vsc.IngressControllerReplicas = 2
 
-	for _, test := range tests {
-		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
-		if diff := cmp.Diff(test.expected, result); diff != "" {
-			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-		}
-		if len(vsc.warnings) > 0 {
-			t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, test.msg)
-		}
+	for _, tc := range tests {
+		t.Run(tc.msg, func(t *testing.T) {
+			result := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOpts)
+			result.BundleValidator = nil
+
+			if !cmp.Equal(tc.expected, result) {
+				t.Error(cmp.Diff(tc.expected, result))
+			}
+			if len(vsc.warnings) > 0 {
+				t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, tc.msg)
+			}
+		})
+	}
+}
+
+func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
+	t.Parallel()
+
+	ownerDetails := policyOwnerDetails{
+		owner:          nil, // nil is OK for the unit test
+		ownerNamespace: "default",
+		vsNamespace:    "default",
+		vsName:         "test",
+	}
+
+	tests := []struct {
+		name       string
+		policyRefs []conf_v1.PolicyReference
+		policies   map[string]*conf_v1.Policy
+		policyOpts policyOptions
+		context    string
+		want       policiesCfg
+	}{
+		{
+			name: "valid bundle",
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-bundle",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-bundle": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApBundle: "testWAFPolicyBundle.tgz",
+						},
+					},
+				},
+			},
+			context: "route",
+			want: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:   "on",
+					ApBundle: "/fake/bundle/path/testWAFPolicyBundle.tgz",
+				},
+			},
+		},
+		{
+			name: "valid bundle with logConf",
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-bundle",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-bundle": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApBundle: "testWAFPolicyBundle.tgz",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:      true,
+									ApLogBundle: "secops_dashboard.tgz",
+								},
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			want: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:              "on",
+					ApBundle:            "/fake/bundle/path/testWAFPolicyBundle.tgz",
+					ApSecurityLogEnable: true,
+					ApLogConf:           []string{"/fake/bundle/path/secops_dashboard.tgz syslog:server=localhost:514"},
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			res := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
+			res.BundleValidator = nil
+			if !cmp.Equal(tc.want, res) {
+				t.Error(cmp.Diff(tc.want, res))
+			}
+		})
 	}
 }
 
@@ -3140,6 +7285,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	dryRunOverride := true
 	rejectCodeOverride := 505
+
+	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
+	ingressMTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
 
 	tests := []struct {
 		policyRefs        []conf_v1.PolicyReference
@@ -3718,14 +7866,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
 			context: "spec",
 			expected: policiesCfg{
 				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   "/etc/nginx/secrets/default-ingress-mtls-secret",
+					ClientCert:   ingressMTLSCertPath,
 					VerifyClient: "on",
 					VerifyDepth:  1,
 				},
@@ -3765,7 +7913,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
@@ -3810,7 +7958,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
@@ -3827,6 +7975,59 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{},
 			msg:          "ingress mtls missing TLS config",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret",
+							CrlFileName:      "default-ingress-mtls-secret-ca.crl",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				tls: true,
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/ingress-mtls-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+							Data: map[string][]byte{
+								"ca.crl": []byte("base64crl"),
+							},
+						},
+						Path: ingressMTLSCertPath,
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   ingressMTLSCertPath,
+					ClientCrl:    ingressMTLSCrlPath,
+					VerifyClient: "on",
+					VerifyDepth:  1,
+				},
+				ErrorReturn: nil,
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Both ca.crl in the Secret and ingressMTLS.crlFileName fields cannot be used. ca.crl in default/ingress-mtls-secret will be ignored and default/ingress-mtls-policy will be applied`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls ca.crl and ingressMTLS.Crl set",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -4131,10 +8332,13 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "http://foo.com/bar",
-							TokenEndpoint: "http://foo.com/bar",
-							JWKSURI:       "http://foo.com/bar",
+							ClientSecret:          "oidc-secret",
+							AuthEndpoint:          "http://foo.com/bar",
+							TokenEndpoint:         "http://foo.com/bar",
+							JWKSURI:               "http://foo.com/bar",
+							EndSessionEndpoint:    "http://foo.com/bar",
+							PostLogoutRedirectURI: "/_logout",
+							AccessTokenEnable:     true,
 						},
 					},
 				},
@@ -4177,11 +8381,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientID:      "foo",
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://foo.com/auth",
-							TokenEndpoint: "https://foo.com/token",
-							JWKSURI:       "https://foo.com/certs",
+							ClientID:              "foo",
+							ClientSecret:          "oidc-secret",
+							AuthEndpoint:          "https://foo.com/auth",
+							TokenEndpoint:         "https://foo.com/token",
+							JWKSURI:               "https://foo.com/certs",
+							EndSessionEndpoint:    "https://foo.com/logout",
+							PostLogoutRedirectURI: "/_logout",
+							AccessTokenEnable:     true,
 						},
 					},
 				},
@@ -4192,11 +8399,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientID:      "foo",
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://bar.com/auth",
-							TokenEndpoint: "https://bar.com/token",
-							JWKSURI:       "https://bar.com/certs",
+							ClientID:              "foo",
+							ClientSecret:          "oidc-secret",
+							AuthEndpoint:          "https://bar.com/auth",
+							TokenEndpoint:         "https://bar.com/token",
+							JWKSURI:               "https://bar.com/certs",
+							EndSessionEndpoint:    "https://bar.com/logout",
+							PostLogoutRedirectURI: "/_logout",
+							AccessTokenEnable:     true,
 						},
 					},
 				},
@@ -4216,14 +8426,17 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			context: "route",
 			oidcPolCfg: &oidcPolicyCfg{
 				oidc: &version2.OIDC{
-					AuthEndpoint:   "https://foo.com/auth",
-					TokenEndpoint:  "https://foo.com/token",
-					JwksURI:        "https://foo.com/certs",
-					ClientID:       "foo",
-					ClientSecret:   "super_secret_123",
-					RedirectURI:    "/_codexch",
-					Scope:          "openid",
-					ZoneSyncLeeway: 0,
+					AuthEndpoint:          "https://foo.com/auth",
+					TokenEndpoint:         "https://foo.com/token",
+					JwksURI:               "https://foo.com/certs",
+					ClientID:              "foo",
+					ClientSecret:          "super_secret_123",
+					RedirectURI:           "/_codexch",
+					Scope:                 "openid",
+					ZoneSyncLeeway:        0,
+					EndSessionEndpoint:    "https://foo.com/logout",
+					PostLogoutRedirectURI: "/_logout",
+					AccessTokenEnable:     true,
 				},
 				key: "default/oidc-policy-1",
 			},
@@ -4239,13 +8452,16 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{
 				oidc: &version2.OIDC{
-					AuthEndpoint:  "https://foo.com/auth",
-					TokenEndpoint: "https://foo.com/token",
-					JwksURI:       "https://foo.com/certs",
-					ClientID:      "foo",
-					ClientSecret:  "super_secret_123",
-					RedirectURI:   "/_codexch",
-					Scope:         "openid",
+					AuthEndpoint:          "https://foo.com/auth",
+					TokenEndpoint:         "https://foo.com/token",
+					JwksURI:               "https://foo.com/certs",
+					ClientID:              "foo",
+					ClientSecret:          "super_secret_123",
+					RedirectURI:           "/_codexch",
+					Scope:                 "openid",
+					EndSessionEndpoint:    "https://foo.com/logout",
+					PostLogoutRedirectURI: "/_logout",
+					AccessTokenEnable:     true,
 				},
 				key: "default/oidc-policy-1",
 			},
@@ -4270,11 +8486,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://foo.com/auth",
-							TokenEndpoint: "https://foo.com/token",
-							JWKSURI:       "https://foo.com/certs",
-							ClientID:      "foo",
+							ClientSecret:          "oidc-secret",
+							AuthEndpoint:          "https://foo.com/auth",
+							TokenEndpoint:         "https://foo.com/token",
+							JWKSURI:               "https://foo.com/certs",
+							EndSessionEndpoint:    "https://foo.com/logout",
+							PostLogoutRedirectURI: "/_logout",
+							ClientID:              "foo",
+							AccessTokenEnable:     true,
 						},
 					},
 				},
@@ -4285,11 +8504,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://bar.com/auth",
-							TokenEndpoint: "https://bar.com/token",
-							JWKSURI:       "https://bar.com/certs",
-							ClientID:      "bar",
+							ClientSecret:          "oidc-secret",
+							AuthEndpoint:          "https://bar.com/auth",
+							TokenEndpoint:         "https://bar.com/token",
+							JWKSURI:               "https://bar.com/certs",
+							EndSessionEndpoint:    "https://bar.com/logout",
+							PostLogoutRedirectURI: "/_logout",
+							ClientID:              "bar",
+							AccessTokenEnable:     true,
 						},
 					},
 				},
@@ -4317,18 +8539,227 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{
 				&version2.OIDC{
-					AuthEndpoint:   "https://foo.com/auth",
-					TokenEndpoint:  "https://foo.com/token",
-					JwksURI:        "https://foo.com/certs",
-					ClientID:       "foo",
-					ClientSecret:   "super_secret_123",
-					RedirectURI:    "/_codexch",
-					Scope:          "openid",
-					ZoneSyncLeeway: 200,
+					AuthEndpoint:          "https://foo.com/auth",
+					TokenEndpoint:         "https://foo.com/token",
+					JwksURI:               "https://foo.com/certs",
+					ClientID:              "foo",
+					ClientSecret:          "super_secret_123",
+					RedirectURI:           "/_codexch",
+					Scope:                 "openid",
+					EndSessionEndpoint:    "https://foo.com/logout",
+					PostLogoutRedirectURI: "/_logout",
+					ZoneSyncLeeway:        200,
+					AccessTokenEnable:     true,
 				},
 				"default/oidc-policy",
 			},
 			msg: "multi oidc",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "api-key-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+				"default/api-key-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/api-key-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeAPIKey,
+							Data: map[string][]byte{
+								"client1": []byte("password"),
+							},
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple API Key policies in the same context is not valid. API Key policy default/api-key-policy-2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "api key multi api key policies",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "api-key-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+				"default/api-key-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/api-key-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeJWK,
+							Data: map[string][]byte{
+								"client1": []byte("password"),
+							},
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`API Key policy default/api-key-policy references a secret default/api-key-secret of a wrong type 'nginx.org/jwk', must be 'nginx.org/apikey'`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "api key referencing wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "api-key-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+				"default/api-key-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/api-key-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeAPIKey,
+							Data: map[string][]byte{
+								"client1": []byte("password"),
+								"client2": []byte("password"),
+							},
+						},
+						Error: errors.New("secret is invalid"),
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`API Key default/api-key-policy references an invalid secret default/api-key-secret: secret is invalid`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "api key referencing invalid api key secrets",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -4395,30 +8826,33 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
+		t.Run(test.msg, func(t *testing.T) {
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
-		if test.oidcPolCfg != nil {
-			vsc.oidcPolCfg = test.oidcPolCfg
-		}
+			if test.oidcPolCfg != nil {
+				vsc.oidcPolCfg = test.oidcPolCfg
+			}
 
-		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
-		if diff := cmp.Diff(test.expected, result); diff != "" {
-			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-		}
-		if !reflect.DeepEqual(vsc.warnings, test.expectedWarnings) {
-			t.Errorf(
-				"generatePolicies() returned warnings of \n%v but expected \n%v for the case of %s",
-				vsc.warnings,
-				test.expectedWarnings,
-				test.msg,
-			)
-		}
-		if diff := cmp.Diff(test.expectedOidc.oidc, vsc.oidcPolCfg.oidc); diff != "" {
-			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-		}
-		if diff := cmp.Diff(test.expectedOidc.key, vsc.oidcPolCfg.key); diff != "" {
-			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-		}
+			result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
+			result.BundleValidator = nil
+			if diff := cmp.Diff(test.expected, result); diff != "" {
+				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			}
+			if !reflect.DeepEqual(vsc.warnings, test.expectedWarnings) {
+				t.Errorf(
+					"generatePolicies() returned warnings of \n%v but expected \n%v for the case of %s",
+					vsc.warnings,
+					test.expectedWarnings,
+					test.msg,
+				)
+			}
+			if diff := cmp.Diff(test.expectedOidc.oidc, vsc.oidcPolCfg.oidc); diff != "" {
+				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			}
+			if diff := cmp.Diff(test.expectedOidc.key, vsc.oidcPolCfg.key); diff != "" {
+				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			}
+		})
 	}
 }
 
@@ -4504,7 +8938,11 @@ func TestGenerateUpstream(t *testing.T) {
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
+	backupEndpoints := []string{
+		"backup.service.svc.test.corp.local:8080",
+	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -4529,10 +8967,15 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod:         "random",
 		Keepalive:        21,
 		UpstreamZoneSize: "256k",
+		BackupServers: []version2.UpstreamServer{
+			{
+				Address: "backup.service.svc.test.corp.local:8080",
+			},
+		},
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, backupEndpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -4610,8 +9053,8 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false)
-		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints)
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
+		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints, nil)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -4627,7 +9070,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	name := "test-upstream"
 	endpoints := []string{"example.com"}
 	upstream := conf_v1.Upstream{Service: name}
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.Upstream{
 		Name: name,
@@ -4642,8 +9085,8 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, true, endpoints)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false, &fakeBV)
+	result := vsc.generateUpstream(nil, name, upstream, true, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -4661,6 +9104,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		"192.168.10.10:8080",
 	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -4688,8 +9132,8 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		NTLM:             true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false, &fakeBV)
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -4925,6 +9369,7 @@ func TestGenerateBuffer(t *testing.T) {
 func TestGenerateLocationForProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -4971,6 +9416,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 func TestGenerateLocationForGrpcProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -5205,7 +9651,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 		{
 			inputTLS:         nil,
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -5216,7 +9662,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -5227,7 +9673,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{},
-			inputCfgParams:  &ConfigParams{},
+			inputCfgParams:  &ConfigParams{Context: context.Background()},
 			wildcard:        true,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -5242,7 +9688,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "missing",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/missing": {
@@ -5262,7 +9708,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "mistyped",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/mistyped": {
@@ -5292,7 +9738,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 					Path: "secret.pem",
 				},
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -5308,7 +9754,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	namespace := "default"
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
 
 		// it is ok to use nil as the owner
 		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
@@ -5596,7 +10042,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 	}
 
-	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{}, &StaticConfigParams{})
+	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{Context: context.Background()}, &StaticConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
@@ -5642,32 +10088,105 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 
 func TestGenerateSplits(t *testing.T) {
 	t.Parallel()
-	originalPath := "/path"
-	splits := []conf_v1.Split{
+	tests := []struct {
+		splits               []conf_v1.Split
+		expectedSplitClients []version2.SplitClient
+		msg                  string
+	}{
 		{
-			Weight: 90,
-			Action: &conf_v1.Action{
-				Proxy: &conf_v1.ActionProxy{
-					Upstream:    "coffee-v1",
-					RewritePath: "/rewrite",
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 9,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+				{
+					Weight: 1,
+					Action: &conf_v1.Action{
+						Return: &conf_v1.ActionReturn{
+							Body: "hello",
+						},
+					},
 				},
 			},
-		},
-		{
-			Weight: 9,
-			Action: &conf_v1.Action{
-				Pass: "coffee-v2",
-			},
-		},
-		{
-			Weight: 1,
-			Action: &conf_v1.Action{
-				Return: &conf_v1.ActionReturn{
-					Body: "hello",
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_splits_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_2",
+						},
+					},
 				},
 			},
+			msg: "Normal Split",
+		},
+		{
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 0,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+				{
+					Weight: 10,
+					Action: &conf_v1.Action{
+						Return: &conf_v1.ActionReturn{
+							Body: "hello",
+						},
+					},
+				},
+			},
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_splits_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_2",
+						},
+					},
+				},
+			},
+			msg: "Split with 0 weight",
 		},
 	}
+	originalPath := "/path"
 
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -5675,10 +10194,10 @@ func TestGenerateSplits(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -5697,11 +10216,11 @@ func TestGenerateSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -5715,24 +10234,6 @@ func TestGenerateSplits(t *testing.T) {
 					URL:  "http://nginx.com",
 					Code: 301,
 				},
-			},
-		},
-	}
-	expectedSplitClient := version2.SplitClient{
-		Source:   "$request_id",
-		Variable: "$vs_default_cafe_splits_1",
-		Distributions: []version2.Distribution{
-			{
-				Weight: "90%",
-				Value:  "/internal_location_splits_1_split_0",
-			},
-			{
-				Weight: "9%",
-				Value:  "/internal_location_splits_1_split_1",
-			},
-			{
-				Weight: "1%",
-				Value:  "/internal_location_splits_1_split_2",
 			},
 		},
 	}
@@ -5830,34 +10331,1722 @@ func TestGenerateSplits(t *testing.T) {
 		owner: nil,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			resultSplitClients, resultLocations, resultReturnLocations, _, _, _, _ := generateSplits(
+				test.splits,
+				upstreamNamer,
+				crUpstreams,
+				variableNamer,
+				scIndex,
+				&cfgParams,
+				errorPageDetails,
+				originalPath,
+				locSnippet,
+				enableSnippets,
+				returnLocationIndex,
+				true,
+				"coffee",
+				"default",
+				vsc.warnings,
+				vsc.DynamicWeightChangesReload,
+			)
 
-	resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
-		splits,
-		upstreamNamer,
-		crUpstreams,
-		variableNamer,
-		scIndex,
-		&cfgParams,
-		errorPageDetails,
-		originalPath,
-		locSnippet,
-		enableSnippets,
-		returnLocationIndex,
-		true,
-		"coffee",
-		"default",
-		vsc.warnings,
-	)
+			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
+				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClients, resultSplitClients))
+			}
+			if !cmp.Equal(expectedLocations, resultLocations) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedLocations, resultLocations))
+			}
+			if !cmp.Equal(expectedReturnLocations, resultReturnLocations) {
+				t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", cmp.Diff(expectedReturnLocations, resultReturnLocations))
+			}
+		})
+	}
+}
 
-	if diff := cmp.Diff(expectedSplitClient, resultSplitClient); diff != "" {
-		t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", diff)
+func TestGenerateSplitsWeightChangesDynamicReload(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		splits               []conf_v1.Split
+		expectedSplitClients []version2.SplitClient
+		msg                  string
+	}{
+		{
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 10,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+			},
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_0_100",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "100%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_1_99",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "99%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_2_98",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "2%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "98%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_3_97",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "3%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "97%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_4_96",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "4%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "96%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_5_95",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "5%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "95%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_6_94",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "6%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "94%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_7_93",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "7%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "93%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_8_92",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "8%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "92%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_9_91",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "91%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_10_90",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_11_89",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "11%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "89%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_12_88",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "12%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "88%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_13_87",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "13%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "87%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_14_86",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "14%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "86%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_15_85",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "15%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "85%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_16_84",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "16%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "84%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_17_83",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "17%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "83%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_18_82",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "18%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "82%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_19_81",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "19%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "81%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_20_80",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "20%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "80%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_21_79",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "21%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "79%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_22_78",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "22%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "78%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_23_77",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "23%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "77%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_24_76",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "24%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "76%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_25_75",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "25%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "75%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_26_74",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "26%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "74%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_27_73",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "27%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "73%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_28_72",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "28%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "72%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_29_71",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "29%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "71%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_30_70",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "30%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "70%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_31_69",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "31%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "69%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_32_68",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "32%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "68%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_33_67",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "33%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "67%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_34_66",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "34%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "66%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_35_65",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "35%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "65%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_36_64",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "36%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "64%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_37_63",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "37%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "63%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_38_62",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "38%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "62%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_39_61",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "39%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "61%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_40_60",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "40%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "60%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_41_59",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "41%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "59%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_42_58",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "42%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "58%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_43_57",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "43%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "57%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_44_56",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "44%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "56%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_45_55",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "45%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "55%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_46_54",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "46%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "54%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_47_53",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "47%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "53%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_48_52",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "48%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "52%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_49_51",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "49%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "51%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_50_50",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "50%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "50%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_51_49",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "51%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "49%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_52_48",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "52%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "48%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_53_47",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "53%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "47%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_54_46",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "54%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "46%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_55_45",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "55%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "45%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_56_44",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "56%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "44%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_57_43",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "57%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "43%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_58_42",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "58%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "42%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_59_41",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "59%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "41%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_60_40",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "60%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "40%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_61_39",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "61%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "39%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_62_38",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "62%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "38%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_63_37",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "63%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "37%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_64_36",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "64%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "36%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_65_35",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "65%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "35%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_66_34",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "66%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "34%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_67_33",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "67%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "33%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_68_32",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "68%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "32%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_69_31",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "69%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "31%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_70_30",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "70%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "30%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_71_29",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "71%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "29%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_72_28",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "72%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "28%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_73_27",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "73%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "27%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_74_26",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "74%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "26%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_75_25",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "75%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "25%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_76_24",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "76%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "24%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_77_23",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "77%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "23%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_78_22",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "78%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "22%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_79_21",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "79%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "21%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_80_20",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "80%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "20%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_81_19",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "81%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "19%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_82_18",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "82%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "18%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_83_17",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "83%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "17%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_84_16",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "84%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "16%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_85_15",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "85%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "15%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_86_14",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "86%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "14%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_87_13",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "87%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "13%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_88_12",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "88%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "12%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_89_11",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "89%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "11%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_90_10",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_91_9",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "91%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_92_8",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "92%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "8%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_93_7",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "93%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "7%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_94_6",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "94%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "6%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_95_5",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "95%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "5%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_96_4",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "96%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "4%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_97_3",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "97%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "3%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_98_2",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "98%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "2%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_99_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "99%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_100_0",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "100%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+					},
+				},
+			},
+			msg: "Normal Split",
+		},
 	}
-	if diff := cmp.Diff(expectedLocations, resultLocations); diff != "" {
-		t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", diff)
+	originalPath := "/path"
+
+	virtualServer := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
 	}
-	if diff := cmp.Diff(expectedReturnLocations, resultReturnLocations); diff != "" {
-		t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", diff)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
+	scIndex := 1
+	cfgParams := ConfigParams{Context: context.Background()}
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {
+			Service: "coffee-v1",
+		},
+		"vs_default_cafe_coffee-v2": {
+			Service: "coffee-v2",
+		},
+	}
+	enableSnippets := false
+	expectedLocations := []version2.Location{
+		{
+			Path:      "/internal_location_splits_1_split_0",
+			ProxyPass: "http://vs_default_cafe_coffee-v1",
+			Rewrites: []string{
+				"^ $request_uri_no_args",
+				fmt.Sprintf(`"^%v(.*)$" "/rewrite$1" break`, originalPath),
+			},
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-v1.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-v1",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+		},
+		{
+			Path:                     "/internal_location_splits_1_split_1",
+			ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-v2.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-v2",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+		},
+	}
+
+	expectedMaps := []version2.Map{
+		{
+			Source:   "$vs_default_cafe_keyval_split_clients_1",
+			Variable: "$vs_default_cafe_map_split_clients_1",
+			Parameters: []version2.Parameter{
+				{Value: `"vs_default_cafe_split_clients_1_0_100"`, Result: "$vs_default_cafe_split_clients_1_0_100"},
+				{Value: `"vs_default_cafe_split_clients_1_1_99"`, Result: "$vs_default_cafe_split_clients_1_1_99"},
+				{Value: `"vs_default_cafe_split_clients_1_2_98"`, Result: "$vs_default_cafe_split_clients_1_2_98"},
+				{Value: `"vs_default_cafe_split_clients_1_3_97"`, Result: "$vs_default_cafe_split_clients_1_3_97"},
+				{Value: `"vs_default_cafe_split_clients_1_4_96"`, Result: "$vs_default_cafe_split_clients_1_4_96"},
+				{Value: `"vs_default_cafe_split_clients_1_5_95"`, Result: "$vs_default_cafe_split_clients_1_5_95"},
+				{Value: `"vs_default_cafe_split_clients_1_6_94"`, Result: "$vs_default_cafe_split_clients_1_6_94"},
+				{Value: `"vs_default_cafe_split_clients_1_7_93"`, Result: "$vs_default_cafe_split_clients_1_7_93"},
+				{Value: `"vs_default_cafe_split_clients_1_8_92"`, Result: "$vs_default_cafe_split_clients_1_8_92"},
+				{Value: `"vs_default_cafe_split_clients_1_9_91"`, Result: "$vs_default_cafe_split_clients_1_9_91"},
+				{Value: `"vs_default_cafe_split_clients_1_10_90"`, Result: "$vs_default_cafe_split_clients_1_10_90"},
+				{Value: `"vs_default_cafe_split_clients_1_11_89"`, Result: "$vs_default_cafe_split_clients_1_11_89"},
+				{Value: `"vs_default_cafe_split_clients_1_12_88"`, Result: "$vs_default_cafe_split_clients_1_12_88"},
+				{Value: `"vs_default_cafe_split_clients_1_13_87"`, Result: "$vs_default_cafe_split_clients_1_13_87"},
+				{Value: `"vs_default_cafe_split_clients_1_14_86"`, Result: "$vs_default_cafe_split_clients_1_14_86"},
+				{Value: `"vs_default_cafe_split_clients_1_15_85"`, Result: "$vs_default_cafe_split_clients_1_15_85"},
+				{Value: `"vs_default_cafe_split_clients_1_16_84"`, Result: "$vs_default_cafe_split_clients_1_16_84"},
+				{Value: `"vs_default_cafe_split_clients_1_17_83"`, Result: "$vs_default_cafe_split_clients_1_17_83"},
+				{Value: `"vs_default_cafe_split_clients_1_18_82"`, Result: "$vs_default_cafe_split_clients_1_18_82"},
+				{Value: `"vs_default_cafe_split_clients_1_19_81"`, Result: "$vs_default_cafe_split_clients_1_19_81"},
+				{Value: `"vs_default_cafe_split_clients_1_20_80"`, Result: "$vs_default_cafe_split_clients_1_20_80"},
+				{Value: `"vs_default_cafe_split_clients_1_21_79"`, Result: "$vs_default_cafe_split_clients_1_21_79"},
+				{Value: `"vs_default_cafe_split_clients_1_22_78"`, Result: "$vs_default_cafe_split_clients_1_22_78"},
+				{Value: `"vs_default_cafe_split_clients_1_23_77"`, Result: "$vs_default_cafe_split_clients_1_23_77"},
+				{Value: `"vs_default_cafe_split_clients_1_24_76"`, Result: "$vs_default_cafe_split_clients_1_24_76"},
+				{Value: `"vs_default_cafe_split_clients_1_25_75"`, Result: "$vs_default_cafe_split_clients_1_25_75"},
+				{Value: `"vs_default_cafe_split_clients_1_26_74"`, Result: "$vs_default_cafe_split_clients_1_26_74"},
+				{Value: `"vs_default_cafe_split_clients_1_27_73"`, Result: "$vs_default_cafe_split_clients_1_27_73"},
+				{Value: `"vs_default_cafe_split_clients_1_28_72"`, Result: "$vs_default_cafe_split_clients_1_28_72"},
+				{Value: `"vs_default_cafe_split_clients_1_29_71"`, Result: "$vs_default_cafe_split_clients_1_29_71"},
+				{Value: `"vs_default_cafe_split_clients_1_30_70"`, Result: "$vs_default_cafe_split_clients_1_30_70"},
+				{Value: `"vs_default_cafe_split_clients_1_31_69"`, Result: "$vs_default_cafe_split_clients_1_31_69"},
+				{Value: `"vs_default_cafe_split_clients_1_32_68"`, Result: "$vs_default_cafe_split_clients_1_32_68"},
+				{Value: `"vs_default_cafe_split_clients_1_33_67"`, Result: "$vs_default_cafe_split_clients_1_33_67"},
+				{Value: `"vs_default_cafe_split_clients_1_34_66"`, Result: "$vs_default_cafe_split_clients_1_34_66"},
+				{Value: `"vs_default_cafe_split_clients_1_35_65"`, Result: "$vs_default_cafe_split_clients_1_35_65"},
+				{Value: `"vs_default_cafe_split_clients_1_36_64"`, Result: "$vs_default_cafe_split_clients_1_36_64"},
+				{Value: `"vs_default_cafe_split_clients_1_37_63"`, Result: "$vs_default_cafe_split_clients_1_37_63"},
+				{Value: `"vs_default_cafe_split_clients_1_38_62"`, Result: "$vs_default_cafe_split_clients_1_38_62"},
+				{Value: `"vs_default_cafe_split_clients_1_39_61"`, Result: "$vs_default_cafe_split_clients_1_39_61"},
+				{Value: `"vs_default_cafe_split_clients_1_40_60"`, Result: "$vs_default_cafe_split_clients_1_40_60"},
+				{Value: `"vs_default_cafe_split_clients_1_41_59"`, Result: "$vs_default_cafe_split_clients_1_41_59"},
+				{Value: `"vs_default_cafe_split_clients_1_42_58"`, Result: "$vs_default_cafe_split_clients_1_42_58"},
+				{Value: `"vs_default_cafe_split_clients_1_43_57"`, Result: "$vs_default_cafe_split_clients_1_43_57"},
+				{Value: `"vs_default_cafe_split_clients_1_44_56"`, Result: "$vs_default_cafe_split_clients_1_44_56"},
+				{Value: `"vs_default_cafe_split_clients_1_45_55"`, Result: "$vs_default_cafe_split_clients_1_45_55"},
+				{Value: `"vs_default_cafe_split_clients_1_46_54"`, Result: "$vs_default_cafe_split_clients_1_46_54"},
+				{Value: `"vs_default_cafe_split_clients_1_47_53"`, Result: "$vs_default_cafe_split_clients_1_47_53"},
+				{Value: `"vs_default_cafe_split_clients_1_48_52"`, Result: "$vs_default_cafe_split_clients_1_48_52"},
+				{Value: `"vs_default_cafe_split_clients_1_49_51"`, Result: "$vs_default_cafe_split_clients_1_49_51"},
+				{Value: `"vs_default_cafe_split_clients_1_50_50"`, Result: "$vs_default_cafe_split_clients_1_50_50"},
+				{Value: `"vs_default_cafe_split_clients_1_51_49"`, Result: "$vs_default_cafe_split_clients_1_51_49"},
+				{Value: `"vs_default_cafe_split_clients_1_52_48"`, Result: "$vs_default_cafe_split_clients_1_52_48"},
+				{Value: `"vs_default_cafe_split_clients_1_53_47"`, Result: "$vs_default_cafe_split_clients_1_53_47"},
+				{Value: `"vs_default_cafe_split_clients_1_54_46"`, Result: "$vs_default_cafe_split_clients_1_54_46"},
+				{Value: `"vs_default_cafe_split_clients_1_55_45"`, Result: "$vs_default_cafe_split_clients_1_55_45"},
+				{Value: `"vs_default_cafe_split_clients_1_56_44"`, Result: "$vs_default_cafe_split_clients_1_56_44"},
+				{Value: `"vs_default_cafe_split_clients_1_57_43"`, Result: "$vs_default_cafe_split_clients_1_57_43"},
+				{Value: `"vs_default_cafe_split_clients_1_58_42"`, Result: "$vs_default_cafe_split_clients_1_58_42"},
+				{Value: `"vs_default_cafe_split_clients_1_59_41"`, Result: "$vs_default_cafe_split_clients_1_59_41"},
+				{Value: `"vs_default_cafe_split_clients_1_60_40"`, Result: "$vs_default_cafe_split_clients_1_60_40"},
+				{Value: `"vs_default_cafe_split_clients_1_61_39"`, Result: "$vs_default_cafe_split_clients_1_61_39"},
+				{Value: `"vs_default_cafe_split_clients_1_62_38"`, Result: "$vs_default_cafe_split_clients_1_62_38"},
+				{Value: `"vs_default_cafe_split_clients_1_63_37"`, Result: "$vs_default_cafe_split_clients_1_63_37"},
+				{Value: `"vs_default_cafe_split_clients_1_64_36"`, Result: "$vs_default_cafe_split_clients_1_64_36"},
+				{Value: `"vs_default_cafe_split_clients_1_65_35"`, Result: "$vs_default_cafe_split_clients_1_65_35"},
+				{Value: `"vs_default_cafe_split_clients_1_66_34"`, Result: "$vs_default_cafe_split_clients_1_66_34"},
+				{Value: `"vs_default_cafe_split_clients_1_67_33"`, Result: "$vs_default_cafe_split_clients_1_67_33"},
+				{Value: `"vs_default_cafe_split_clients_1_68_32"`, Result: "$vs_default_cafe_split_clients_1_68_32"},
+				{Value: `"vs_default_cafe_split_clients_1_69_31"`, Result: "$vs_default_cafe_split_clients_1_69_31"},
+				{Value: `"vs_default_cafe_split_clients_1_70_30"`, Result: "$vs_default_cafe_split_clients_1_70_30"},
+				{Value: `"vs_default_cafe_split_clients_1_71_29"`, Result: "$vs_default_cafe_split_clients_1_71_29"},
+				{Value: `"vs_default_cafe_split_clients_1_72_28"`, Result: "$vs_default_cafe_split_clients_1_72_28"},
+				{Value: `"vs_default_cafe_split_clients_1_73_27"`, Result: "$vs_default_cafe_split_clients_1_73_27"},
+				{Value: `"vs_default_cafe_split_clients_1_74_26"`, Result: "$vs_default_cafe_split_clients_1_74_26"},
+				{Value: `"vs_default_cafe_split_clients_1_75_25"`, Result: "$vs_default_cafe_split_clients_1_75_25"},
+				{Value: `"vs_default_cafe_split_clients_1_76_24"`, Result: "$vs_default_cafe_split_clients_1_76_24"},
+				{Value: `"vs_default_cafe_split_clients_1_77_23"`, Result: "$vs_default_cafe_split_clients_1_77_23"},
+				{Value: `"vs_default_cafe_split_clients_1_78_22"`, Result: "$vs_default_cafe_split_clients_1_78_22"},
+				{Value: `"vs_default_cafe_split_clients_1_79_21"`, Result: "$vs_default_cafe_split_clients_1_79_21"},
+				{Value: `"vs_default_cafe_split_clients_1_80_20"`, Result: "$vs_default_cafe_split_clients_1_80_20"},
+				{Value: `"vs_default_cafe_split_clients_1_81_19"`, Result: "$vs_default_cafe_split_clients_1_81_19"},
+				{Value: `"vs_default_cafe_split_clients_1_82_18"`, Result: "$vs_default_cafe_split_clients_1_82_18"},
+				{Value: `"vs_default_cafe_split_clients_1_83_17"`, Result: "$vs_default_cafe_split_clients_1_83_17"},
+				{Value: `"vs_default_cafe_split_clients_1_84_16"`, Result: "$vs_default_cafe_split_clients_1_84_16"},
+				{Value: `"vs_default_cafe_split_clients_1_85_15"`, Result: "$vs_default_cafe_split_clients_1_85_15"},
+				{Value: `"vs_default_cafe_split_clients_1_86_14"`, Result: "$vs_default_cafe_split_clients_1_86_14"},
+				{Value: `"vs_default_cafe_split_clients_1_87_13"`, Result: "$vs_default_cafe_split_clients_1_87_13"},
+				{Value: `"vs_default_cafe_split_clients_1_88_12"`, Result: "$vs_default_cafe_split_clients_1_88_12"},
+				{Value: `"vs_default_cafe_split_clients_1_89_11"`, Result: "$vs_default_cafe_split_clients_1_89_11"},
+				{Value: `"vs_default_cafe_split_clients_1_90_10"`, Result: "$vs_default_cafe_split_clients_1_90_10"},
+				{Value: `"vs_default_cafe_split_clients_1_91_9"`, Result: "$vs_default_cafe_split_clients_1_91_9"},
+				{Value: `"vs_default_cafe_split_clients_1_92_8"`, Result: "$vs_default_cafe_split_clients_1_92_8"},
+				{Value: `"vs_default_cafe_split_clients_1_93_7"`, Result: "$vs_default_cafe_split_clients_1_93_7"},
+				{Value: `"vs_default_cafe_split_clients_1_94_6"`, Result: "$vs_default_cafe_split_clients_1_94_6"},
+				{Value: `"vs_default_cafe_split_clients_1_95_5"`, Result: "$vs_default_cafe_split_clients_1_95_5"},
+				{Value: `"vs_default_cafe_split_clients_1_96_4"`, Result: "$vs_default_cafe_split_clients_1_96_4"},
+				{Value: `"vs_default_cafe_split_clients_1_97_3"`, Result: "$vs_default_cafe_split_clients_1_97_3"},
+				{Value: `"vs_default_cafe_split_clients_1_98_2"`, Result: "$vs_default_cafe_split_clients_1_98_2"},
+				{Value: `"vs_default_cafe_split_clients_1_99_1"`, Result: "$vs_default_cafe_split_clients_1_99_1"},
+				{Value: `"vs_default_cafe_split_clients_1_100_0"`, Result: "$vs_default_cafe_split_clients_1_100_0"},
+				{Value: "default", Result: "$vs_default_cafe_split_clients_1_100_0"},
+			},
+		},
+	}
+
+	expectedKeyValZones := []version2.KeyValZone{
+		{
+			Name:  "vs_default_cafe_keyval_zone_split_clients_1",
+			Size:  "100k",
+			State: "/etc/nginx/state_files/vs_default_cafe_keyval_zone_split_clients_1.json",
+		},
+	}
+
+	expectedKeyVals := []version2.KeyVal{
+		{
+			Key:      `"vs_default_cafe_keyval_key_split_clients_1"`,
+			Variable: "$vs_default_cafe_keyval_split_clients_1",
+			ZoneName: "vs_default_cafe_keyval_zone_split_clients_1",
+		},
+	}
+
+	expectedTwoWaySplitClients := []version2.TwoWaySplitClients{
+		{
+			Key:               `"vs_default_cafe_keyval_key_split_clients_1"`,
+			Variable:          "$vs_default_cafe_keyval_split_clients_1",
+			ZoneName:          "vs_default_cafe_keyval_zone_split_clients_1",
+			SplitClientsIndex: 1,
+			Weights:           []int{90, 10},
+		},
+	}
+	returnLocationIndex := 1
+
+	staticConfigParams := &StaticConfigParams{
+		DynamicWeightChangesReload: true,
+	}
+
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, staticConfigParams, false, &fakeBV)
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			resultSplitClients, resultLocations, _, resultMaps, resultKeyValZones, resultKeyVals, resultTwoWaySplitClients := generateSplits(
+				test.splits,
+				upstreamNamer,
+				crUpstreams,
+				variableNamer,
+				scIndex,
+				&cfgParams,
+				errorPageDetails{},
+				originalPath,
+				"",
+				enableSnippets,
+				returnLocationIndex,
+				true,
+				"coffee",
+				"default",
+				vsc.warnings,
+				vsc.DynamicWeightChangesReload,
+			)
+
+			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
+				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClients, resultSplitClients))
+			}
+			if !cmp.Equal(expectedLocations, resultLocations) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedLocations, resultLocations))
+			}
+
+			if !cmp.Equal(expectedMaps, resultMaps) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedMaps, resultMaps))
+			}
+
+			if !cmp.Equal(expectedKeyValZones, resultKeyValZones) {
+				t.Errorf("generateSplits() resultKeyValZones mismatch (-want +got):\n%s", cmp.Diff(expectedKeyValZones, resultKeyValZones))
+			}
+
+			if !cmp.Equal(expectedKeyVals, resultKeyVals) {
+				t.Errorf("generateSplits() resultKeyVals mismatch (-want +got):\n%s", cmp.Diff(expectedKeyVals, resultKeyVals))
+			}
+
+			if !cmp.Equal(expectedTwoWaySplitClients, resultTwoWaySplitClients) {
+				t.Errorf("generateSplits() resultTwoWaySplitClients mismatch (-want +got):\n%s", cmp.Diff(expectedTwoWaySplitClients, resultTwoWaySplitClients))
+			}
+		})
 	}
 }
 
@@ -5886,8 +12075,8 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 
 	expected := routingCfg{
@@ -5945,9 +12134,10 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	locSnippet := ""
 	enableSnippets := false
+	weightChangesDynamicReload := false
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -5964,7 +12154,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
-		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{})
+		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{}, weightChangesDynamicReload)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -6051,11 +12241,11 @@ func TestGenerateMatchesConfig(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -6072,8 +12262,8 @@ func TestGenerateMatchesConfig(t *testing.T) {
 			},
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 
@@ -6346,8 +12536,9 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
+	weightChangesDynamicReload := false
 	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
@@ -6377,6 +12568,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		"",
 		"",
 		Warnings{},
+		weightChangesDynamicReload,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -6454,8 +12646,8 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 	errorPages := []conf_v1.ErrorPage{
@@ -6466,11 +12658,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -6757,8 +12949,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
+	weightChangesWithoutReload := false
 	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
@@ -6787,6 +12980,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		"coffee",
 		"default",
 		Warnings{},
+		weightChangesWithoutReload,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -7028,6 +13222,7 @@ func TestNewHealthCheckWithDefaults(t *testing.T) {
 		URI:                 "/",
 		Interval:            "5s",
 		Jitter:              "0s",
+		KeepaliveTime:       "60s",
 		Fails:               1,
 		Passes:              1,
 		Headers:             make(map[string]string),
@@ -7056,6 +13251,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 					Path:           "/healthz",
 					Interval:       "5s",
 					Jitter:         "2s",
+					KeepaliveTime:  "120s",
 					Fails:          3,
 					Passes:         2,
 					Port:           8080,
@@ -7085,6 +13281,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 				URI:                 "/healthz",
 				Interval:            "5s",
 				Jitter:              "2s",
+				KeepaliveTime:       "120s",
 				Fails:               3,
 				Passes:              2,
 				Port:                8080,
@@ -7115,6 +13312,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 				URI:                 "/",
 				Interval:            "5s",
 				Jitter:              "0s",
+				KeepaliveTime:       "60s",
 				Fails:               1,
 				Passes:              1,
 				Headers:             make(map[string]string),
@@ -7137,6 +13335,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 				URI:                 "/",
 				Interval:            "5s",
 				Jitter:              "0s",
+				KeepaliveTime:       "60s",
 				Fails:               1,
 				Passes:              1,
 				Headers:             make(map[string]string),
@@ -7155,6 +13354,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 					Enable:         true,
 					Interval:       "1m 5s",
 					Jitter:         "2m 3s",
+					KeepaliveTime:  "1m 6s",
 					ConnectTimeout: "1m 10s",
 					SendTimeout:    "1m 20s",
 					ReadTimeout:    "1m 30s",
@@ -7170,6 +13370,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 				URI:                 "/",
 				Interval:            "1m5s",
 				Jitter:              "2m3s",
+				KeepaliveTime:       "1m6s",
 				Fails:               1,
 				Passes:              1,
 				Headers:             make(map[string]string),
@@ -7197,6 +13398,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 				URI:                 "/",
 				Interval:            "5s",
 				Jitter:              "0s",
+				KeepaliveTime:       "60s",
 				Fails:               1,
 				Passes:              1,
 				Headers:             make(map[string]string),
@@ -7236,6 +13438,7 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 					Enable:         true,
 					Interval:       "5s",
 					Jitter:         "2s",
+					KeepaliveTime:  "120s",
 					Fails:          3,
 					Passes:         2,
 					Port:           50051,
@@ -7267,6 +13470,7 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 				GRPCPass:            fmt.Sprintf("grpc://%v", upstreamName),
 				Interval:            "5s",
 				Jitter:              "2s",
+				KeepaliveTime:       "120s",
 				Fails:               3,
 				Passes:              2,
 				Port:                50051,
@@ -7276,6 +13480,7 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 					"Host":       "my.service",
 					"User-Agent": "nginx",
 				},
+				IsGRPC: true,
 			},
 			msg: "HealthCheck with changed parameters",
 		},
@@ -7299,9 +13504,11 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 				GRPCPass:            fmt.Sprintf("grpc://%v", upstreamName),
 				Interval:            "5s",
 				Jitter:              "0s",
+				KeepaliveTime:       "60s",
 				Fails:               1,
 				Passes:              1,
 				Headers:             make(map[string]string),
+				IsGRPC:              true,
 			},
 			msg: "HealthCheck with default parameters from Upstream",
 		},
@@ -7492,11 +13699,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	for _, test := range tests {
 		isWildcardEnabled := false
 		vsc := newVirtualServerConfigurator(
-			&ConfigParams{},
+			&ConfigParams{Context: context.Background()},
 			test.isPlus,
 			test.isResolverConfigured,
 			&StaticConfigParams{},
 			isWildcardEnabled,
+			&fakeBV,
 		)
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
@@ -7537,7 +13745,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -7571,7 +13779,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -7672,8 +13880,8 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false)
-		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
+		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{}, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -7734,12 +13942,19 @@ func TestGenerateSessionCookie(t *testing.T) {
 			expected: nil,
 			msg:      "session cookie not enabled",
 		},
+		{
+			sc:       &conf_v1.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			expected: &version2.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			msg:      "session cookie with samesite param",
+		},
 	}
 	for _, test := range tests {
-		result := generateSessionCookie(test.sc)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateSessionCookie() returned %v, but expected %v for the case of: %v", result, test.expected, test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			result := generateSessionCookie(test.sc)
+			if !cmp.Equal(test.expected, result) {
+				t.Error(cmp.Diff(test.expected, result))
+			}
+		})
 	}
 }
 
@@ -7846,9 +14061,9 @@ func TestGenerateErrorPages(t *testing.T) {
 					Codes: []int{404, 405, 500, 502},
 					Return: &conf_v1.ErrorPageReturn{
 						ActionReturn: conf_v1.ActionReturn{
-							Code: 200,
+							Code:    200,
+							Headers: nil,
 						},
-						Headers: nil,
 					},
 					Redirect: nil,
 				},
@@ -7927,11 +14142,11 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 							Code: 200,
 							Type: "application/json",
 							Body: "Hello World",
-						},
-						Headers: []conf_v1.Header{
-							{
-								Name:  "HeaderName",
-								Value: "HeaderValue",
+							Headers: []conf_v1.Header{
+								{
+									Name:  "HeaderName",
+									Value: "HeaderValue",
+								},
 							},
 						},
 					},
@@ -7978,6 +14193,7 @@ func TestIsTLSEnabled(t *testing.T) {
 	tests := []struct {
 		upstream   conf_v1.Upstream
 		spiffeCert bool
+		nsmEgress  bool
 		expected   bool
 	}{
 		{
@@ -8016,10 +14232,20 @@ func TestIsTLSEnabled(t *testing.T) {
 			spiffeCert: false,
 			expected:   true,
 		},
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: true,
+				},
+			},
+			nsmEgress:  true,
+			spiffeCert: false,
+			expected:   false,
+		},
 	}
 
 	for _, test := range tests {
-		result := isTLSEnabled(test.upstream, test.spiffeCert)
+		result := isTLSEnabled(test.upstream, test.spiffeCert, test.nsmEgress)
 		if result != test.expected {
 			t.Errorf("isTLSEnabled(%v, %v) returned %v but expected %v", test.upstream, test.spiffeCert, result, test.expected)
 		}
@@ -8757,11 +14983,39 @@ func TestAddWafConfig(t *testing.T) {
 			expected: &validationResults{},
 			msg:      "valid waf config, disable waf",
 		},
+		{
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApBundle: "NginxDefaultPolicy.tgz",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:      true,
+					ApLogBundle: "secops_dashboard.tgz",
+					LogDest:     "syslog:server=127.0.0.1:1514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"ns2/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/ns2-logconf"},
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config using bundle",
+		},
 	}
 
 	for _, test := range tests {
-		polCfg := newPoliciesConfig()
-		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
+		polCfg := newPoliciesConfig(&fakeBV)
+		result := polCfg.addWAFConfig(context.Background(), test.wafInput, test.polKey, test.polNamespace, test.apResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
@@ -8826,5 +15080,748 @@ func TestGenerateTimeWithDefault(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("generateTimeWithDefault(%q, %q) returned %q but expected %q", test.value, test.defaultValue, result, test.expected)
 		}
+	}
+}
+
+var (
+	baseCfgParams = ConfigParams{
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	virtualServerExWithGunzipOn = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host:   "cafe.example.com",
+				Gunzip: true,
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerExWithGunzipOff = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host:   "cafe.example.com",
+				Gunzip: false,
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerExWithNoGunzip = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPAndHTTPSListeners = VirtualServerEx{
+		HTTPPort:  8083,
+		HTTPSPort: 8443,
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP:  "http-8083",
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPListener = VirtualServerEx{
+		HTTPPort: 8083,
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP: "http-8083",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPSListener = VirtualServerEx{
+		HTTPSPort: 8443,
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPAndHTTPSIPListeners = VirtualServerEx{
+		HTTPPort:  8083,
+		HTTPSPort: 8443,
+		HTTPIPv4:  "192.168.0.2",
+		HTTPIPv6:  "::1",
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP:  "http-8083",
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPIPListener = VirtualServerEx{
+		HTTPPort: 8083,
+		HTTPIPv4: "192.168.0.2",
+		HTTPIPv6: "::1",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP: "http-8083",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPSIPListener = VirtualServerEx{
+		HTTPSPort: 8443,
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithNilListener = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host:     "cafe.example.com",
+				Listener: nil,
+			},
+		},
+	}
+
+	fakeBV = fakeBundleValidator{}
+)
+
+type fakeBundleValidator struct{}
+
+func (*fakeBundleValidator) validate(bundle string) (string, error) {
+	bundle = fmt.Sprintf("/fake/bundle/path/%s", bundle)
+	if strings.Contains(bundle, "invalid") {
+		return bundle, fmt.Errorf("invalid bundle %s", bundle)
+	}
+	return bundle, nil
+}
+
+func TestRFC1123ToSnake(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "valid",
+			input:    "api-policy-1",
+			expected: "api_policy_1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !cmp.Equal(rfc1123ToSnake(tt.input), tt.expected) {
+				t.Error(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
+			}
+		})
 	}
 }

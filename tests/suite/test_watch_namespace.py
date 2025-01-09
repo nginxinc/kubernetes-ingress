@@ -63,10 +63,11 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
         )
 
     def fin():
-        print("Clean up:")
-        delete_namespace(kube_apis.v1, watched_namespace)
-        delete_namespace(kube_apis.v1, foreign_namespace)
-        delete_namespace(kube_apis.v1, watched_namespace2)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_namespace(kube_apis.v1, watched_namespace)
+            delete_namespace(kube_apis.v1, foreign_namespace)
+            delete_namespace(kube_apis.v1, watched_namespace2)
 
     request.addfinalizer(fin)
 
@@ -74,6 +75,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 
 
 @pytest.mark.ingresses
+@pytest.mark.watch_namespace
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [
@@ -93,7 +95,8 @@ class TestWatchNamespace:
             ), f"Expected: {expected_responses[ing]} response code for {backend_setup.ingress_hosts[ing]}"
 
 
-@pytest.mark.test
+@pytest.mark.ingresses
+@pytest.mark.watch_namespace
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [
@@ -113,7 +116,7 @@ class TestWatchMultipleNamespaces:
             retry = 0
             while resp.status_code != expected_responses[ing] and retry < 3:
                 resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
-                retry = +1
+                retry = retry + 1
                 wait_before_test()
             assert (
                 resp.status_code == expected_responses[ing]

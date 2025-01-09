@@ -54,6 +54,14 @@ class VirtualServerSetup:
         self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[1]}"
         self.backend_1_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[0]}"
         self.backend_2_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
+        self.backend_1_url_custom = f"http://{public_endpoint.public_ip}:{public_endpoint.custom_http}{vs_paths[0]}"
+        self.backend_2_url_custom = f"http://{public_endpoint.public_ip}:{public_endpoint.custom_http}{vs_paths[1]}"
+        self.backend_1_url_custom_ssl = (
+            f"https://{public_endpoint.public_ip}:{public_endpoint.custom_https}{vs_paths[0]}"
+        )
+        self.backend_2_url_custom_ssl = (
+            f"https://{public_endpoint.public_ip}:{public_endpoint.custom_https}{vs_paths[1]}"
+        )
         self.metrics_url = f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
 
 
@@ -82,10 +90,11 @@ def virtual_server_setup(request, kube_apis, ingress_controller_endpoint, test_n
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up Virtual Server Example:")
-        delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        if request.param.get("app_type"):
-            delete_common_app(kube_apis, request.param["app_type"], test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Virtual Server Example:")
+            delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
+            if request.param.get("app_type"):
+                delete_common_app(kube_apis, request.param["app_type"], test_namespace)
 
     request.addfinalizer(fin)
 
@@ -101,13 +110,16 @@ class TransportServerSetup:
         namespace (str):
     """
 
-    def __init__(self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource):
+    def __init__(
+        self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource, metrics_url
+    ):
         self.name = name
         self.namespace = namespace
         self.ingress_pod_name = ingress_pod_name
         self.ic_namespace = ic_namespace
         self.public_endpoint = public_endpoint
         self.resource = resource
+        self.metrics_url = metrics_url
 
 
 @pytest.fixture(scope="class")
@@ -141,15 +153,18 @@ def transport_server_setup(
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up TransportServer Example:")
-        delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
-        delete_items_from_yaml(kube_apis, service_file, test_namespace)
-        delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up TransportServer Example:")
+            delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
+            delete_items_from_yaml(kube_apis, service_file, test_namespace)
+            delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
 
     request.addfinalizer(fin)
 
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
     ic_namespace = ingress_controller_prerequisites.namespace
+
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
 
     return TransportServerSetup(
         ts_resource["metadata"]["name"],
@@ -158,6 +173,7 @@ def transport_server_setup(
         ic_namespace,
         ingress_controller_endpoint,
         ts_resource,
+        metrics_url,
     )
 
 
@@ -186,13 +202,14 @@ def v_s_route_app_setup(request, kube_apis, v_s_route_setup) -> None:
     wait_until_all_pods_are_ready(kube_apis.v1, v_s_route_setup.route_s.namespace)
 
     def fin():
-        print("Clean up the Application:")
-        delete_deployment(kube_apis.apps_v1_api, deployment_one, v_s_route_setup.route_m.namespace)
-        delete_service(kube_apis.v1, svc_one, v_s_route_setup.route_m.namespace)
-        delete_deployment(kube_apis.apps_v1_api, deployment_three, v_s_route_setup.route_m.namespace)
-        delete_service(kube_apis.v1, svc_three, v_s_route_setup.route_m.namespace)
-        delete_deployment(kube_apis.apps_v1_api, deployment_two, v_s_route_setup.route_s.namespace)
-        delete_service(kube_apis.v1, svc_two, v_s_route_setup.route_s.namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Application:")
+            delete_deployment(kube_apis.apps_v1_api, deployment_one, v_s_route_setup.route_m.namespace)
+            delete_service(kube_apis.v1, svc_one, v_s_route_setup.route_m.namespace)
+            delete_deployment(kube_apis.apps_v1_api, deployment_three, v_s_route_setup.route_m.namespace)
+            delete_service(kube_apis.v1, svc_three, v_s_route_setup.route_m.namespace)
+            delete_deployment(kube_apis.apps_v1_api, deployment_two, v_s_route_setup.route_s.namespace)
+            delete_service(kube_apis.v1, svc_two, v_s_route_setup.route_s.namespace)
 
     request.addfinalizer(fin)
 
@@ -288,14 +305,15 @@ def v_s_route_setup(request, kube_apis, ingress_controller_endpoint) -> VirtualS
     route_s = VirtualServerRoute(ns_2, vsr_s_name, vsr_s_paths)
 
     def fin():
-        print("Clean up the Virtual Server Route:")
-        delete_v_s_route(kube_apis.custom_objects, vsr_m_name, ns_1)
-        delete_v_s_route(kube_apis.custom_objects, vsr_s_name, ns_2)
-        print("Clean up Virtual Server:")
-        delete_virtual_server(kube_apis.custom_objects, vs_name, ns_1)
-        print("Delete test namespaces")
-        delete_namespace(kube_apis.v1, ns_1)
-        delete_namespace(kube_apis.v1, ns_2)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Virtual Server Route:")
+            delete_v_s_route(kube_apis.custom_objects, vsr_m_name, ns_1)
+            delete_v_s_route(kube_apis.custom_objects, vsr_s_name, ns_2)
+            print("Clean up Virtual Server:")
+            delete_virtual_server(kube_apis.custom_objects, vs_name, ns_1)
+            print("Delete test namespaces")
+            delete_namespace(kube_apis.v1, ns_1)
+            delete_namespace(kube_apis.v1, ns_2)
 
     request.addfinalizer(fin)
 

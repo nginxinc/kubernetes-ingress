@@ -64,11 +64,12 @@ def jwt_secrets_setup(
     )
 
     def fin():
-        print("Clean up the JWT Secrets Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml", test_namespace
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the JWT Secrets Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml", test_namespace
+            )
 
     request.addfinalizer(fin)
 
@@ -81,9 +82,10 @@ def jwt_secret(request, kube_apis, ingress_controller_endpoint, jwt_secrets_setu
     wait_before_test(1)
 
     def fin():
-        print("Delete Secret:")
-        if is_secret_present(kube_apis.v1, secret_name, test_namespace):
-            delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete Secret:")
+            if is_secret_present(kube_apis.v1, secret_name, test_namespace):
+                delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 

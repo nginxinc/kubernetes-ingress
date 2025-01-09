@@ -10,16 +10,25 @@ on:
       - "Lint"
       - "Update Docker Images"
       - "OpenSSF Scorecards"
+      - "Build OSS"
+      - "Build Plus"
+      - "Release NIC"
     types:
       - completed
 
+permissions:
+  contents: read
+
 jobs:
   on-failure:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.repository.fork == false }}
+    permissions:
+      contents: read
+      actions: read # for 8398a7/action-slack
     steps:
       - name: Data
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         continue-on-error: true
         id: data
         with:
@@ -40,7 +49,7 @@ jobs:
             }
 
       - name: Send Notification
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
         with:
           status: custom
           custom_payload: |

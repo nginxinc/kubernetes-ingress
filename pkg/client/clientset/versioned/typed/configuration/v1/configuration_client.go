@@ -3,16 +3,18 @@
 package v1
 
 import (
-	"net/http"
+	http "net/http"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
+	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
 type K8sV1Interface interface {
 	RESTClient() rest.Interface
+	GlobalConfigurationsGetter
 	PoliciesGetter
+	TransportServersGetter
 	VirtualServersGetter
 	VirtualServerRoutesGetter
 }
@@ -22,8 +24,16 @@ type K8sV1Client struct {
 	restClient rest.Interface
 }
 
+func (c *K8sV1Client) GlobalConfigurations(namespace string) GlobalConfigurationInterface {
+	return newGlobalConfigurations(c, namespace)
+}
+
 func (c *K8sV1Client) Policies(namespace string) PolicyInterface {
 	return newPolicies(c, namespace)
+}
+
+func (c *K8sV1Client) TransportServers(namespace string) TransportServerInterface {
+	return newTransportServers(c, namespace)
 }
 
 func (c *K8sV1Client) VirtualServers(namespace string) VirtualServerInterface {
@@ -79,10 +89,10 @@ func New(c rest.Interface) *K8sV1Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv := v1.SchemeGroupVersion
+	gv := configurationv1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()

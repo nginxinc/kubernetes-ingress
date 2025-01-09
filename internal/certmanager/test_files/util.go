@@ -14,17 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint
+// nolint
 package test
 
 import (
 	"math/rand"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 type StringGenerator func(n int) string
 

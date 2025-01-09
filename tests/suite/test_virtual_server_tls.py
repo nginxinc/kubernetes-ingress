@@ -4,6 +4,7 @@ from settings import TEST_DATA
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
+    get_reload_count,
     is_secret_present,
     replace_secret,
     wait_before_test,
@@ -25,9 +26,10 @@ def clean_up(request, kube_apis, test_namespace) -> None:
     secret_name = get_name_from_yaml(f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")
 
     def fin():
-        print("Clean up after test:")
-        if is_secret_present(kube_apis.v1, secret_name, test_namespace):
-            delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up after test:")
+            if is_secret_present(kube_apis.v1, secret_name, test_namespace):
+                delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -75,7 +77,14 @@ def assert_gb_subject(virtual_server_setup):
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+            {
+                "type": "complete",
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-prometheus-metrics",
+                    f"-ssl-dynamic-reload=false",
+                ],
+            },
             {"example": "virtual-server-tls", "app_type": "simple"},
         )
     ],
@@ -121,6 +130,10 @@ class TestVirtualServerTLS:
         wait_before_test(1)
         assert_us_subject(virtual_server_setup)
 
+        # with -ssl-dynamic-reload=false, we expect
+        # replacing a secret to trigger a reload
+        count_before_replace = get_reload_count(virtual_server_setup.metrics_url)
+
         print("\nStep 7: update secret and check")
         replace_secret(
             kube_apis.v1,
@@ -130,3 +143,58 @@ class TestVirtualServerTLS:
         )
         wait_before_test(1)
         assert_gb_subject(virtual_server_setup)
+
+        count_after = get_reload_count(virtual_server_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 1
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
+
+
+@pytest.mark.vs
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    "crd_ingress_controller, virtual_server_setup",
+    [
+        (
+            {
+                "type": "complete",
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-prometheus-metrics",
+                ],
+            },
+            {"example": "virtual-server-tls", "app_type": "simple"},
+        )
+    ],
+    indirect=True,
+)
+class TestVirtualServerTLSDynamicReloads:
+    def test_tls_termination(self, kube_apis, crd_ingress_controller, virtual_server_setup, clean_up):
+        print("\nStep 1: no secret")
+        assert_unrecognized_name_error(virtual_server_setup)
+
+        print("\nStep 2: deploy secret and check")
+        secret_name = create_secret_from_yaml(
+            kube_apis.v1, virtual_server_setup.namespace, f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml"
+        )
+        wait_before_test(1)
+        assert_us_subject(virtual_server_setup)
+
+        # for Plus with -ssl-dynamic-reload=true, we expect
+        # replacing a secret not to trigger a reload
+        count_before_replace = get_reload_count(virtual_server_setup.metrics_url)
+
+        print("\nStep 3: update secret and check")
+        replace_secret(
+            kube_apis.v1,
+            secret_name,
+            virtual_server_setup.namespace,
+            f"{TEST_DATA}/virtual-server-tls/new-tls-secret.yaml",
+        )
+        wait_before_test(1)
+        assert_gb_subject(virtual_server_setup)
+
+        count_after = get_reload_count(virtual_server_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 0
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"

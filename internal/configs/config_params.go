@@ -1,10 +1,16 @@
 package configs
 
-import conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+import (
+	"context"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+)
 
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
 // as well as configs for Ingress resources.
 type ConfigParams struct {
+	Context                                context.Context
 	ClientMaxBodySize                      string
 	DefaultServerAccessLogOff              bool
 	DefaultServerReturn                    string
@@ -20,7 +26,7 @@ type ConfigParams struct {
 	Keepalive                              int
 	LBMethod                               string
 	LocationSnippets                       []string
-	MainAccessLogOff                       bool
+	MainAccessLog                          string
 	MainErrorLogLevel                      string
 	MainHTTPSnippets                       []string
 	MainKeepaliveRequests                  int64
@@ -37,6 +43,8 @@ type ConfigParams struct {
 	MainStreamLogFormat                    []string
 	MainStreamLogFormatEscaping            string
 	MainStreamSnippets                     []string
+	MainMapHashBucketSize                  string
+	MainMapHashMaxSize                     string
 	MainWorkerConnections                  string
 	MainWorkerCPUAffinity                  string
 	MainWorkerProcesses                    string
@@ -65,6 +73,7 @@ type ConfigParams struct {
 	ProxyHideHeaders                       []string
 	ProxyMaxTempFileSize                   string
 	ProxyPassHeaders                       []string
+	ProxySetHeaders                        []version2.Header
 	ProxyProtocol                          bool
 	ProxyReadTimeout                       string
 	ProxySendTimeout                       string
@@ -78,6 +87,7 @@ type ConfigParams struct {
 	SlowStart                              string
 	SSLRedirect                            bool
 	UpstreamZoneSize                       string
+	UseClusterIP                           bool
 	VariablesHashBucketSize                uint64
 	VariablesHashMaxSize                   uint64
 
@@ -91,9 +101,10 @@ type ConfigParams struct {
 	MainServerSSLPreferServerCiphers bool
 	MainServerSSLProtocols           string
 
-	IngressTemplate       *string
-	VirtualServerTemplate *string
-	MainTemplate          *string
+	IngressTemplate         *string
+	VirtualServerTemplate   *string
+	MainTemplate            *string
+	TransportServerTemplate *string
 
 	JWTKey      string
 	JWTLoginURL string
@@ -107,11 +118,24 @@ type ConfigParams struct {
 	SSLPorts []int
 
 	SpiffeServerCerts bool
+
+	LimitReqRate       string
+	LimitReqKey        string
+	LimitReqZoneSize   string
+	LimitReqDelay      int
+	LimitReqNoDelay    bool
+	LimitReqBurst      int
+	LimitReqDryRun     bool
+	LimitReqLogLevel   string
+	LimitReqRejectCode int
+	LimitReqScale      bool
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
 type StaticConfigParams struct {
 	DisableIPV6                    bool
+	DefaultHTTPListenerPort        int
+	DefaultHTTPSListenerPort       int
 	HealthStatus                   bool
 	HealthStatusURI                string
 	NginxStatus                    bool
@@ -119,16 +143,24 @@ type StaticConfigParams struct {
 	NginxStatusPort                int
 	StubStatusOverUnixSocketForOSS bool
 	TLSPassthrough                 bool
+	TLSPassthroughPort             int
 	EnableSnippets                 bool
 	NginxServiceMesh               bool
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
+	MainAppProtectV5LoadModule     bool
 	MainAppProtectDosLoadModule    bool
+	MainAppProtectV5EnforcerAddr   string
 	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
 	SSLRejectHandshake             bool
 	EnableCertManager              bool
+	DynamicSSLReload               bool
+	StaticSSLPath                  string
+	DynamicWeightChangesReload     bool
+	NginxVersion                   nginx.Version
+	AppProtectBundlePath           string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.
@@ -143,14 +175,36 @@ type Listener struct {
 	Protocol string
 }
 
+// MGMTSecrets holds mgmt block secret names
+type MGMTSecrets struct {
+	License     string
+	ClientAuth  string
+	TrustedCert string
+	TrustedCRL  string
+}
+
+// MGMTConfigParams holds mgmt block parameters.
+type MGMTConfigParams struct {
+	Context              context.Context
+	SSLVerify            *bool
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
+	EnforceInitialReport *bool
+	Endpoint             string
+	Interval             string
+	Secrets              MGMTSecrets
+}
+
 // NewDefaultConfigParams creates a ConfigParams with default values.
-func NewDefaultConfigParams(isPlus bool) *ConfigParams {
+func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 	upstreamZoneSize := "256k"
 	if isPlus {
 		upstreamZoneSize = "512k"
 	}
 
 	return &ConfigParams{
+		Context:                       ctx,
 		DefaultServerReturn:           "404",
 		ServerTokens:                  "on",
 		ProxyConnectTimeout:           "60s",
@@ -158,8 +212,11 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		ProxySendTimeout:              "60s",
 		ClientMaxBodySize:             "1m",
 		SSLRedirect:                   true,
+		MainAccessLog:                 "/dev/stdout main",
 		MainServerNamesHashBucketSize: "256",
 		MainServerNamesHashMaxSize:    "1024",
+		MainMapHashBucketSize:         "256",
+		MainMapHashMaxSize:            "2048",
 		ProxyBuffering:                true,
 		MainWorkerProcesses:           "auto",
 		MainWorkerConnections:         "1024",
@@ -173,25 +230,23 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		LBMethod:                      "random two least_conn",
 		MainErrorLogLevel:             "notice",
 		ResolverIPV6:                  true,
-		MainKeepaliveTimeout:          "65s",
-		MainKeepaliveRequests:         100,
+		MainKeepaliveTimeout:          "75s",
+		MainKeepaliveRequests:         1000,
 		VariablesHashBucketSize:       256,
 		VariablesHashMaxSize:          1024,
+		LimitReqKey:                   "${binary_remote_addr}",
+		LimitReqZoneSize:              "10m",
+		LimitReqLogLevel:              "error",
+		LimitReqRejectCode:            429,
 	}
 }
 
-// NewDefaultGlobalConfigParams creates a GlobalConfigParams with default values.
-func NewDefaultGlobalConfigParams() *GlobalConfigParams {
-	return &GlobalConfigParams{Listeners: map[string]Listener{}}
-}
-
-// NewGlobalConfigParamsWithTLSPassthrough creates new GlobalConfigParams with enabled TLS Passthrough listener.
-func NewGlobalConfigParamsWithTLSPassthrough() *GlobalConfigParams {
-	return &GlobalConfigParams{
-		Listeners: map[string]Listener{
-			conf_v1alpha1.TLSPassthroughListenerName: {
-				Protocol: conf_v1alpha1.TLSPassthroughListenerProtocol,
-			},
-		},
+// NewDefaultMGMTConfigParams creates a ConfigParams with mgmt values.
+func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
+	return &MGMTConfigParams{
+		Context:              ctx,
+		SSLVerify:            nil,
+		EnforceInitialReport: nil,
+		Secrets:              MGMTSecrets{},
 	}
 }

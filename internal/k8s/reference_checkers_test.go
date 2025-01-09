@@ -5,12 +5,12 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSecretIsReferencedByIngress(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing             *networking.Ingress
 		secretNamespace string
@@ -149,6 +149,7 @@ func TestSecretIsReferencedByIngress(t *testing.T) {
 }
 
 func TestSecretIsReferencedByMinion(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing             *networking.Ingress
 		secretNamespace string
@@ -230,6 +231,7 @@ func TestSecretIsReferencedByMinion(t *testing.T) {
 }
 
 func TestSecretIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs              *conf_v1.VirtualServer
 		secretNamespace string
@@ -299,6 +301,7 @@ func TestSecretIsReferencedByVirtualServer(t *testing.T) {
 }
 
 func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
+	t.Parallel()
 	isPlus := false // doesn't matter for VirtualServerRoute
 	rc := newSecretReferenceChecker(isPlus)
 
@@ -309,17 +312,74 @@ func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
 }
 
 func TestSecretIsReferencedByTransportServer(t *testing.T) {
-	isPlus := false // doesn't matter for TransportServer
-	rc := newSecretReferenceChecker(isPlus)
+	t.Parallel()
+	tests := []struct {
+		ts              *conf_v1.TransportServer
+		secretNamespace string
+		secretName      string
+		expected        bool
+		msg             string
+	}{
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					TLS: &conf_v1.TransportServerTLS{
+						Secret: "test-secret",
+					},
+				},
+			},
+			secretNamespace: "default",
+			secretName:      "test-secret",
+			expected:        true,
+			msg:             "tls secret is referenced",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					TLS: &conf_v1.TransportServerTLS{
+						Secret: "test-secret",
+					},
+				},
+			},
+			secretNamespace: "other-namespace",
+			secretName:      "test-secret",
+			expected:        false,
+			msg:             "tls secret is referenced but in another namespace",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{},
+			},
+			secretNamespace: "other-namespace",
+			secretName:      "test-secret",
+			expected:        false,
+			msg:             "tls secret is not but in another namespace",
+		},
+	}
 
-	// always returns false
-	result := rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
-		t.Error("IsReferencedByTransportServer() returned true but expected false")
+	for _, test := range tests {
+		isPlus := false // doesn't matter for TransportServer
+		rc := newSecretReferenceChecker(isPlus)
+
+		// always returns false
+		result := rc.IsReferencedByTransportServer(test.secretNamespace, test.secretName, test.ts)
+		if result != test.expected {
+			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
 	}
 }
 
 func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing              *networking.Ingress
 		serviceNamespace string
@@ -453,7 +513,82 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 	}
 }
 
+func TestBackupServiceIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		vs                *conf_v1.VirtualServer
+		serviceNamespace  string
+		backupServiceName string
+		expected          bool
+		msg               string
+	}{
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "default",
+			backupServiceName: "test-backup-service",
+			expected:          true,
+			msg:               "Backup service is referenced by this VirtualServer",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service-does-not-exist",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "default",
+			backupServiceName: "test-backup-service",
+			expected:          false,
+			msg:               "Backup service is not referenced by this VirtualServer",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "non-default-namespace",
+			backupServiceName: "test-backup-service",
+			expected:          false,
+			msg:               "Backup service is in different namespace",
+		},
+	}
+	for _, test := range tests {
+		rc := newServiceReferenceChecker(false)
+
+		result := rc.IsReferencedByVirtualServer(test.serviceNamespace, test.backupServiceName, test.vs)
+		if result != test.expected {
+			t.Errorf("IsReferencedByVirtualServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
 func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs               *conf_v1.VirtualServer
 		vsr              *conf_v1.VirtualServerRoute
@@ -569,21 +704,22 @@ func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) 
 	}
 }
 
-func TestIsServiceReferencedByTransportServer(t *testing.T) {
+func TestServiceIsReferencedByTransportServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		ts               *conf_v1alpha1.TransportServer
+		ts               *conf_v1.TransportServer
 		serviceNamespace string
 		serviceName      string
 		expected         bool
 		msg              string
 	}{
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},
@@ -596,12 +732,12 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 			msg:              "service is referenced in an upstream",
 		},
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},
@@ -614,12 +750,12 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 			msg:              "wrong namespace for service in an upstream",
 		},
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},
@@ -643,26 +779,103 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 	}
 }
 
+func TestBackupServiceIsReferencedByTransportServer(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		ts                     *conf_v1.TransportServer
+		backupServiceNamespace string
+		backupServiceName      string
+		expected               bool
+		msg                    string
+	}{
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "default",
+			backupServiceName:      "test-backup-service",
+			expected:               true,
+			msg:                    "Backup Service is referenced by this TransportService",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "some-namespace",
+			backupServiceName:      "test-backup-service",
+			expected:               false,
+			msg:                    "wrong namespace for service in an upstream",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Service: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "default",
+			backupServiceName:      "random-backup-service",
+			expected:               false,
+			msg:                    "wrong name for service in an upstream",
+		},
+	}
+
+	for _, test := range tests {
+		rc := newServiceReferenceChecker(false)
+
+		result := rc.IsReferencedByTransportServer(test.backupServiceNamespace, test.backupServiceName, test.ts)
+		if result != test.expected {
+			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
 func TestPolicyIsReferencedByIngressesAndTransportServers(t *testing.T) {
+	t.Parallel()
 	rc := newPolicyReferenceChecker()
 
 	result := rc.IsReferencedByIngress("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByIngress() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByMinion("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByMinion() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
 func TestPolicyIsReferencedByVirtualServerAndVirtualServerRoute(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs              *conf_v1.VirtualServer
 		vsr             *conf_v1.VirtualServerRoute
@@ -870,6 +1083,7 @@ func TestPolicyIsReferencedByVirtualServerAndVirtualServerRoute(t *testing.T) {
 }
 
 func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing               *networking.Ingress
 		resourceNamespace string
@@ -1007,25 +1221,27 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 }
 
 func TestAppProtectResourceIsReferenced(t *testing.T) {
+	t.Parallel()
 	rc := newAppProtectResourceReferenceChecker("test")
 
 	result := rc.IsReferencedByVirtualServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByVirtualServerRoute("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
 func TestIsPolicyIsReferenced(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policies          []conf_v1.PolicyReference
 		resourceNamespace string
@@ -1096,6 +1312,7 @@ func TestIsPolicyIsReferenced(t *testing.T) {
 }
 
 func TestEndpointIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs               *conf_v1.VirtualServer
 		vsr              *conf_v1.VirtualServerRoute
@@ -1222,6 +1439,7 @@ func TestEndpointIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T)
 }
 
 func TestDosProtectedIsReferencedByIngresses(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing               *networking.Ingress
 		resourceNamespace string
@@ -1359,6 +1577,7 @@ func TestDosProtectedIsReferencedByIngresses(t *testing.T) {
 }
 
 func TestDosProtectedIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs                 *conf_v1.VirtualServer
 		protectedNamespace string
@@ -1416,6 +1635,52 @@ func TestDosProtectedIsReferencedByVirtualServer(t *testing.T) {
 		result := rc.IsReferencedByVirtualServer(test.protectedNamespace, test.protectedName, test.vs)
 		if result != test.expected {
 			t.Errorf("IsReferencedByVirtualServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestReplicaReferenceChecker(t *testing.T) {
+	tests := []struct {
+		Ingress  *networking.Ingress
+		Expected bool
+	}{
+		{
+			Ingress: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						"foo": "bar",
+					},
+				},
+			},
+			Expected: false,
+		},
+		{
+			Ingress: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/limit-req-scale": "false",
+					},
+				},
+			},
+			Expected: false,
+		},
+		{
+			Ingress: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/limit-req-scale": "true",
+					},
+				},
+			},
+			Expected: true,
+		},
+	}
+
+	var checker ratelimitScalingAnnotationChecker
+	for i, testcase := range tests {
+		result := checker.IsReferencedByIngress("foo", "bar", testcase.Ingress)
+		if result != testcase.Expected {
+			t.Errorf("replicaReferenceChecker did not work for case %d", i)
 		}
 	}
 }

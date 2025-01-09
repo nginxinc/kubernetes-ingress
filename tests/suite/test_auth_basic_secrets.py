@@ -72,11 +72,14 @@ def auth_basic_secrets_setup(
     )
 
     def fin():
-        print("Clean up the Auth Basic Secrets Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/auth-basic-secrets/{request.param}/auth-basic-secrets-ingress.yaml", test_namespace
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Auth Basic Secrets Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(
+                kube_apis,
+                f"{TEST_DATA}/auth-basic-secrets/{request.param}/auth-basic-secrets-ingress.yaml",
+                test_namespace,
+            )
 
     request.addfinalizer(fin)
 
@@ -93,9 +96,10 @@ def auth_basic_secret(
     wait_before_test(1)
 
     def fin():
-        print("Delete Secret:")
-        if is_secret_present(kube_apis.v1, secret_name, test_namespace):
-            delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete Secret:")
+            if is_secret_present(kube_apis.v1, secret_name, test_namespace):
+                delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -103,6 +107,7 @@ def auth_basic_secret(
 
 
 @pytest.mark.ingresses
+@pytest.mark.basic_auth
 class TestAuthBasicSecrets:
     def test_response_code_200_and_server_name(self, auth_basic_secrets_setup, auth_basic_secret):
         req_url = f"http://{auth_basic_secrets_setup.public_endpoint.public_ip}:{auth_basic_secrets_setup.public_endpoint.port}/backend2"

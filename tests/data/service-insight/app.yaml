@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend1
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: backend1
+  template:
+    metadata:
+      labels:
+        app: backend1
+    spec:
+      containers:
+      - name: backend1
+        image: nginxdemos/nginx-hello:plain-text
+        ports:
+        - containerPort: 8080

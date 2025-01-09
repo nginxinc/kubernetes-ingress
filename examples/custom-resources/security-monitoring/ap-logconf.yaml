@@ -1,0 +1,15 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APLogConf
+metadata:
+  name: logconf
+spec:
+  content:
+    format: user-defined
+    format_string: "%blocking_exception_reason%,%dest_port%,%ip_client%,%is_truncated_bool%,%method%,%policy_name%,%protocol%,%request_status%,%response_code%,%severity%,%sig_cves%,%sig_set_names%,%src_port%,%sub_violations%,%support_id%,%threat_campaign_names%,%violation_rating%,%vs_name%,%x_forwarded_for_header_value%,%outcome%,%outcome_reason%,%violations%,%violation_details%,%bot_signature_name%,%bot_category%,%bot_anomalies%,%enforced_bot_anomalies%,%client_class%,%client_application%,%client_application_version%,%transport_protocol%,%uri%,%request%"
+    escaping_characters:
+      - from: ","
+        to: "%2C"
+    max_message_size: 5k
+    list_delimiter: "::"
+  filter:
+    request_type: illegal

@@ -1,6 +1,4 @@
 import json
-from unittest import mock
-from unittest.mock import Mock
 
 import pytest
 import requests
@@ -42,8 +40,8 @@ class TestVSErrorPages:
                 )
                 print(f"redirect to uri: {resp.next.url}")
             except AttributeError as e:
-                print(f"Exception occured: {e}")
-                retry = +1
+                print(f"Exception occurred: {e}")
+                retry = retry + 1
                 continue
             break
         assert f"http://{virtual_server_setup.vs_host}/error.html" in resp.next.url

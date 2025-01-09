@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint
+// nolint
 package test
 
 import (
@@ -46,11 +46,7 @@ func ObjectCreatedReactor(t *testing.T, b *Builder, expectedObj runtime.Object) 
 		if !ok {
 			return
 		}
-		obj, ok := createAction.GetObject().(runtime.Object)
-		if !ok {
-			t.Errorf("object passed to Create does not implement runtime.Object")
-		}
-
+		obj := createAction.GetObject()
 		if !reflect.DeepEqual(obj, expectedObj) {
 			t.Errorf("expected %+v to equal %+v", obj, expectedObj)
 		}

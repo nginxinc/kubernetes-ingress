@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -239,6 +241,30 @@ func ParseSize(s string) (string, error) {
 	return "", errors.New("invalid size string")
 }
 
+var rateRegexp = regexp.MustCompile(`^(\d+)(r/s|r/m)$`)
+
+// ParseRequestRate ensures that the string value is a valid request rate in r/s or r/m and > 0
+func ParseRequestRate(s string) (string, error) {
+	s = strings.TrimSpace(s)
+
+	match := rateRegexp.FindStringSubmatch(s)
+
+	if match == nil {
+		return "", errors.New("string does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
+	}
+
+	number, err := strconv.Atoi(match[1])
+	if err != nil {
+		return "", errors.New("string does not match rate-pattern")
+	}
+
+	if number <= 0 {
+		return "", errors.New("rate must be >0")
+	}
+
+	return s, nil
+}
+
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers
 var proxyBuffersRegexp = regexp.MustCompile(`^\d+ \d+[kKmM]?$`)
 
@@ -250,6 +276,20 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 		return s, nil
 	}
 	return "", errors.New("invalid proxy buffers string")
+}
+
+// parseProxySetHeaders ensures that the string colon-separated list of headers and values
+func parseProxySetHeaders(proxySetHeaders []string) []version2.Header {
+	var headers []version2.Header
+	for _, header := range proxySetHeaders {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 {
+			headers = append(headers, version2.Header{Name: parts[0], Value: ""})
+		} else {
+			headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
+		}
+	}
+	return headers
 }
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers
@@ -372,4 +412,9 @@ func VerifyAppProtectThresholds(value string) bool {
 // VerifyPath ensures that rewrite paths are in the correct format
 func VerifyPath(s string) bool {
 	return pathRegexp.MatchString(s)
+}
+
+// BoolToPointerBool turns a bool into a pointer bool
+func BoolToPointerBool(b bool) *bool {
+	return &b
 }

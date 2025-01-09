@@ -12,6 +12,7 @@ import (
 
 func TestValidateVirtualServer(t *testing.T) {
 	t.Parallel()
+
 	virtualServer := v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -65,6 +66,127 @@ func TestValidateVirtualServer(t *testing.T) {
 	err := vsv.ValidateVirtualServer(&virtualServer)
 	if err != nil {
 		t.Errorf("ValidateVirtualServer() returned error %v for valid input %v", err, virtualServer)
+	}
+}
+
+func makeVirtualServer() v1.VirtualServer {
+	return v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host: "example.com",
+			TLS: &v1.TLS{
+				Secret: "abc",
+			},
+			ExternalDNS: v1.ExternalDNS{
+				Enable: false,
+			},
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+			Dos: "some-ns/some-name",
+		},
+	}
+}
+
+func TestValidateFailsOnMissingBackupPort(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	// setup only backup name, missing backup port
+	vs.Spec.Upstreams[1].Backup = "backup-service"
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err == nil {
+		t.Error("want error for missing backup port, got nil", err)
+	}
+}
+
+func createPointerFromUInt16(port uint16) *uint16 {
+	return &port
+}
+
+func TestValidateFailsOnMissingBackupName(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	// setup only backup port, missing backup name
+	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err == nil {
+		t.Error("want error for missing backup name, got nil", err)
+	}
+}
+
+func TestValidateFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
+	t.Parallel()
+
+	notSupportedLBMethods := []string{"hash", "hash_ip", "random", "random two least_conn"}
+	for _, lbMethod := range notSupportedLBMethods {
+		lbMethod := lbMethod
+		t.Run(lbMethod, func(t *testing.T) {
+			t.Parallel()
+
+			vs := makeVirtualServer()
+			vs.Spec.Upstreams[1].Backup = "backup-service"
+			vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+			// Not supported load balancing method
+			vs.Spec.Upstreams[1].LBMethod = lbMethod
+
+			vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+			err := vsv.ValidateVirtualServer(&vs)
+			if err == nil {
+				t.Errorf("want error for not supported load balancing method: %s", lbMethod)
+			}
+		})
+	}
+}
+
+func TestValidateBackup(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	vs.Spec.Upstreams[1].Backup = "backup-service"
+	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err != nil {
+		t.Error(err)
 	}
 }
 
@@ -395,12 +517,12 @@ func TestValidateUpstreams(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstreams             []v1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
 			upstreams:             []v1.Upstream{},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "no upstreams",
 		},
 		{
@@ -458,7 +580,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstreams             []v1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
@@ -472,7 +594,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					ProxyNextUpstreamTries:   5,
 				},
 			},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "invalid upstream name",
 		},
 		{
@@ -783,12 +905,12 @@ func TestValidateVirtualServerRoutes(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
 			routes:        []v1.Route{},
-			upstreamNames: sets.String{},
+			upstreamNames: sets.Set[string]{},
 			msg:           "no routes",
 		},
 		{
@@ -821,7 +943,7 @@ func TestValidateVirtualServerRoutesFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -872,7 +994,7 @@ func TestValidateRoute(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		route                 v1.Route
-		upstreamNames         sets.String
+		upstreamNames         sets.Set[string]
 		isRouteFieldForbidden bool
 		msg                   string
 	}{
@@ -966,7 +1088,7 @@ func TestValidateRouteFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		route                 v1.Route
-		upstreamNames         sets.String
+		upstreamNames         sets.Set[string]
 		isRouteFieldForbidden bool
 		msg                   string
 	}{
@@ -990,7 +1112,7 @@ func TestValidateRouteFails(t *testing.T) {
 					Pass: "-test",
 				},
 			},
-			upstreamNames:         sets.String{},
+			upstreamNames:         sets.Set[string]{},
 			isRouteFieldForbidden: false,
 			msg:                   "invalid pass action",
 		},
@@ -1001,7 +1123,7 @@ func TestValidateRouteFails(t *testing.T) {
 					Pass: "test",
 				},
 			},
-			upstreamNames:         sets.String{},
+			upstreamNames:         sets.Set[string]{},
 			isRouteFieldForbidden: false,
 			msg:                   "non-existing upstream in pass action",
 		},
@@ -1419,7 +1541,7 @@ func TestValidateUpstreamFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstream      string
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1468,6 +1590,10 @@ func TestValidateRegexPath(t *testing.T) {
 		{
 			regexPath: "~ [0-9a-z]{4}[0-9]+",
 			msg:       "regexp with curly braces",
+		},
+		{
+			regexPath: "~ ^/coffee/(?!.*\\/latte)(?!.*\\/americano)(.*)",
+			msg:       "regex with backtracking",
 		},
 	}
 
@@ -1578,32 +1704,89 @@ func TestValidatePath(t *testing.T) {
 
 func TestValidateSplits(t *testing.T) {
 	t.Parallel()
-	splits := []v1.Split{
+	tests := []struct {
+		splits        []v1.Split
+		upstreamNames sets.Set[string]
+		msg           string
+	}{
 		{
-			Weight: 90,
-			Action: &v1.Action{
-				Pass: "test-1",
-			},
-		},
-		{
-			Weight: 10,
-			Action: &v1.Action{
-				Proxy: &v1.ActionProxy{
-					Upstream: "test-2",
+			splits: []v1.Split{
+				{
+					Weight: 90,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 10,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights",
 		},
-	}
-	upstreamNames := map[string]sets.Empty{
-		"test-1": {},
-		"test-2": {},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 0,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 100,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights with 0 and 100",
+		},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 0,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 50,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+				{
+					Weight: 50,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights with 0",
+		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
 
-	allErrs := vsv.validateSplits(splits, field.NewPath("splits"), upstreamNames, "")
-	if len(allErrs) > 0 {
-		t.Errorf("validateSplits() returned errors %v for valid input", allErrs)
+	for _, test := range tests {
+		allErrs := vsv.validateSplits(test.splits, field.NewPath("splits"), test.upstreamNames, "")
+		if len(allErrs) > 0 {
+			t.Errorf("validateSplits() returned errors %v for valid input", allErrs)
+		}
 	}
 }
 
@@ -1611,7 +1794,7 @@ func TestValidateSplitsFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		splits        []v1.Split
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1711,6 +1894,27 @@ func TestValidateSplitsFails(t *testing.T) {
 				"test-2": {},
 			},
 			msg: "invalid action with non-existing upstream",
+		},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 100,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: -2,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "invalid negative weight",
 		},
 	}
 
@@ -1822,19 +2026,8 @@ func TestValidateConditionFails(t *testing.T) {
 	}
 }
 
-func TestIsCookieName(t *testing.T) {
+func TestIsCookieName_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
-	validCookieNames := []string{
-		"123",
-		"my_cookie",
-	}
-
-	for _, name := range validCookieNames {
-		errs := isCookieName(name)
-		if len(errs) > 0 {
-			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
-		}
-	}
 
 	invalidCookieNames := []string{
 		"",
@@ -1846,6 +2039,22 @@ func TestIsCookieName(t *testing.T) {
 		errs := isCookieName(name)
 		if len(errs) == 0 {
 			t.Errorf("isCookieName(%q) returned no errors for invalid input", name)
+		}
+	}
+}
+
+func TestIsCookieName_IsValidOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	validCookieNames := []string{
+		"123",
+		"my_cookie",
+	}
+
+	for _, name := range validCookieNames {
+		errs := isCookieName(name)
+		if len(errs) > 0 {
+			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
 		}
 	}
 }
@@ -1908,7 +2117,7 @@ func TestValidateMatch(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		match         v1.Match
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1973,7 +2182,7 @@ func TestValidateMatchFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		match         v1.Match
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -2212,14 +2421,14 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
-		pathPrefix    string
+		upstreamNames sets.Set[string]
+		vsPath        string
 		msg           string
 	}{
 		{
 			routes:        []v1.Route{},
-			upstreamNames: sets.String{},
-			pathPrefix:    "/",
+			upstreamNames: sets.Set[string]{},
+			vsPath:        "/",
 			msg:           "no routes",
 		},
 		{
@@ -2234,8 +2443,74 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
 			},
-			pathPrefix: "/",
-			msg:        "valid route",
+			vsPath: "/",
+			msg:    "valid prefix route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "/",
+			msg:    "valid route prefix with two paths",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "~/test",
+			msg:    "valid regex route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~ /regex1/?(.*)",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "~ /regex1/?(.*)",
+			msg:    "valid regex route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "=/test",
+			msg:    "valid exact route",
 		},
 	}
 
@@ -2243,7 +2518,7 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 
 	for _, test := range tests {
 		allErrs := vsv.validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
-			test.pathPrefix, "default")
+			test.vsPath, "default")
 		if len(allErrs) > 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2254,8 +2529,8 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
-		pathPrefix    string
+		upstreamNames sets.Set[string]
+		vsPath        string
 		msg           string
 	}{
 		{
@@ -2277,8 +2552,8 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 				"test-1": {},
 				"test-2": {},
 			},
-			pathPrefix: "/",
-			msg:        "duplicated paths",
+			vsPath: "/",
+			msg:    "duplicated paths",
 		},
 		{
 			routes: []v1.Route{
@@ -2288,7 +2563,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 				},
 			},
 			upstreamNames: map[string]sets.Empty{},
-			pathPrefix:    "",
+			vsPath:        "",
 			msg:           "invalid route",
 		},
 		{
@@ -2303,8 +2578,131 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 			upstreamNames: map[string]sets.Empty{
 				"test-1": {},
 			},
-			pathPrefix: "/abc",
-			msg:        "invalid prefix",
+			vsPath: "/abc",
+			msg:    "invalid prefix",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "~^/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/abc",
+			msg:    "prefix vs path with both matching prefix and mismatching regex subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with matching regex subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with matching exact subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "=/test",
+			msg:    "exact vs path with prefix subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "~/test",
+			msg:    "regex vs path with exact subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/abc",
+			msg:    "prefix vs path with both exact and matching prefix subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with both regex and matching prefix subroute path",
 		},
 	}
 
@@ -2312,7 +2710,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 
 	for _, test := range tests {
 		allErrs := vsv.validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
-			test.pathPrefix, "default")
+			test.vsPath, "default")
 		if len(allErrs) == 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned no errors for the case of %s", test.msg)
 		}
@@ -2503,9 +2901,10 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 				Value: "my.service",
 			},
 		},
-		StatusMatch: "! 500",
-		Mandatory:   true,
-		Persistent:  true,
+		StatusMatch:   "! 500",
+		Mandatory:     true,
+		Persistent:    true,
+		KeepaliveTime: "120s",
 	}
 
 	allErrs := validateUpstreamHealthCheck(hc, "", field.NewPath("healthCheck"))
@@ -2957,7 +3356,6 @@ func TestValidateSessionCookie(t *testing.T) {
 			sc: &v1.SessionCookie{
 				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
 			},
-
 			msg: "max valid config",
 		},
 	}
@@ -2969,7 +3367,30 @@ func TestValidateSessionCookie(t *testing.T) {
 	}
 }
 
-func TestValidateSessionCookieFails(t *testing.T) {
+func TestValidateSessionCookie_IsValidOnValidSameSiteInput(t *testing.T) {
+	t.Parallel()
+
+	samesites := []string{
+		"strict",
+		"Strict",
+		"STRICT",
+		"lax",
+		"Lax",
+		"LAX",
+		"none",
+		"None",
+		"NONE",
+	}
+	for _, samesite := range samesites {
+		sc := &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: samesite}
+		allErr := validateSessionCookie(sc, field.NewPath("sessionCookie"))
+		if len(allErr) != 0 {
+			t.Errorf("validateSessionCookie() returned errors for valid input: %s", samesite)
+		}
+	}
+}
+
+func TestValidateSessionCookie_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		sc  *v1.SessionCookie
@@ -2995,12 +3416,18 @@ func TestValidateSessionCookieFails(t *testing.T) {
 			sc:  &v1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
 			msg: "invalid path format",
 		},
+		{
+			sc:  &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: "bogus_value"},
+			msg: "invalid samesite value",
+		},
 	}
 	for _, test := range tests {
-		allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
+			if len(allErrs) == 0 {
+				t.Errorf("validateSessionCookie() did not return errors for invalid input for the case of: %s", test.msg)
+			}
+		})
 	}
 }
 
@@ -3896,39 +4323,39 @@ func TestValidateErrorPageReturn(t *testing.T) {
 	tests := []v1.ErrorPageReturn{
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "",
-				Body: "Could not process request, try again",
+				Code:    200,
+				Type:    "",
+				Body:    "Could not process request, try again",
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 		{
 			ActionReturn: v1.ActionReturn{
 				Code: 0,
 				Type: "",
 				Body: "Could not process request, try again. Upstream status ${upstream_status}",
-			},
-			Headers: []v1.Header{
-				{
-					Name:  "Set-Cookie",
-					Value: "mycookie=true",
+				Headers: []v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "mycookie=true",
+					},
 				},
 			},
 		},
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "application/json",
-				Body: `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Code:    200,
+				Type:    "application/json",
+				Body:    `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&epr, field.NewPath("return"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned errors for valid input: %v", epr, allErrs)
@@ -3979,11 +4406,11 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"Could not process request, try again\", \"status\": \"${status}\"}`,
-				},
-				Headers: []v1.Header{
-					{
-						Name:  "Set-Cookie$_%^$  -",
-						Value: "mycookie=true",
+					Headers: []v1.Header{
+						{
+							Name:  "Set-Cookie$_%^$  -",
+							Value: "mycookie=true",
+						},
 					},
 				},
 			},
@@ -3993,6 +4420,7 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&test.epr, field.NewPath("return"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned no errors for invalid input for the case of %v", test.epr, test.msg)
@@ -4020,7 +4448,7 @@ func TestValidateErrorPageRedirect(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned errors for valid input: %v", epr, allErrs)
@@ -4066,7 +4494,7 @@ func TestValidateErrorPageRedirectFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned no errors for invalid input", epr)

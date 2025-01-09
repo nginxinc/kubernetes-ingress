@@ -1,5 +1,10 @@
 package version1
 
+import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+)
+
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.
 type UpstreamLabels struct {
 	Service           string
@@ -10,11 +15,14 @@ type UpstreamLabels struct {
 
 // IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
-	Upstreams         []Upstream
-	Servers           []Server
-	Keepalive         string
-	Ingress           Ingress
-	SpiffeClientCerts bool
+	Upstreams               []Upstream
+	Servers                 []Server
+	Keepalive               string
+	Ingress                 Ingress
+	SpiffeClientCerts       bool
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
+	LimitReqZones           []LimitReqZone
 }
 
 // Ingress holds information about an Ingress resource.
@@ -57,6 +65,14 @@ type HealthCheck struct {
 	Mandatory      bool
 	Headers        map[string]string
 	TimeoutSeconds int64
+}
+
+// LimitReqZone describes a zone used for request rate limiting
+type LimitReqZone struct {
+	Name string
+	Key  string
+	Size string
+	Rate string
 }
 
 // Server describes an NGINX server.
@@ -107,6 +123,7 @@ type Server struct {
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
 	AppProtectDosName            string
+	AppProtectDosAllowListPath   string
 	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
@@ -134,6 +151,17 @@ type JWTAuth struct {
 	RedirectLocationName string
 }
 
+// LimitReq configures a request rate limit
+type LimitReq struct {
+	Zone       string
+	Burst      int
+	Delay      int
+	NoDelay    bool
+	RejectCode int
+	DryRun     bool
+	LogLevel   string
+}
+
 // Location describes an NGINX location.
 type Location struct {
 	LocationSnippets     []string
@@ -142,6 +170,7 @@ type Location struct {
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
 	ProxySendTimeout     string
+	ProxySetHeaders      []version2.Header
 	ClientMaxBodySize    string
 	Websocket            bool
 	Rewrite              string
@@ -155,16 +184,33 @@ type Location struct {
 	JWTAuth              *JWTAuth
 	BasicAuth            *BasicAuth
 	ServiceName          string
+	LimitReq             *LimitReq
 
 	MinionIngress *Ingress
 }
 
+// MGMTConfig is tbe configuration for the MGMT block.
+type MGMTConfig struct {
+	SSLVerify            *bool
+	EnforceInitialReport *bool
+	Endpoint             string
+	Interval             string
+	TrustedCert          bool
+	TrustedCRL           bool
+	ClientAuth           bool
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
+}
+
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
-	AccessLogOff                       bool
+	AccessLog                          string
 	DefaultServerAccessLogOff          bool
 	DefaultServerReturn                string
 	DisableIPV6                        bool
+	DefaultHTTPListenerPort            int
+	DefaultHTTPSListenerPort           int
 	ErrorLogLevel                      string
 	HealthStatus                       bool
 	HealthStatusURI                    string
@@ -175,6 +221,7 @@ type MainConfig struct {
 	LogFormat                          []string
 	LogFormatEscaping                  string
 	MainSnippets                       []string
+	MGMTConfig                         MGMTConfig
 	NginxStatus                        bool
 	NginxStatusAllowCIDRs              []string
 	NginxStatusPort                    int
@@ -192,6 +239,8 @@ type MainConfig struct {
 	SetRealIPFrom                      []string
 	ServerNamesHashBucketSize          string
 	ServerNamesHashMaxSize             string
+	MapHashBucketSize                  string
+	MapHashMaxSize                     string
 	ServerTokens                       string
 	SSLRejectHandshake                 bool
 	SSLCiphers                         string
@@ -203,6 +252,7 @@ type MainConfig struct {
 	StreamSnippets                     []string
 	StubStatusOverUnixSocketForOSS     bool
 	TLSPassthrough                     bool
+	TLSPassthroughPort                 int
 	VariablesHashBucketSize            uint64
 	VariablesHashMaxSize               uint64
 	WorkerConnections                  string
@@ -211,6 +261,8 @@ type MainConfig struct {
 	WorkerRlimitNofile                 string
 	WorkerShutdownTimeout              string
 	AppProtectLoadModule               bool
+	AppProtectV5LoadModule             bool
+	AppProtectV5EnforcerAddr           string
 	AppProtectFailureModeAction        string
 	AppProtectCompressedRequestsAction string
 	AppProtectCookieSeed               string
@@ -225,6 +277,9 @@ type MainConfig struct {
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
 	OIDC                               bool
+	DynamicSSLReloadEnabled            bool
+	StaticSSLPath                      string
+	NginxVersion                       nginx.Version
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

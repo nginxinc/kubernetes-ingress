@@ -1,4 +1,4 @@
-
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -21,14 +21,13 @@ load_module modules/ngx_http_app_protect_module.so;
 {{- if .AppProtectDosLoadModule}}
 load_module modules/ngx_http_app_protect_dos_module.so;
 {{- end}}
+load_module modules/ngx_fips_check_module.so;
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
 {{- end}}
 
-{{if .OIDC}}
 load_module modules/ngx_http_js_module.so;
-{{- end}}
 
 events {
     worker_connections  {{.WorkerConnections}};
@@ -37,6 +36,11 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
+    map_hash_max_size {{.MapHashMaxSize}};
+    map_hash_bucket_size {{.MapHashBucketSize}};
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
@@ -59,13 +63,19 @@ http {
         '' $sent_http_grpc_status;
     }
 
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
+
     {{- if .AppProtectDosLoadModule}}
     {{- if .AppProtectDosLogFormat}}
     log_format  log_dos {{if .AppProtectDosLogFormatEscaping}}escape={{ .AppProtectDosLogFormatEscaping }} {{end}}
                     {{range $i, $value := .AppProtectDosLogFormat -}}
                     {{with $value}}'{{if $i}} {{end}}{{$value}}'
                     {{end}}{{end}};
-    {{- else -}}
+    {{- else }}
     log_format  log_dos ', vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, '
                         'outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, '
                         'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
@@ -76,16 +86,16 @@ http {
     {{- end}}
     {{- end}}
 
-    {{if .AccessLogOff}}
-    access_log off;
-    {{else}}
-    access_log  /dev/stdout  main;
-    {{end}}
+    {{- if .AppProtectV5LoadModule}}
+    app_protect_enforcer_address {{ .AppProtectV5EnforcerAddr }};
+    {{- end}}
 
-    {{if .LatencyMetrics}}
+    access_log {{.AccessLog}};
+
+    {{- if .LatencyMetrics}}
     log_format response_time '{"upstreamAddress":"$upstream_addr", "upstreamResponseTime":"$upstream_response_time", "proxyHost":"$proxy_host", "upstreamStatus": "$upstream_status"}';
     access_log syslog:server=unix:/var/lib/nginx/nginx-syslog.sock,nohostname,tag=nginx response_time;
-    {{end}}
+    {{- end}}
 
     {{- if .AppProtectLoadModule}}
     {{if .AppProtectFailureModeAction}}app_protect_failure_mode_action {{.AppProtectFailureModeAction}};{{end}}
@@ -123,24 +133,30 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    {{if .SSLProtocols}}ssl_protocols {{.SSLProtocols}};{{end}}
-    {{if .SSLCiphers}}ssl_ciphers "{{.SSLCiphers}}";{{end}}
-    {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
-    {{if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
+    {{- if .SSLProtocols}}
+    ssl_protocols {{.SSLProtocols}};
+    {{- end}}
+    {{- if .SSLCiphers}}
+    ssl_ciphers "{{.SSLCiphers}}";
+    {{- end}}
+    {{- if .SSLPreferServerCiphers}}
+    ssl_prefer_server_ciphers on;
+    {{- end}}
+    {{- if .SSLDHParam}}
+    ssl_dhparam {{.SSLDHParam}};
+    {{- end}}
 
-    {{if .OpenTracingEnabled}}
+    {{- if .OpenTracingEnabled}}
     opentracing on;
-    {{end}}
-    {{if .OpenTracingLoadModule}}
+    {{- end}}
+    {{- if .OpenTracingLoadModule}}
     opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
-    {{end}}
-
-    {{if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{- end}}
+    {{ $resolverIPV6HTTPBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6HTTPBool }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{end}}
 
-    {{if .OIDC}}
+    {{- if .OIDC}}
     include oidc/oidc_common.conf;
     {{- end}}
 
@@ -152,41 +168,45 @@ http {
         set $resource_namespace "";
         set $service "";
 
-        listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        listen {{ .DefaultHTTPListenerPort }} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
+        {{- if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPListenerPort }} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
 
-        {{if .TLSPassthrough}}
-        listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server{{if .HTTP2}} http2{{end}} proxy_protocol;
+        {{- if .TLSPassthrough}}
+        listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server proxy_protocol;
         set_real_ip_from unix:;
         real_ip_header proxy_protocol;
-        {{else}}
-        listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
-        {{end}}
+        {{- else}}
+        listen {{ .DefaultHTTPSListenerPort }} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
+        {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPSListenerPort }} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        {{- end}}
 
-        {{if .SSLRejectHandshake}}
+        {{- if .HTTP2}}
+        http2 on;
+        {{- end}}
+
+        {{- if .SSLRejectHandshake}}
         ssl_reject_handshake on;
-        {{else}}
-        ssl_certificate /etc/nginx/secrets/default;
-        ssl_certificate_key /etc/nginx/secrets/default;
-        {{end}}
+        {{- else}}
+        ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/default" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
+        ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/default" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
+        {{- end}}
 
-        {{range $setRealIPFrom := .SetRealIPFrom}}
+        {{- range $setRealIPFrom := .SetRealIPFrom}}
         set_real_ip_from {{$setRealIPFrom}};{{end}}
-        {{if .RealIPHeader}}real_ip_header {{.RealIPHeader}};{{end}}
-        {{if .RealIPRecursive}}real_ip_recursive on;{{end}}
+        {{- if .RealIPHeader}}real_ip_header {{.RealIPHeader}};{{end}}
+        {{- if .RealIPRecursive}}real_ip_recursive on;{{end}}
 
         server_name _;
         server_tokens "{{.ServerTokens}}";
-        {{if .DefaultServerAccessLogOff}}
+        {{- if .DefaultServerAccessLogOff}}
         access_log off;
-        {{end}}
+        {{end -}}
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end}}
 
-        {{if .HealthStatus}}
+        {{- if .HealthStatus}}
         location {{.HealthStatusURI}} {
             default_type text/plain;
             return 200 "healthy\n";
@@ -214,11 +234,18 @@ http {
 
         location  = /dashboard.html {
         }
+        {{if .AppProtectDosLoadModule}}
+        location = /dashboard-dos.html {
+        }
+        {{end}}
         {{range $value := .NginxStatusAllowCIDRs}}
         allow {{$value}};{{end}}
 
         deny all;
         location /api {
+            {{if .AppProtectDosLoadModule}}
+            app_protect_dos_api on;
+            {{end}}
             api write=off;
         }
     }
@@ -229,9 +256,9 @@ http {
         listen unix:/var/lib/nginx/nginx-plus-api.sock;
         access_log off;
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end}}
 
         # $config_version_mismatch is defined in /etc/nginx/config-version.conf
         location /configVersionCheck {
@@ -253,24 +280,24 @@ http {
         listen unix:/var/lib/nginx/nginx-418-server.sock;
         access_log off;
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end -}}
 
         return 418;
     }
-    {{if .InternalRouteServer}}
+    {{- if .InternalRouteServer}}
     server {
         listen 443 ssl;
         {{if not .DisableIPV6}}listen [::]:443 ssl;{{end}}
         server_name {{.InternalRouteServerName}};
-        ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-        ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/spiffe_cert.pem" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
+        ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/spiffe_key.pem" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
         ssl_client_certificate /etc/nginx/secrets/spiffe_rootca.pem;
         ssl_verify_client on;
         ssl_verify_depth 25;
     }
-    {{end}}
+    {{- end}}
 }
 
 stream {
@@ -287,23 +314,35 @@ stream {
 
     access_log  /dev/stdout  stream-main;
 
-    {{range $value := .StreamSnippets}}
+    {{- range $value := .StreamSnippets}}
     {{$value}}{{end}}
-
-    {{if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{ $resolverIPV6StreamBool := boolToPointerBool .ResolverIPV6 -}}
+    {{ makeResolver .ResolverAddresses .ResolverValid $resolverIPV6StreamBool }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{end}}
 
-    {{if .TLSPassthrough}}
+    map_hash_max_size {{.MapHashMaxSize}};
+    {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
+
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
+
+    {{- if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
     }
 
     server {
-        listen 443{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:443{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        listen {{.TLSPassthroughPort}}{{if .ProxyProtocol}} proxy_protocol{{end}};
+        {{if not .DisableIPV6}}listen [::]:{{.TLSPassthroughPort}}{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+
+        {{if .ProxyProtocol}}
+        {{range $setRealIPFrom := .SetRealIPFrom}}
+        set_real_ip_from {{$setRealIPFrom}};{{end}}
+        {{end}}
 
         ssl_preread on;
 
@@ -313,4 +352,30 @@ stream {
     {{end}}
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+
+mgmt {
+    {{- if or (ne .MGMTConfig.Endpoint "") (ne .MGMTConfig.Interval "") }}
+    usage_report
+    {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
+    {{- end }}
+    license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
+    enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
+    {{ if .MGMTConfig.SSLVerify -}}
+    ssl_verify {{ makeOnOffFromBool .MGMTConfig.SSLVerify }};
+    {{ end -}}
+    {{ if .MGMTConfig.ResolverAddresses -}}
+    {{ makeResolver .MGMTConfig.ResolverAddresses .MGMTConfig.ResolverValid .MGMTConfig.ResolverIPV6 }}
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCert -}}
+    ssl_trusted_certificate {{ printf "%s/mgmt/ca.crt" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.TrustedCRL -}}
+    ssl_crl {{ printf "%s/mgmt/ca.crl" .StaticSSLPath }};
+    {{ end -}}
+    {{ if .MGMTConfig.ClientAuth -}}
+    ssl_certificate {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    ssl_certificate_key {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    {{ end -}}
+    deployment_context /etc/nginx/reporting/tracking.info;
 }

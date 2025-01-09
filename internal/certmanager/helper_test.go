@@ -44,6 +44,14 @@ func Test_translateVsSpec(t *testing.T) {
 		Usages:      "server auth,signing",
 	}
 
+	validSpecWithTempCert := vsapi.CertManager{
+		CommonName:    "www.example.com",
+		Duration:      "168h", // 1 week
+		RenewBefore:   "24h",
+		Usages:        "server auth,signing",
+		IssueTempCert: true,
+	}
+
 	invalidDuration := vsapi.CertManager{
 		Duration: "un-parsable duration",
 	}
@@ -69,6 +77,17 @@ func Test_translateVsSpec(t *testing.T) {
 				a.Equal(&metav1.Duration{Duration: time.Hour * 24 * 7}, crt.Spec.Duration)
 				a.Equal(&metav1.Duration{Duration: time.Hour * 24}, crt.Spec.RenewBefore)
 				a.Equal([]cmapi.KeyUsage{cmapi.UsageServerAuth, cmapi.UsageSigning}, crt.Spec.Usages)
+			},
+		},
+		"success with temp cert": {
+			crt:    gen.Certificate("example-cert"),
+			cmspec: &validSpecWithTempCert,
+			check: func(a *assert.Assertions, crt *cmapi.Certificate) {
+				a.Equal("www.example.com", crt.Spec.CommonName)
+				a.Equal(&metav1.Duration{Duration: time.Hour * 24 * 7}, crt.Spec.Duration)
+				a.Equal(&metav1.Duration{Duration: time.Hour * 24}, crt.Spec.RenewBefore)
+				a.Equal([]cmapi.KeyUsage{cmapi.UsageServerAuth, cmapi.UsageSigning}, crt.Spec.Usages)
+				a.Equal("true", crt.ObjectMeta.Annotations[certMgrTempCertAnnotation])
 			},
 		},
 		"nil cm spec": {

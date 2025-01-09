@@ -69,14 +69,15 @@ def vs_externalname_setup(
     ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
 
     def fin():
-        print("Clean up ExternalName Setup:")
-        delete_namespace(kube_apis.v1, external_ns)
-        replace_configmap(
-            kube_apis.v1,
-            config_map_name,
-            ingress_controller_prerequisites.namespace,
-            ingress_controller_prerequisites.config_map,
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up ExternalName Setup:")
+            delete_namespace(kube_apis.v1, external_ns)
+            replace_configmap(
+                kube_apis.v1,
+                config_map_name,
+                ingress_controller_prerequisites.namespace,
+                ingress_controller_prerequisites.config_map,
+            )
 
     request.addfinalizer(fin)
 
@@ -84,12 +85,13 @@ def vs_externalname_setup(
 
 
 @pytest.mark.vs
+@pytest.mark.vs_externalname
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", "-v=3"]},
+            {"type": "complete", "extra_args": [f"-enable-custom-resources", "-log-level=debug"]},
             {"example": "virtual-server-externalname", "app_type": "simple"},
         )
     ],

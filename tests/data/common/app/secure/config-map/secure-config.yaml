@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secure-config
+data:
+  app.conf: |-
+    server {
+      listen 8443 ssl;
+      listen [::]:8443 ssl;
+
+      server_name app.example.com;
+
+      ssl_certificate /etc/nginx/ssl/tls.crt;
+      ssl_certificate_key /etc/nginx/ssl/tls.key;
+
+      default_type text/plain;
+
+      location / {
+        return 200 "here is your response via ssl port $server_port with X-Forwarded-Port $http_x_forwarded_port\n";
+      }
+    }

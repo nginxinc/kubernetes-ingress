@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app-backup
+  namespace: external-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-app-backup
+  template:
+    metadata:
+      labels:
+        app: secure-app-backup
+    spec:
+      containers:
+        - name: secure-app-backup
+          image: nginxdemos/nginx-hello:plain-text
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: secret
+              mountPath: /etc/nginx/ssl
+              readOnly: true
+            - name: config-volume
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: secret
+          secret:
+            secretName: app-tls-secret
+        - name: config-volume
+          configMap:
+            name: secure-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-app-backup
+  namespace: external-ns
+spec:
+  ports:
+    - port: 8443
+      targetPort: 8443
+      protocol: TCP
+      name: https
+  selector:
+    app: secure-app-backup
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secure-config
+  namespace: external-ns
+data:
+  app.conf: |-
+    server {
+      listen 8443 ssl;
+      listen [::]:8443 ssl;
+
+      server_name app.example.com;
+
+      ssl_certificate /etc/nginx/ssl/tls.crt;
+      ssl_certificate_key /etc/nginx/ssl/tls.key;
+
+      default_type text/plain;
+
+      location / {
+        return 200 "HELLO FROM EXTERNAL APP pod $hostname\n";
+      }
+    }

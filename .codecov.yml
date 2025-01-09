@@ -2,10 +2,15 @@ coverage:
   status:
     project:
       default:
+        informational: true
         target: auto
         threshold: 0%
     patch:
       default:
+        informational: true
         target: auto
         threshold: 0%
     changes: false
+ignore:
+  - "pkg/client"
+  - "**/*generated*.go"

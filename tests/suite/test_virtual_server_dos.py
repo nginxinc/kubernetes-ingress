@@ -61,15 +61,17 @@ def virtual_server_setup_dos(request, kube_apis, ingress_controller_endpoint, te
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source, test_namespace)
     vs_host = get_first_host_from_yaml(vs_source)
     vs_paths = get_paths_from_vs_yaml(vs_source)
+    vs_paths[0] += f"good_path.html"
     if request.param["app_type"]:
         create_example_app(kube_apis, request.param["app_type"], test_namespace)
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up Virtual Server Example:")
-        delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        if request.param["app_type"]:
-            delete_common_app(kube_apis, request.param["app_type"], test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Virtual Server Example:")
+            delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
+            if request.param["app_type"]:
+                delete_common_app(kube_apis, request.param["app_type"], test_namespace)
 
     request.addfinalizer(fin)
 
@@ -81,12 +83,14 @@ class DosSetup:
     Encapsulate the example details.
     Attributes:
         req_url (str):
+        protected_name (str)
         pol_name (str):
         log_name (str):
     """
 
-    def __init__(self, req_url, pol_name, log_name):
+    def __init__(self, req_url, protected_name, pol_name, log_name):
         self.req_url = req_url
+        self.protected_name = protected_name
         self.pol_name = pol_name
         self.log_name = log_name
 
@@ -137,15 +141,16 @@ def dos_setup(
             nginx_reload(kube_apis.v1, item.metadata.name, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up:")
-        delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
-        delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
-        clean_good_bad_clients()
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
+            delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
+            delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
+            clean_good_bad_clients()
 
     request.addfinalizer(fin)
 
-    return DosSetup(req_url, pol_name, log_name)
+    return DosSetup(req_url, protected_name, pol_name, log_name)
 
 
 @pytest.mark.dos
@@ -158,7 +163,7 @@ def dos_setup(
                 "extra_args": [
                     f"-enable-custom-resources",
                     f"-enable-app-protect-dos",
-                    f"-v=3",
+                    f"-log-level=debug",
                 ],
             },
             {"example": "virtual-server-dos", "app_type": "dos"},
@@ -235,6 +240,8 @@ class TestDos:
             f"app_protect_dos_policy_file /etc/nginx/dos/policies/{test_namespace}_{dos_setup.pol_name}.json;",
             f"app_protect_dos_security_log_enable on;",
             f"app_protect_dos_security_log /etc/nginx/dos/logconfs/{test_namespace}_{dos_setup.log_name}.json syslog:server=syslog-svc.{ingress_controller_prerequisites.namespace}.svc.cluster.local:514;",
+            f"access_log syslog:server=accesslog-svc.{ingress_controller_prerequisites.namespace}.svc.cluster.local:514 log_dos if=$loggable;",
+            f'app_protect_dos_access_file "/etc/nginx/dos/allowlist/{test_namespace}_{dos_setup.protected_name}.json";',
         ]
 
         print("\n confirm response for standard request")

@@ -30,5 +30,21 @@ spec:
     targetPort: 3334
     protocol: UDP
     name: udp-server
+  - port: 9114
+    targetPort: 9114
+    protocol: TCP
+    name: service-insight
+  - port: 8443
+    targetPort: 8443
+    protocol: TCP
+    name: custom-ssl-port
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: custom-http
+  - port: 8445
+    targetPort: 8445
+    protocol: TCP
+    name: custom-https
   selector:
     app: nginx-ingress

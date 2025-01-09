@@ -1,0 +1,16 @@
+apiVersion: k8s.nginx.org/v1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: tcp-server
+    protocol: TCP
+  tls:
+    secret: transport-server-tls-secret
+  upstreams:
+    - name: tcp-app
+      service: tcp-service
+      port: 3333
+  action:
+    pass: tcp-app

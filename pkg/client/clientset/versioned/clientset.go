@@ -3,11 +3,10 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
-	k8sv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1alpha1"
 	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
 	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
 	discovery "k8s.io/client-go/discovery"
@@ -17,25 +16,17 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface
 	K8sV1() k8sv1.K8sV1Interface
 	AppprotectdosV1beta1() appprotectdosv1beta1.AppprotectdosV1beta1Interface
 	ExternaldnsV1() externaldnsv1.ExternaldnsV1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	k8sV1alpha1          *k8sv1alpha1.K8sV1alpha1Client
 	k8sV1                *k8sv1.K8sV1Client
 	appprotectdosV1beta1 *appprotectdosv1beta1.AppprotectdosV1beta1Client
 	externaldnsV1        *externaldnsv1.ExternaldnsV1Client
-}
-
-// K8sV1alpha1 retrieves the K8sV1alpha1Client
-func (c *Clientset) K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface {
-	return c.k8sV1alpha1
 }
 
 // K8sV1 retrieves the K8sV1Client
@@ -97,10 +88,6 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.k8sV1alpha1, err = k8sv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
-	if err != nil {
-		return nil, err
-	}
 	cs.k8sV1, err = k8sv1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -134,7 +121,6 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.k8sV1alpha1 = k8sv1alpha1.New(c)
 	cs.k8sV1 = k8sv1.New(c)
 	cs.appprotectdosV1beta1 = appprotectdosv1beta1.New(c)
 	cs.externaldnsV1 = externaldnsv1.New(c)

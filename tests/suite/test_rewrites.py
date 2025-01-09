@@ -23,7 +23,8 @@ def hello_app(request, kube_apis, test_namespace):
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        delete_items_from_yaml(kube_apis, hello_app_yaml, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_items_from_yaml(kube_apis, hello_app_yaml, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -44,7 +45,8 @@ def vs_rewrites_setup(
     wait_before_test()
 
     def fin():
-        delete_virtual_server(kube_apis.custom_objects, vs, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_virtual_server(kube_apis.custom_objects, vs, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -68,10 +70,11 @@ def vsr_rewrites_setup(
     wait_before_test()
 
     def fin():
-        delete_virtual_server(kube_apis.custom_objects, vs_parent, test_namespace)
-        delete_v_s_route(kube_apis.custom_objects, vsr_prefixes, test_namespace)
-        delete_v_s_route(kube_apis.custom_objects, vsr_regex1, test_namespace)
-        delete_v_s_route(kube_apis.custom_objects, vsr_regex2, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_virtual_server(kube_apis.custom_objects, vs_parent, test_namespace)
+            delete_v_s_route(kube_apis.custom_objects, vsr_prefixes, test_namespace)
+            delete_v_s_route(kube_apis.custom_objects, vsr_regex1, test_namespace)
+            delete_v_s_route(kube_apis.custom_objects, vsr_regex2, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -97,6 +100,7 @@ test_data = [
 @pytest.mark.parametrize("crd_ingress_controller", [({"type": "complete"})], indirect=True)
 class TestRewrites:
     @pytest.mark.vs
+    @pytest.mark.vs_rewrite
     @pytest.mark.parametrize("path,args,cookies,expected", test_data)
     def test_vs_rewrite(self, vs_rewrites_setup, path, args, cookies, expected):
         """
@@ -108,6 +112,7 @@ class TestRewrites:
         assert f"URI: {expected}\nRequest" in resp.text
 
     @pytest.mark.vsr
+    @pytest.mark.vsr_rewrite
     @pytest.mark.parametrize("path,args,cookies,expected", test_data)
     def test_vsr_rewrite(self, vsr_rewrites_setup, path, args, cookies, expected):
         """

@@ -1,4 +1,5 @@
 """Describe the custom assertion methods"""
+
 import time
 
 import pytest
@@ -143,6 +144,19 @@ def assert_event(event_text, events_list) -> None:
     pytest.fail(f'Failed to find the event "{event_text}" in the list. Exiting...')
 
 
+def assert_event_not_present(event_text, events_list) -> None:
+    """
+    Search for the event in the list.
+
+    :param event_text: event text
+    :param events_list: list of events
+    :return:
+    """
+    for i in range(len(events_list) - 1, -1, -1):
+        if event_text in events_list[i].message:
+            pytest.fail(f'Event "{event_text}" exists in the list. Exiting...')
+
+
 def assert_event_starts_with_text_and_contains_errors(event_text, events_list, fields_list) -> None:
     """
     Search for the event starting with the expected text in the list and check its message.
@@ -254,3 +268,36 @@ def assert_proxy_entries_exist(config) -> None:
     assert "proxy_next_upstream error timeout;" in config
     assert "proxy_next_upstream_timeout 0s;" in config
     assert "proxy_next_upstream_tries 0;" in config
+
+
+def assert_pods_scaled_to_count(apps_v1_api, v1, deployment_name, namespace, expected_count, timeout=60, interval=1):
+    """
+    Check if the number of pods for a given deployment has scaled down to the expected count.
+
+    :param apps_v1_api: AppsV1Api
+    :param v1: CoreV1Api
+    :param deployment_name: name of the deployment to check.
+    :param namespace: namespace of the deployment.
+    :param expected_count: expected number of pods after scaling.
+    :param timeout: Maximum time to wait for the expected count to be met.
+    :param interval: Time to wait between checks.
+    """
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        selector = ",".join(
+            [
+                f"{key}={value}"
+                for key, value in apps_v1_api.read_namespaced_deployment(
+                    deployment_name, namespace
+                ).spec.selector.match_labels.items()
+            ]
+        )
+        pods = v1.list_namespaced_pod(namespace, label_selector=selector)
+        pod_count = len(pods.items)
+        if pod_count == expected_count:
+            print(f"Expected {expected_count} pods, found {pod_count} for '{deployment_name}' in '{namespace}'.")
+            return
+        time.sleep(interval)
+    assert (
+        False
+    ), f"Expected {expected_count} pods, but found {pod_count} for '{deployment_name}' in '{namespace}' after {timeout} seconds."

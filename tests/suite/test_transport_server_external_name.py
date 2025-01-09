@@ -56,15 +56,16 @@ def ts_externalname_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up ExternalName Setup:")
-        delete_service(kube_apis.v1, external_svc, transport_server_setup.namespace)
-        delete_namespace(kube_apis.v1, external_ns)
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            config_map_name,
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up ExternalName Setup:")
+            delete_service(kube_apis.v1, external_svc, transport_server_setup.namespace)
+            delete_namespace(kube_apis.v1, external_ns)
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                config_map_name,
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
 
     request.addfinalizer(fin)
 
@@ -119,7 +120,7 @@ class TestTransportServerStatus:
                 ts_externalname_setup.ic_pod_name,
                 ingress_controller_prerequisites.namespace,
             )
-            retry = +1
+            retry = retry + 1
 
         assert resolver_count == 2  # one for http and other for stream context
         assert (

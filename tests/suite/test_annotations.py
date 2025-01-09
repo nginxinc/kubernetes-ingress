@@ -139,17 +139,18 @@ def annotations_setup(
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend2-svc-80")
 
     def fin():
-        print("Clean up Annotations Example:")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml", test_namespace
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Annotations Example:")
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml", test_namespace
+            )
 
     request.addfinalizer(fin)
 
@@ -190,8 +191,9 @@ def annotations_grpc_setup(
     error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
 
     def fin():
-        print("Clean up gRPC Annotations Example:")
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml", test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up gRPC Annotations Example:")
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml", test_namespace)
 
     request.addfinalizer(fin)
 
@@ -208,6 +210,7 @@ def annotations_grpc_setup(
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
 class TestAnnotations:
     def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites, cli_arguments):
@@ -242,6 +245,7 @@ class TestAnnotations:
                     "nginx.org/hsts": "True",
                     "nginx.org/hsts-behind-proxy": "True",
                     "nginx.org/upstream-zone-size": "124k",
+                    "nginx.org/proxy-set-headers": "X-Forwarded-ABC",
                 },
                 [
                     "proxy_send_timeout 10s;",
@@ -252,6 +256,7 @@ class TestAnnotations:
                     "if ($http_x_forwarded_proto = 'https')",
                     'set $hsts_header_val "max-age=2592000; preload";',
                     " 124k;",
+                    "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
                 ],
                 ["proxy_send_timeout 60s;", "if ($https = on)", " 256k;"],
             )
@@ -285,7 +290,6 @@ class TestAnnotations:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-
         assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
         for _ in expected_strings:
             assert _ in result_conf
@@ -452,6 +456,7 @@ class TestAnnotations:
                     "nginx.org/proxy-send-timeout": "invalid",
                     "nginx.org/max-conns": "-10",
                     "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid",
+                    "nginx.org/proxy-set-headers": "abc!123",
                 }
             )
         ],
@@ -482,6 +487,7 @@ class TestAnnotations:
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["mergeable"], indirect=True)
 class TestMergeableFlows:
     @pytest.mark.parametrize(
@@ -489,8 +495,19 @@ class TestMergeableFlows:
         [
             (
                 f"{TEST_DATA}/annotations/mergeable/minion-annotations-differ.yaml",
-                ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;", "max_conns=1048;", "max_conns=1024;"],
-                ["proxy_send_timeout 10s;", "max_conns=108;"],
+                [
+                    "proxy_send_timeout 25s;",
+                    "proxy_send_timeout 33s;",
+                    "max_conns=1048;",
+                    "max_conns=1024;",
+                    'proxy_set_header X-Forwarded-ABC "minionA";',
+                    'proxy_set_header X-Forwarded-ABC "minionB";',
+                ],
+                [
+                    "proxy_send_timeout 10s;",
+                    "max_conns=108;",
+                    "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+                ],
             ),
         ],
     )
@@ -516,7 +533,6 @@ class TestMergeableFlows:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-
         assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
         for _ in expected_strings:
             assert _ in result_conf
@@ -525,6 +541,48 @@ class TestMergeableFlows:
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
+@pytest.mark.parametrize("annotations_setup", ["standard"], indirect=True)
+class TestStandardFlows:
+    @pytest.mark.parametrize(
+        "yaml_file, expected_strings, unexpected_strings",
+        [
+            (
+                f"{TEST_DATA}/annotations/standard/annotations-ingress.yaml",
+                ["proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;", "proxy_set_header ABC $http_abc;"],
+                [
+                    'proxy_set_header X-Forwarded-ABC "ABC";',
+                ],
+            ),
+        ],
+    )
+    def test_standard_ingress(
+        self,
+        kube_apis,
+        annotations_setup,
+        ingress_controller_prerequisites,
+        yaml_file,
+        expected_strings,
+        unexpected_strings,
+    ):
+        print("Case 8: standard ingress")
+        replace_ingresses_from_yaml(kube_apis.networking_v1, annotations_setup.namespace, yaml_file)
+        wait_before_test(1)
+        result_conf = get_ingress_nginx_template_conf(
+            kube_apis.v1,
+            annotations_setup.namespace,
+            annotations_setup.ingress_name,
+            annotations_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+        for _ in expected_strings:
+            assert _ in result_conf
+        for _ in unexpected_strings:
+            assert _ not in result_conf
+
+
+@pytest.mark.ingresses
+@pytest.mark.annotations
 class TestGrpcFlows:
     @pytest.mark.parametrize(
         "annotations, expected_strings, unexpected_strings",
@@ -559,7 +617,6 @@ class TestGrpcFlows:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_grpc_setup.namespace)
-
         assert_event_count_increased(annotations_grpc_setup.ingress_event_text, initial_count, new_events)
         for _ in expected_strings:
             assert _ in result_conf

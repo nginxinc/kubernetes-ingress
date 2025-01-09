@@ -1,0 +1,28 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server-splitted
+spec:
+  host: virtual-server-splitted.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1-v1
+    service: backend1-svc-v1
+    port: 80
+  - name: backend1-v2
+    service: backend1-svc-v2
+    port: 80
+  routes:
+  - path: "/backends"
+    splits:
+    - weight: 0
+      action:
+        pass: backend1-v1
+    - weight: 100
+      action:
+        pass: backend1-v2
+  - path: "/backend2"
+    action:
+      pass: backend2

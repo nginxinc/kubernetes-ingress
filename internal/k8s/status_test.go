@@ -2,13 +2,17 @@ package k8s
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-	fake_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
+	fake_v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,21 +23,22 @@ import (
 )
 
 func TestUpdateTransportServerStatus(t *testing.T) {
-	ts := &conf_v1alpha1.TransportServer{
+	t.Parallel()
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "before status",
 			Reason:  "before reason",
 			Message: "before message",
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{
+	fakeClient := fake_v1.NewSimpleClientset(
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{
 				*ts,
 			},
 		})
@@ -56,9 +61,9 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating transportserver status: %v", err)
 	}
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
 
-	expectedStatus := conf_v1alpha1.TransportServerStatus{
+	expectedStatus := conf_v1.TransportServerStatus{
 		State:   "after status",
 		Reason:  "after reason",
 		Message: "after message",
@@ -70,35 +75,38 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 }
 
 func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
-	ts := &conf_v1alpha1.TransportServer{
+	t.Parallel()
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "same status",
 			Reason:  "same reason",
 			Message: "same message",
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{
+	fakeClient := fake_v1.NewSimpleClientset(
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{
 				*ts,
 			},
 		})
 
-	tsLister, _ := cache.NewInformer(
-		cache.NewListWatchFromClient(
-			fakeClient.K8sV1alpha1().RESTClient(),
-			"transportservers",
-			"nginx-ingress",
-			fields.Everything(),
-		),
-		&conf_v1alpha1.TransportServer{},
-		2,
-		nil,
+	tsLister, _ := cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.K8sV1().RESTClient(),
+				"transportservers",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &conf_v1.TransportServer{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
 	)
 
 	err := tsLister.Add(ts)
@@ -107,17 +115,19 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	}
 	nsi := make(map[string]*namespacedInformer)
 	nsi["default"] = &namespacedInformer{transportServerLister: tsLister}
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		namespacedInformers: nsi,
 		confClient:          fakeClient,
 		keyFunc:             cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:              l,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "same status", "same reason", "same message")
 	if err != nil {
 		t.Errorf("error updating transportserver status: %v", err)
 	}
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
 
 	if updatedTs.Status.State != "same status" {
 		t.Errorf("expected: %v actual: %v", "same status", updatedTs.Status.State)
@@ -131,38 +141,42 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 }
 
 func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
-	ts := &conf_v1alpha1.TransportServer{
+	t.Parallel()
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "before status",
 			Reason:  "before reason",
 			Message: "before message",
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{},
+	fakeClient := fake_v1.NewSimpleClientset(
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{},
 		})
 
-	tsLister, _ := cache.NewInformer(
-		cache.NewListWatchFromClient(
-			fakeClient.K8sV1alpha1().RESTClient(),
-			"transportservers",
-			"nginx-ingress",
-			fields.Everything(),
-		),
-		&conf_v1alpha1.TransportServer{},
-		2,
-		nil,
+	tsLister, _ := cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.K8sV1().RESTClient(),
+				"transportservers",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &conf_v1.TransportServer{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
 	)
 
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{transportServerLister: tsLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		namespacedInformers: nsi,
 		confClient:          fakeClient,
@@ -173,28 +187,30 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 				Ports: "1234",
 			},
 		},
+		logger: l,
 	}
 
 	err := su.UpdateTransportServerStatus(ts, "after status", "after reason", "after message")
 	if err != nil {
-		t.Errorf("unexpected error: %v, result should be empty as no matching TransportServer is present", err)
+		t.Fatalf("unexpected error: %v, result should be empty as no matching TransportServer is present", err)
 	}
 
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
-	if updatedTs != nil {
-		t.Errorf("expected TransportServer Store would be empty as provided TransportServer was not found. Unexpected updated TransportServer: %v", updatedTs)
+	_, err = fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	if err == nil {
+		t.Fatalf("expected TransportServer Store would be empty as provided TransportServer was not found.")
 	}
 }
 
 func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
+	t.Parallel()
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -208,9 +224,19 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
-		cache.NewListWatchFromClient(fakeClient.NetworkingV1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
-		&networking.Ingress{}, 2, nil)
+	ingLister.Store, _ = cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.NetworkingV1().RESTClient(),
+				"ingresses",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &networking.Ingress{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
+	)
 
 	err := ingLister.Store.Add(&ing)
 	if err != nil {
@@ -220,6 +246,7 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
@@ -227,6 +254,7 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		externalStatusAddress: "123.123.123.123",
 		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:                l,
 	}
 	err = su.ClearIngressStatus(ing)
 	if err != nil {
@@ -293,14 +321,15 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 }
 
 func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
+	t.Parallel()
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -314,9 +343,19 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
-		cache.NewListWatchFromClient(fakeClient.NetworkingV1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
-		&networking.Ingress{}, 2, nil)
+	ingLister.Store, _ = cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.NetworkingV1().RESTClient(),
+				"ingresses",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &networking.Ingress{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
+	)
 
 	err := ingLister.Store.Add(&ing)
 	if err != nil {
@@ -326,12 +365,14 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalStatusAddress: "",
 		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:                l,
 	}
 
 	su.SaveStatusFromIngressLink("3.3.3.3")
@@ -403,13 +444,14 @@ func checkStatus(expected string, actual networking.Ingress) bool {
 }
 
 func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		su                statusUpdater
 		expectedEndpoints []conf_v1.ExternalEndpoint
 	}{
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "8.8.8.8",
 					},
@@ -421,7 +463,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 		},
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						Hostname: "my-loadbalancer.example.com",
 					},
@@ -443,6 +485,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 }
 
 func TestHasVsStatusChanged(t *testing.T) {
+	t.Parallel()
 	state := "Valid"
 	reason := "AddedOrUpdated"
 	msg := "Configuration was added or updated"
@@ -494,6 +537,7 @@ func TestHasVsStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasVsStatusChanged(&test.vs, state, reason, msg)
 
 		if changed != test.expected {
@@ -503,6 +547,7 @@ func TestHasVsStatusChanged(t *testing.T) {
 }
 
 func TestHasVsrStatusChanged(t *testing.T) {
+	t.Parallel()
 	referencedBy := "namespace/name"
 	state := "Valid"
 	reason := "AddedOrUpdated"
@@ -570,6 +615,7 @@ func TestHasVsrStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasVsrStatusChanged(&test.vsr, state, reason, msg, referencedBy)
 
 		if changed != test.expected {
@@ -579,6 +625,7 @@ func TestHasVsrStatusChanged(t *testing.T) {
 }
 
 func TestGetExternalServicePorts(t *testing.T) {
+	t.Parallel()
 	svc := v1.Service{
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -609,6 +656,7 @@ func TestGetExternalServicePorts(t *testing.T) {
 }
 
 func TestIsRequiredPort(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		port     intstr.IntOrString
 		expected bool
@@ -667,6 +715,7 @@ func TestIsRequiredPort(t *testing.T) {
 }
 
 func TestHasPolicyStatusChanged(t *testing.T) {
+	t.Parallel()
 	state := "Valid"
 	reason := "AddedOrUpdated"
 	msg := "Configuration was added or updated"
@@ -718,6 +767,7 @@ func TestHasPolicyStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasPolicyStatusChanged(&test.pol, state, reason, msg)
 
 		if changed != test.expected {

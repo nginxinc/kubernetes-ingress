@@ -1,174 +1,133 @@
 package main
 
 import (
-	"errors"
-	"reflect"
-	"strings"
+	"bytes"
+	"context"
+	"io"
+	"log/slog"
+	"regexp"
 	"testing"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	pkgversion "k8s.io/apimachinery/pkg/version"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestValidatePort(t *testing.T) {
-	badPorts := []int{80, 443, 1, 1023, 65536}
-	for _, badPort := range badPorts {
-		err := validatePort(badPort)
-		if err == nil {
-			t.Errorf("Expected error for port %v\n", badPort)
-		}
-	}
-
-	goodPorts := []int{8080, 8081, 8082, 1024, 65535}
-	for _, goodPort := range goodPorts {
-		err := validatePort(goodPort)
-		if err != nil {
-			t.Errorf("Error for valid port:  %v err: %v\n", goodPort, err)
-		}
-	}
-}
-
-func TestParseNginxStatusAllowCIDRs(t *testing.T) {
-	badCIDRs := []struct {
-		input         string
-		expectedError error
+func TestLogFormats(t *testing.T) {
+	testCases := []struct {
+		name   string
+		format string
+		wantre string
 	}{
 		{
-			"earth, ,,furball",
-			errors.New("invalid IP address: earth"),
+			name:   "glog format message",
+			format: "glog",
+			wantre: `^I\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
-			"127.0.0.1,10.0.1.0/24, ,,furball",
-			errors.New("invalid CIDR address: an empty string is an invalid CIDR block or IP address"),
+			name:   "json format message",
+			format: "json",
+			wantre: `^{"time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+.*","level":"INFO","msg":".*}`,
 		},
 		{
-			"false",
-			errors.New("invalid IP address: false"),
+			name:   "text format message",
+			format: "text",
+			wantre: `^time=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+.*level=\w+\smsg=\w+`,
 		},
 	}
-	for _, badCIDR := range badCIDRs {
-		_, err := parseNginxStatusAllowCIDRs(badCIDR.input)
-		if err == nil {
-			t.Errorf("parseNginxStatusAllowCIDRs(%q) returned no error when it should have returned error %q", badCIDR.input, badCIDR.expectedError)
-		} else if err.Error() != badCIDR.expectedError.Error() {
-			t.Errorf("parseNginxStatusAllowCIDRs(%q) returned error %q when it should have returned error %q", badCIDR.input, err, badCIDR.expectedError)
-		}
+	t.Parallel()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			ctx := initLogger(tc.format, levels.LevelInfo, &buf)
+			l := nl.LoggerFromContext(ctx)
+			l.Log(ctx, levels.LevelInfo, "test")
+			got := buf.String()
+			re := regexp.MustCompile(tc.wantre)
+			if !re.MatchString(got) {
+				t.Errorf("\ngot:\n%q\nwant:\n%q", got, tc.wantre)
+			}
+		})
 	}
+}
 
-	goodCIDRs := []struct {
-		input    string
-		expected []string
+func TestK8sVersionValidation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		kubeVersion string
 	}{
 		{
-			"127.0.0.1",
-			[]string{"127.0.0.1"},
+			name:        "Earliest version 1.22.0",
+			kubeVersion: "1.22.0",
 		},
 		{
-			"10.0.1.0/24",
-			[]string{"10.0.1.0/24"},
+			name:        "Minor version 1.22.5",
+			kubeVersion: "1.22.5",
 		},
 		{
-			"127.0.0.1,10.0.1.0/24,68.121.233.214 , 24.24.24.24/32",
-			[]string{"127.0.0.1", "10.0.1.0/24", "68.121.233.214", "24.24.24.24/32"},
+			name:        "Close to current 1.32.0",
+			kubeVersion: "1.32.0",
 		},
 	}
-	for _, goodCIDR := range goodCIDRs {
-		result, err := parseNginxStatusAllowCIDRs(goodCIDR.input)
-		if err != nil {
-			t.Errorf("parseNginxStatusAllowCIDRs(%q) returned an error when it should have returned no error: %q", goodCIDR.input, err)
-		}
+	t.Parallel()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// setup logger
+			l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+			ctx := nl.ContextWithLogger(context.Background(), l)
 
-		if !reflect.DeepEqual(result, goodCIDR.expected) {
-			t.Errorf("parseNginxStatusAllowCIDRs(%q) returned %v expected %v: ", goodCIDR.input, result, goodCIDR.expected)
-		}
+			// setup kube client with version
+			clientset := fake.NewSimpleClientset()
+			fakeDiscovery, _ := clientset.Discovery().(*fakediscovery.FakeDiscovery)
+			fakeDiscovery.FakedServerVersion = &pkgversion.Info{GitVersion: tc.kubeVersion}
+
+			// run test
+			err := validateKubernetesVersionInfo(ctx, clientset)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+		})
 	}
 }
 
-func TestValidateCIDRorIP(t *testing.T) {
-	badCIDRs := []string{"localhost", "thing", "~", "!!!", "", " ", "-1"}
-	for _, badCIDR := range badCIDRs {
-		err := validateCIDRorIP(badCIDR)
-		if err == nil {
-			t.Errorf(`Expected error for invalid CIDR "%v"\n`, badCIDR)
-		}
+func TestK8sVersionValidationBad(t *testing.T) {
+	testCases := []struct {
+		name        string
+		kubeVersion string
+	}{
+		{
+			name:        "Before earliest version 1.21.0",
+			kubeVersion: "1.21.0",
+		},
+		{
+			name:        "Empty version",
+			kubeVersion: "",
+		},
+		{
+			name:        "Garbage",
+			kubeVersion: "xyzabc",
+		},
 	}
+	t.Parallel()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// setup logger
+			l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+			ctx := nl.ContextWithLogger(context.Background(), l)
 
-	goodCIDRs := []string{"0.0.0.0/32", "0.0.0.0/0", "127.0.0.1/32", "127.0.0.0/24", "23.232.65.42"}
-	for _, goodCIDR := range goodCIDRs {
-		err := validateCIDRorIP(goodCIDR)
-		if err != nil {
-			t.Errorf("Error for valid CIDR: %v err: %v\n", goodCIDR, err)
-		}
-	}
-}
+			// setup kube client with version
+			clientset := fake.NewSimpleClientset()
+			fakeDiscovery, _ := clientset.Discovery().(*fakediscovery.FakeDiscovery)
+			fakeDiscovery.FakedServerVersion = &pkgversion.Info{GitVersion: tc.kubeVersion}
 
-func TestValidateLocation(t *testing.T) {
-	badLocations := []string{
-		"",
-		"/",
-		" /test",
-		"/bad;",
-	}
-	for _, badLocation := range badLocations {
-		err := validateLocation(badLocation)
-		if err == nil {
-			t.Errorf("validateLocation(%v) returned no error when it should have returned an error", badLocation)
-		}
-	}
-
-	goodLocations := []string{
-		"/test",
-		"/test/subtest",
-	}
-	for _, goodLocation := range goodLocations {
-		err := validateLocation(goodLocation)
-		if err != nil {
-			t.Errorf("validateLocation(%v) returned an error when it should have returned no error: %v", goodLocation, err)
-		}
-	}
-}
-
-func TestValidateAppProtectLogLevel(t *testing.T) {
-	badLogLevels := []string{
-		"",
-		"critical",
-		"none",
-		"info;",
-	}
-	for _, badLogLevel := range badLogLevels {
-		err := validateAppProtectLogLevel(badLogLevel)
-		if err == nil {
-			t.Errorf("validateAppProtectLogLevel(%v) returned no error when it should have returned an error", badLogLevel)
-		}
-	}
-
-	goodLogLevels := []string{
-		"fatal",
-		"Error",
-		"WARN",
-		"info",
-		"debug",
-		"trace",
-	}
-	for _, goodLogLevel := range goodLogLevels {
-		err := validateAppProtectLogLevel(goodLogLevel)
-		if err != nil {
-			t.Errorf("validateAppProtectLogLevel(%v) returned an error when it should have returned no error: %v", goodLogLevel, err)
-		}
-	}
-}
-
-func TestValidateNamespaces(t *testing.T) {
-	badNamespaces := []string{"watchns1, watchns2, watchns%$", "watchns1,watchns2,watchns%$"}
-	for _, badNs := range badNamespaces {
-		err := validateNamespaceNames(strings.Split(badNs, ","))
-		if err == nil {
-			t.Errorf("Expected error for invalid namespace %v\n", badNs)
-		}
-	}
-
-	goodNamespaces := []string{"watched-namespace", "watched-namespace,", "watched-namespace1,watched-namespace2", "watched-namespace1, watched-namespace2"}
-	for _, goodNs := range goodNamespaces {
-		err := validateNamespaceNames(strings.Split(goodNs, ","))
-		if err != nil {
-			t.Errorf("Error for valid namespace:  %v err: %v\n", goodNs, err)
-		}
+			// run test
+			err := validateKubernetesVersionInfo(ctx, clientset)
+			if err == nil {
+				t.Error("Wanted an error here")
+			}
+		})
 	}
 }

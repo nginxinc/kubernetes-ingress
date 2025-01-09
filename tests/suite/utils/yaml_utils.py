@@ -123,7 +123,7 @@ def get_paths_from_vsr_yaml(file) -> []:
     return res
 
 
-def get_secret_name_from_vs_yaml(file) -> str:
+def get_secret_name_from_vs_or_ts_yaml(file) -> str:
     """
     Parse yaml file and return the tls secret name.
 

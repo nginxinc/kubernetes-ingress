@@ -2,11 +2,13 @@ package version2
 
 // TransportServerConfig holds NGINX configuration for a TransportServer.
 type TransportServerConfig struct {
-	Server         StreamServer
-	Upstreams      []StreamUpstream
-	StreamSnippets []string
-	Match          *Match
-	DisableIPV6    bool
+	Server                  StreamServer
+	Upstreams               []StreamUpstream
+	StreamSnippets          []string
+	Match                   *Match
+	DisableIPV6             bool
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 // StreamUpstream defines a stream upstream.
@@ -16,6 +18,7 @@ type StreamUpstream struct {
 	UpstreamLabels      UpstreamLabels
 	LoadBalancingMethod string
 	Resolve             bool
+	BackupServers       []StreamUpstreamBackupServer
 }
 
 // StreamUpstreamServer defines a stream upstream server.
@@ -26,8 +29,15 @@ type StreamUpstreamServer struct {
 	MaxConnections int
 }
 
+// StreamUpstreamBackupServer represents Backup Server address
+// or name defined by the ExternalName service.
+type StreamUpstreamBackupServer struct {
+	Address string
+}
+
 // StreamServer defines a server in the stream module.
 type StreamServer struct {
+	ServerName               string
 	TLSPassthrough           bool
 	UnixSocket               string
 	Port                     int
@@ -46,6 +56,16 @@ type StreamServer struct {
 	HealthCheck              *StreamHealthCheck
 	ServerSnippets           []string
 	DisableIPV6              bool
+	SSL                      *StreamSSL
+	IPv4                     string
+	IPv6                     string
+}
+
+// StreamSSL defines SSL configuration for a server.
+type StreamSSL struct {
+	Enabled        bool
+	Certificate    string
+	CertificateKey string
 }
 
 // StreamHealthCheck defines a health check for a StreamUpstream in a StreamServer.

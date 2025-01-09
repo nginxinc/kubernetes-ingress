@@ -1,13 +1,13 @@
 package k8s
 
 import (
-	"fmt"
+	"context"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +16,7 @@ import (
 func createTestConfiguration() *Configuration {
 	lbc := LoadBalancerController{
 		ingressClass: "nginx",
+		Logger:       nic_logger.LoggerFromContext(context.Background()),
 	}
 	isPlus := false
 	appProtectEnabled := false
@@ -45,6 +46,7 @@ func createTestConfiguration() *Configuration {
 }
 
 func TestAddIngressForRegularIngress(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
 	// no problems are expected for all cases
@@ -216,6 +218,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 }
 
 func TestAddInvalidIngress(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
 	ing := createTestIngress("ingress", "foo.example.com", "foo.example.com")
@@ -1878,17 +1881,147 @@ func TestHostCollisions(t *testing.T) {
 func TestAddTransportServer(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
+
+	// no problems are expected for all cases
+	var expectedProblems []ConfigurationProblem
+	var expectedChanges []ResourceChange
+
+	// Add TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts,
+			},
+		},
+	}
+
+	changes, problems := configuration.AddOrUpdateTransportServer(ts)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Update TransportServer
+
+	updatedTS := ts.DeepCopy()
+	updatedTS.Generation++
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(updatedTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Make TransportServer invalid
+
+	invalidTS := updatedTS.DeepCopy()
+	invalidTS.Generation++
+	invalidTS.Spec.Upstreams = nil
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: Delete,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+			Error: `spec.action.pass: Not found: "myapp"`,
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(invalidTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Restore TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(updatedTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Delete TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: Delete,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.DeleteTransportServer("default/transportserver")
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("DeleteTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("DeleteTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
+func TestAddTransportServerWithHost(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
+
+	secretName := "echo-secret"
+
+	ts := createTestTransportServerWithHost("transportserver", "echo.example.com", "tcp-7777", secretName)
 
 	// no problems are expected for all cases
 	var expectedProblems []ConfigurationProblem
@@ -2055,7 +2188,7 @@ func TestAddTransportServerForTLSPassthrough(t *testing.T) {
 func TestListenerFlip(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2067,8 +2200,7 @@ func TestListenerFlip(t *testing.T) {
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2245,8 +2377,7 @@ func TestAddTransportServerWithIncorrectClass(t *testing.T) {
 func TestAddTransportServerWithNonExistingListener(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	gc := createTestGlobalConfiguration([]conf_v1alpha1.Listener{})
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, []conf_v1.Listener{}, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2284,10 +2415,10 @@ func TestDeleteNonExistingTransportServer(t *testing.T) {
 	}
 }
 
-func TestAddGlobalConfiguration(t *testing.T) {
+func TestAddOrUpdateGlobalConfiguration(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2301,12 +2432,45 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	gc := createTestGlobalConfiguration(listeners)
 
-	var nilGC *conf_v1alpha1.GlobalConfiguration
-
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
 
 	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if err != nil {
+		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
+	}
+}
+
+//gocyclo:ignore
+func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "tcp-8888",
+			Port:     8888,
+			Protocol: "TCP",
+		},
+	}
+	gc := createTestGlobalConfiguration(listeners)
+
+	var nilGC *conf_v1.GlobalConfiguration
+
+	var expectedChanges []ResourceChange
+	var expectedProblems []ConfigurationProblem
+
+	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2361,7 +2525,7 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2425,7 +2589,7 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2436,7 +2600,7 @@ func TestAddGlobalConfiguration(t *testing.T) {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
 	}
 
-	// Make GlobalConfiguration Invalid
+	// Make listener for TransportServer ts1 invalid
 
 	invalidGC := updatedGC2.DeepCopy()
 	invalidGC.Spec.Listeners[0].Port = -1
@@ -2449,13 +2613,6 @@ func TestAddGlobalConfiguration(t *testing.T) {
 				TransportServer: ts1,
 			},
 		},
-		{
-			Op: Delete,
-			Resource: &TransportServerConfiguration{
-				ListenerPort:    7000,
-				TransportServer: ts2,
-			},
-		},
 	}
 	expectedProblems = []ConfigurationProblem{
 		{
@@ -2464,16 +2621,12 @@ func TestAddGlobalConfiguration(t *testing.T) {
 			Reason:  "Rejected",
 			Message: "Listener tcp-7777 doesn't exist",
 		},
-		{
-			Object:  ts2,
-			IsError: false,
-			Reason:  "Rejected",
-			Message: "Listener tcp-8888 doesn't exist",
-		},
 	}
 	expectedErrMsg := "spec.listeners[0].port: Invalid value: -1: must be between 1 and 65535, inclusive"
+	expectedGC3 := invalidGC.DeepCopy()
+	expectedGC3.Spec.Listeners = invalidGC.Spec.Listeners[1:]
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2484,11 +2637,11 @@ func TestAddGlobalConfiguration(t *testing.T) {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned error %v but expected %v", err, expectedErrMsg)
 	}
 	storedGC = configuration.GetGlobalConfiguration()
-	if diff := cmp.Diff(nilGC, storedGC); diff != "" {
+	if diff := cmp.Diff(expectedGC3, storedGC); diff != "" {
 		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 
-	// Restore
+	// Restore GlobalConfiguration
 
 	expectedChanges = []ResourceChange{
 		{
@@ -2496,13 +2649,6 @@ func TestAddGlobalConfiguration(t *testing.T) {
 			Resource: &TransportServerConfiguration{
 				ListenerPort:    8888,
 				TransportServer: ts1,
-			},
-		},
-		{
-			Op: AddOrUpdate,
-			Resource: &TransportServerConfiguration{
-				ListenerPort:    7000,
-				TransportServer: ts2,
 			},
 		},
 	}
@@ -2569,18 +2715,667 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 }
 
+func TestAddGlobalConfigurationThenAddVirtualServerWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithValidCustomListenersFirstThenAddGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithValidCustomListenersAndNoGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithCustomHttpListenerThatDoNotExistInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-bogus",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{"Listener http-bogus is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithCustomHttpsListenerThatDoNotExistInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-bogus")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listener https-bogus is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestDeleteHttpListenerFromExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPSListener, expectedChanges, noProblems)
+}
+
+func TestDeleteHttpsListenerFromExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListener, expectedChanges, noProblems)
+}
+
+func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+			},
+		},
+	}
+	deleteGlobalConfiguration(t, configuration, expectedChanges, noProblems)
+}
+
+func TestRenameHttpListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, bogusHTTPListener, expectedChanges, noProblems)
+}
+
+func TestRenameHttpsListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+	addOrUpdateGlobalConfiguration(t, configuration, bogusHTTPSListener, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithCustomHttpListenerInHttpsBlock(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"http-8082")
+
+	expectedWarningMsg := "Listener http-8082 can't be use in `listener.https` context as SSL is not enabled for that listener."
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{expectedWarningMsg},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithCustomHttpsListenerInHttpBlock(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"https-8442",
+		"https-8442")
+
+	expectedWarningMsg := "Listener https-8442 can't be use in `listener.http` context as SSL is enabled for that listener."
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{expectedWarningMsg},
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithNoHttpsListener(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithNoHttpListener(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithNoHttpOrHttpsListener(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"",
+		"")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToFalseInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedWarningMsg := "Listener https-8442 can't be use in `listener.https` context as SSL is not enabled for that listener."
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{expectedWarningMsg},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPSListenerSSLFalse, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToTrueInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedWarningMsg := "Listener http-8082 can't be use in `listener.http` context as SSL is enabled for that listener."
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{expectedWarningMsg},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListenerSSLTrue, expectedChanges, noProblems)
+}
+
+func TestAddMultipleVirtualServersWithTheSameCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServerCafe := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	virtualServerFoo := createTestVirtualServerWithListeners(
+		"foo",
+		"foo.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChangesForVsCafe := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServerCafe,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServerCafe, expectedChangesForVsCafe, noProblems)
+
+	expectedChangesForVsFoo := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServerFoo,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServerFoo, expectedChangesForVsFoo, noProblems)
+}
+
+func TestUpdateGlobalConfigurationWithVirtualServerDeployedWithNoCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServer(
+		"cafe",
+		"cafe.example.com")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	// Update GlobalConfiguration by removing a listener
+	// Since our VirtualServer does not have any listener
+	// we do not want to see any VirtualServerConfiguration events
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListener, noChanges, noProblems)
+}
+
+func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithNoCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServer(
+		"cafe",
+		"cafe.example.com")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	// Delete the existing GlobalConfiguration
+	// Since our VirtualServer does not have any listeners
+	// we do not want to see any VirtualServerConfiguration events
+	deleteGlobalConfiguration(t, configuration, noChanges, noProblems)
+}
+
 func TestPortCollisions(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
@@ -2618,7 +3413,7 @@ func TestPortCollisions(t *testing.T) {
 			Object:  ts2,
 			IsError: false,
 			Reason:  "Rejected",
-			Message: "Listener tcp-7777 is taken by another resource",
+			Message: "Listener tcp-7777 with host empty host is taken by another resource",
 		},
 	}
 
@@ -2638,7 +3433,7 @@ func TestPortCollisions(t *testing.T) {
 			Object:  ts3,
 			IsError: false,
 			Reason:  "Rejected",
-			Message: "Listener tcp-7777 is taken by another resource",
+			Message: "Listener tcp-7777 with host empty host is taken by another resource",
 		},
 	}
 
@@ -2761,19 +3556,80 @@ func TestChallengeIngressToVSR(t *testing.T) {
 	}
 }
 
-func mustInitGlobalConfiguration(c *Configuration, gc *conf_v1alpha1.GlobalConfiguration) {
+func TestChallengeIngressNoVSR(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	var expectedProblems []ConfigurationProblem
+
+	vs := createTestVirtualServer("virtualserver", "bar.example.com")
+	ing := createTestChallengeIngress("challenge", "foo.example.com", "/.well-known/acme-challenge/test", "cm-acme-http-solver-test")
+	configuration.AddOrUpdateVirtualServer(vs)
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &IngressConfiguration{
+				Ingress: ing,
+				ValidHosts: map[string]bool{
+					"foo.example.com": true,
+				},
+				ChildWarnings: map[string][]string{},
+			},
+		},
+	}
+
+	changes, problems := configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
+func addOrUpdateGlobalConfiguration(t *testing.T, c *Configuration, listeners []conf_v1.Listener, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	t.Helper()
+	gc := createTestGlobalConfiguration(listeners)
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
 
-	// when adding a valid GlobalConfiguration to a new Configuration, no changes, problems and errors are expected
-
-	if len(changes) > 0 {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned %d changes, expected 0", len(changes)))
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
 	}
-	if len(problems) > 0 {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned %d problems, expected 0", len(problems)))
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedProblems, problems))
 	}
 	if err != nil {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned an unexpected error %v", err))
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned an unexpected error %v", err)
+	}
+}
+
+func deleteGlobalConfiguration(t *testing.T, c *Configuration, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	t.Helper()
+	changes, problems := c.DeleteGlobalConfiguration()
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("DeleteGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
+	}
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("DeleteGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedProblems, problems))
+	}
+}
+
+func addOrUpdateVirtualServer(t *testing.T, c *Configuration, virtualServer *conf_v1.VirtualServer, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	changes, problems := c.AddOrUpdateVirtualServer(virtualServer)
+
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
+	}
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(noProblems, problems))
 	}
 }
 
@@ -2883,6 +3739,24 @@ func createTestVirtualServer(name string, host string) *conf_v1.VirtualServer {
 	}
 }
 
+func createTestVirtualServerWithListeners(name string, host string, httpListener string, httpsListener string) *conf_v1.VirtualServer {
+	return &conf_v1.VirtualServer{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:         "default",
+			Name:              name,
+			CreationTimestamp: metav1.Now(),
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Listener: &conf_v1.VirtualServerListener{
+				HTTP:  httpListener,
+				HTTPS: httpsListener,
+			},
+			IngressClass: "nginx",
+			Host:         host,
+		},
+	}
+}
+
 func createTestVirtualServerWithRoutes(name string, host string, routes []conf_v1.Route) *conf_v1.VirtualServer {
 	vs := createTestVirtualServer(name, host)
 	vs.Spec.Routes = routes
@@ -2939,47 +3813,55 @@ func createTestChallengeVirtualServerRoute(name string, host string, path string
 	}
 }
 
-func createTestTransportServer(name string, listenerName string, listenerProtocol string) *conf_v1alpha1.TransportServer {
-	return &conf_v1alpha1.TransportServer{
+func createTestTransportServer(name string, listenerName string, listenerProtocol string) *conf_v1.TransportServer {
+	return &conf_v1.TransportServer{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
 			Namespace:         "default",
 			CreationTimestamp: metav1.Now(),
 			Generation:        1,
 		},
-		Spec: conf_v1alpha1.TransportServerSpec{
-			Listener: conf_v1alpha1.TransportServerListener{
+		Spec: conf_v1.TransportServerSpec{
+			Listener: conf_v1.TransportServerListener{
 				Name:     listenerName,
 				Protocol: listenerProtocol,
 			},
-			Upstreams: []conf_v1alpha1.Upstream{
+			Upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "myapp",
 					Service: "myapp-svc",
 					Port:    1234,
 				},
 			},
-			Action: &conf_v1alpha1.Action{
+			Action: &conf_v1.TransportServerAction{
 				Pass: "myapp",
 			},
 		},
 	}
 }
 
-func createTestTLSPassthroughTransportServer(name string, host string) *conf_v1alpha1.TransportServer {
-	ts := createTestTransportServer(name, conf_v1alpha1.TLSPassthroughListenerName, conf_v1alpha1.TLSPassthroughListenerProtocol)
+func createTestTransportServerWithHost(name string, host string, listenerName string, secretName string) *conf_v1.TransportServer {
+	ts := createTestTransportServer(name, listenerName, "TCP")
+	ts.Spec.Host = host
+	ts.Spec.TLS = &conf_v1.TransportServerTLS{Secret: secretName}
+
+	return ts
+}
+
+func createTestTLSPassthroughTransportServer(name string, host string) *conf_v1.TransportServer {
+	ts := createTestTransportServer(name, conf_v1.TLSPassthroughListenerName, conf_v1.TLSPassthroughListenerProtocol)
 	ts.Spec.Host = host
 
 	return ts
 }
 
-func createTestGlobalConfiguration(listeners []conf_v1alpha1.Listener) *conf_v1alpha1.GlobalConfiguration {
-	return &conf_v1alpha1.GlobalConfiguration{
+func createTestGlobalConfiguration(listeners []conf_v1.Listener) *conf_v1.GlobalConfiguration {
+	return &conf_v1.GlobalConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "globalconfiguration",
 			Namespace: "nginx-ingress",
 		},
-		Spec: conf_v1alpha1.GlobalConfigurationSpec{
+		Spec: conf_v1.GlobalConfigurationSpec{
 			Listeners: listeners,
 		},
 	}
@@ -3042,6 +3924,7 @@ func TestChooseObjectMetaWinner(t *testing.T) {
 }
 
 func TestSquashResourceChanges(t *testing.T) {
+	t.Parallel()
 	ingConfig := &IngressConfiguration{
 		Ingress: createTestIngress("test", "foo.example.com"),
 	}
@@ -3221,11 +4104,12 @@ func (rc *testReferenceChecker) IsReferencedByVirtualServerRoute(namespace strin
 	return rc.onlyVirtualServerRoutes && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, _ *conf_v1.TransportServer) bool {
 	return rc.onlyTransportServers && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
 func TestFindResourcesForResourceReference(t *testing.T) {
+	t.Parallel()
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 	master := createTestIngressMaster("master-ingress", "bar.example.com")
 	minion := createTestIngressMinion("minion-ingress", "bar.example.com", "/")
@@ -3241,7 +4125,7 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 		})
 	vsr := createTestVirtualServerRoute("virtualserverroute", "asd.example.com", "/")
 	tsPassthrough := createTestTLSPassthroughTransportServer("transportserver-passthrough", "ts.example.com")
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -3322,7 +4206,7 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 			},
 			expected: []Resource{
 				configuration.hosts["ts.example.com"],
-				configuration.listeners["tcp-7777"],
+				configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 			},
 			msg: "only TransportServers",
 		},
@@ -3349,12 +4233,13 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	t.Parallel()
 	ing := createTestIngress("ingress", "foo.example.com", "bar.example.com")
 	vs := createTestVirtualServer("virtualserver", "qwe.example.com")
 	passTS := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
 	ts := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -3377,7 +4262,7 @@ func TestGetResources(t *testing.T) {
 	expected := []Resource{
 		configuration.hosts["foo.example.com"],
 		configuration.hosts["abc.example.com"],
-		configuration.listeners["tcp-7777"],
+		configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 		configuration.hosts["qwe.example.com"],
 	}
 
@@ -3406,7 +4291,7 @@ func TestGetResources(t *testing.T) {
 
 	expected = []Resource{
 		configuration.hosts["abc.example.com"],
-		configuration.listeners["tcp-7777"],
+		configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 	}
 
 	result = configuration.GetResourcesWithFilter(resourceFilter{TransportServers: true})
@@ -3416,12 +4301,13 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGetTransportServerMetrics(t *testing.T) {
+	t.Parallel()
 	tsPass := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
 	tsTCP := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
 	tsUDP := createTestTransportServer("transportserver-udp", "udp-7777", "UDP")
 
 	tests := []struct {
-		tses     []*conf_v1alpha1.TransportServer
+		tses     []*conf_v1.TransportServer
 		expected *TransportServerMetrics
 		msg      string
 	}{
@@ -3435,7 +4321,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "no TransportServers",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsPass,
 			},
 			expected: &TransportServerMetrics{
@@ -3446,7 +4332,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one TLSPassthrough TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsTCP,
 			},
 			expected: &TransportServerMetrics{
@@ -3457,7 +4343,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one TCP TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsUDP,
 			},
 			expected: &TransportServerMetrics{
@@ -3468,7 +4354,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one UDP TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsPass, tsTCP, tsUDP,
 			},
 			expected: &TransportServerMetrics{
@@ -3480,7 +4366,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 		},
 	}
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -3514,6 +4400,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 }
 
 func TestIsEqualForIngressConfigurations(t *testing.T) {
+	t.Parallel()
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 
 	ingConfigWithInvalidHost := NewRegularIngressConfiguration(regularIng)
@@ -3608,6 +4495,7 @@ func TestIsEqualForIngressConfigurations(t *testing.T) {
 }
 
 func TestIsEqualForVirtualServers(t *testing.T) {
+	t.Parallel()
 	vs := createTestVirtualServerWithRoutes(
 		"virtualserver",
 		"foo.example.com",
@@ -3666,6 +4554,7 @@ func TestIsEqualForVirtualServers(t *testing.T) {
 }
 
 func TestIsEqualForDifferentResources(t *testing.T) {
+	t.Parallel()
 	ingConfig := NewRegularIngressConfiguration(createTestIngress("ingress", "foo.example.com"))
 	vsConfig := NewVirtualServerConfiguration(createTestVirtualServer("virtualserver", "bar.example.com"), []*conf_v1.VirtualServerRoute{}, []string{})
 
@@ -3676,6 +4565,7 @@ func TestIsEqualForDifferentResources(t *testing.T) {
 }
 
 func TestCompareConfigurationProblems(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		problem1 *ConfigurationProblem
 		problem2 *ConfigurationProblem
@@ -3761,5 +4651,244 @@ func TestCompareConfigurationProblems(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("compareConfigurationProblems() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
+	}
+}
+
+var (
+	noChanges  []ResourceChange
+	noProblems []ConfigurationProblem
+
+	// customHTTPAndHTTPSListeners defines a custom HTTP and HTTPS listener on port 8082 and 8442
+	customHTTPAndHTTPSListeners = []conf_v1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPSListener defines a customHTTPS listener on port 8442
+	customHTTPSListener = []conf_v1.Listener{
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPListener defines a custom HTTP listener on port 8082
+	customHTTPListener = []conf_v1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+	}
+
+	// customHTTPListenerSSLTrue defines a custom HTTP listener on port 8082 with SSL set to true
+	customHTTPListenerSSLTrue = []conf_v1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPSListenerSSLFalse defines a custom HTTPS listener on port 8442 with SSL set to false
+	customHTTPSListenerSSLFalse = []conf_v1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+			Ssl:      false,
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      false,
+		},
+	}
+
+	// bogusHTTPListener defines a HTTP listener with an invalid name
+	bogusHTTPListener = []conf_v1.Listener{
+		{
+			Name:     "http-bogus",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// bogusHTTPsListener defines a HTTPs listener with an invalid name
+	bogusHTTPSListener = []conf_v1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-bogus",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+)
+
+func TestTransportServerListenerHostCollisions(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "tcp-8888",
+			Port:     8888,
+			Protocol: "TCP",
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
+
+	// Create TransportServers with the same listener and host
+	ts1 := createTestTransportServerWithHost("ts1", "example.com", "tcp-7777", "secret1")
+	ts2 := createTestTransportServerWithHost("ts2", "example.com", "tcp-7777", "secret2") // same listener and host
+	ts3 := createTestTransportServerWithHost("ts3", "example.org", "tcp-7777", "secret3") // different host
+	ts4 := createTestTransportServer("ts4", "tcp-7777", "TCP")                            // No host same listener
+	ts5 := createTestTransportServer("ts5", "tcp-7777", "TCP")                            // same as ts4 to induce error with empty host twice
+	ts6 := createTestTransportServerWithHost("ts6", "example.com", "tcp-8888", "secret4") // different listener
+
+	// Add ts1 to the configuration
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts1,
+			},
+		},
+	}
+	changes, problems := configuration.AddOrUpdateTransportServer(ts1)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts1) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts1) returned problems %v", problems)
+	}
+
+	// Try to add ts2, should be rejected due to conflict
+	changes, problems = configuration.AddOrUpdateTransportServer(ts2)
+	expectedChanges = nil // No changes expected
+	expectedProblems := []ConfigurationProblem{
+		{
+			Object:  ts2,
+			IsError: false,
+			Reason:  "Rejected",
+			Message: "Listener tcp-7777 with host example.com is taken by another resource",
+		},
+	}
+
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts2) returned unexpected changes (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts2) returned unexpected problems (-want +got):\n%s", diff)
+	}
+
+	// Add ts3 with a different host, should be accepted
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts3,
+			},
+		},
+	}
+	changes, problems = configuration.AddOrUpdateTransportServer(ts3)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts3) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts3) returned problems %v", problems)
+	}
+
+	// Add ts4 with no host, should be accepted
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts4,
+			},
+		},
+	}
+	changes, problems = configuration.AddOrUpdateTransportServer(ts4)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts4) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts4) returned problems %v", problems)
+	}
+
+	// Try to add ts5 with no host, should be rejected due to conflict
+	changes, problems = configuration.AddOrUpdateTransportServer(ts5)
+	expectedChanges = nil
+	expectedProblems = []ConfigurationProblem{
+		{
+			Object:  ts5,
+			IsError: false,
+			Reason:  "Rejected",
+			Message: "Listener tcp-7777 with host empty host is taken by another resource",
+		},
+	}
+
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts5) returned unexpected changes (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts5) returned unexpected problems (-want +got):\n%s", diff)
+	}
+
+	// Try to add ts6 with different listener, but same domain as initial ts, should be fine as different listener
+	changes, problems = configuration.AddOrUpdateTransportServer(ts6)
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    8888,
+				TransportServer: ts6,
+			},
+		},
+	}
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts6) returned unexpected changes (-want +got):\n%s", diff)
+	}
+
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts6) returned problems %v", problems)
 	}
 }

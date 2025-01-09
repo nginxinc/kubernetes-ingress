@@ -12,7 +12,274 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+func TestValidateIngress_WithValidPathRegexValuesForNGINXPlus(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "case sensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_sensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "case insensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_insensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "exact path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "exact",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) != 0 {
+				t.Errorf("want no errors, got %+v\n", allErrs)
+			}
+		})
+	}
+}
+
+func TestValidateIngress_WithValidPathRegexValuesForNGINX(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "case sensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_sensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "case insensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_insensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "exact path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "exact",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) != 0 {
+				t.Errorf("want no errors, got %+v\n", allErrs)
+			}
+		})
+	}
+}
+
+func TestValidateIngress_WithInvalidPathRegexValuesForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "bogus not empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "bogus",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "bogus empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+	}
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) == 0 {
+				t.Error("want errors on invalid path regex values")
+			}
+			t.Log(allErrs)
+		})
+	}
+}
+
+func TestValidateIngress_WithInvalidPathRegexValuesForNGINX(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "bogus not empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "bogus",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "bogus empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+	}
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) == 0 {
+				t.Error("want errors on invalid path regex values")
+			}
+			t.Log(allErrs)
+		})
+	}
+}
+
 func TestValidateIngress(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing                   *networking.Ingress
 		isPlus                bool
@@ -134,6 +401,7 @@ func TestValidateIngress(t *testing.T) {
 }
 
 func TestValidateNginxIngressAnnotations(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		annotations           map[string]string
 		specServices          map[string]bool
@@ -965,6 +1233,98 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				`annotations.nginx.org/proxy-pass-headers: Invalid value: "$header2": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
 			},
 			msg: "invalid nginx.org/proxy-pass-headers annotation, multi-value containing '$' after valid header",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1,header-2,header-3",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1, header-2, header-3",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, multi-value with spaces",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "$header1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, single-value containing '$'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "{header1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "{header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, single-value containing '{'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "$header1,header2",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, multi-value containing '$'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header1,$header2",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header2": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, multi-value containing '$' after valid header",
 		},
 		{
 			annotations: map[string]string{
@@ -2778,6 +3138,44 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.com/sticky-cookie-services annotation",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "not_a_boolean",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/use-cluster-ip: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/use-cluster-ip annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/use-cluster-ip annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "false",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/use-cluster-ip annotation",
+		},
 	}
 
 	for _, test := range tests {
@@ -2801,6 +3199,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 }
 
 func TestValidateIngressSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []field.ErrorType
@@ -3059,6 +3458,7 @@ func TestValidateIngressSpec(t *testing.T) {
 }
 
 func TestValidateMasterSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []string
@@ -3130,6 +3530,7 @@ func TestValidateMasterSpec(t *testing.T) {
 }
 
 func TestValidateMinionSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []string
@@ -3268,6 +3669,7 @@ func errorListToTypes(list field.ErrorList) []field.ErrorType {
 }
 
 func TestGetSpecServices(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec     networking.IngressSpec
 		expected map[string]bool
@@ -3358,6 +3760,10 @@ func TestValidateRegexPath(t *testing.T) {
 			regexPath: "/[0-9a-z]{4}[0-9]+",
 			msg:       "regexp with curly braces",
 		},
+		{
+			regexPath: "~ ^/coffee/(?!.*\\/latte)(?!.*\\/americano)(.*)",
+			msg:       "regexp with Perl5 regex",
+		},
 	}
 
 	for _, test := range tests {
@@ -3420,8 +3826,10 @@ func TestValidatePath(t *testing.T) {
 		"/abc}{abc",
 	}
 
+	pathType := networking.PathTypeExact
+
 	for _, path := range validPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) > 0 {
 			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
 		}
@@ -3440,10 +3848,17 @@ func TestValidatePath(t *testing.T) {
 	}
 
 	for _, path := range invalidPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) == 0 {
 			t.Errorf("validatePath(%q) returned no errors for invalid input", path)
 		}
+	}
+
+	pathType = networking.PathTypeImplementationSpecific
+
+	allErrs := validatePath("", &pathType, field.NewPath("path"))
+	if len(allErrs) > 0 {
+		t.Errorf("validatePath with empty path and type ImplementationSpecific returned errors %v for valid input", allErrs)
 	}
 }
 

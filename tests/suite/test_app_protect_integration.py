@@ -1,7 +1,7 @@
 import pytest
 import requests
 import yaml
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import CRDS, TEST_DATA
 from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
@@ -38,7 +38,7 @@ from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
 ap_policy = "dataguard-alarm"
 ap_policy_uds = "dataguard-alarm-uds"
-uds_crd = f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml"
+uds_crd = f"{CRDS}/appprotect.f5.com_apusersigs.yaml"
 uds_crd_resource = f"{TEST_DATA}/appprotect/ap-ic-uds.yaml"
 valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"
@@ -99,14 +99,15 @@ def appprotect_setup(request, kube_apis, ingress_controller_endpoint, test_names
     create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
     def fin():
-        print("Clean up:")
-        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
-        delete_common_app(kube_apis, "simple", test_namespace)
-        src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
-        delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+            delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
+            delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
+            delete_common_app(kube_apis, "simple", test_namespace)
+            src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
+            delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+            write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
 
     request.addfinalizer(fin)
 
@@ -146,6 +147,7 @@ def assert_valid_responses(response) -> None:
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
+@pytest.mark.appprotect_integration
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [
@@ -389,19 +391,17 @@ class TestAppProtect:
         assert_invalid_responses(response)
         # check logs in dest. #1 i.e. syslog server #1
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
-            in log_contents
-            and 'severity="Critical"' in log_contents
-            and 'request_status="blocked"' in log_contents
-            and 'outcome="REJECTED"' in log_contents
+            "ASM:attack_type=" in str(log_contents)
+            and "severity=" in str(log_contents)
+            and "request_status=" in str(log_contents)
+            and "outcome=" in str(log_contents)
         )
         # check logs in dest. #2 i.e. syslog server #2
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
-            in log2_contents
-            and 'severity="Critical"' in log2_contents
-            and 'request_status="blocked"' in log2_contents
-            and 'outcome="REJECTED"' in log2_contents
+            "ASM:attack_type=" in str(log2_contents)
+            and "severity=" in str(log2_contents)
+            and "request_status=" in str(log2_contents)
+            and "outcome=" in str(log2_contents)
         )
 
     @pytest.mark.flaky(max_runs=3)

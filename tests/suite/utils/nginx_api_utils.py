@@ -1,4 +1,5 @@
 """Describe the methods to work with nginx api"""
+
 import ast
 
 import pytest

@@ -11,6 +11,7 @@ type appProtectDosResource struct {
 	AppProtectDosAccessLogDst    string
 	AppProtectDosPolicyFile      string
 	AppProtectDosLogConfFile     string
+	AppProtectDosAllowListPath   string
 }
 
 func getAppProtectDosResource(dosEx *DosEx) *appProtectDosResource {
@@ -26,13 +27,19 @@ func getAppProtectDosResource(dosEx *DosEx) *appProtectDosResource {
 	}
 	dosResource.AppProtectDosName = protected.Namespace + "/" + protected.Name + "/" + protected.Spec.Name
 
+	if protected.Spec.AllowList != nil {
+		dosResource.AppProtectDosAllowListPath = appProtectDosAllowListFileName(protected.Namespace, protected.Name)
+	}
+
 	if protected.Spec.ApDosMonitor != nil {
 		dosResource.AppProtectDosMonitorURI = protected.Spec.ApDosMonitor.URI
 		dosResource.AppProtectDosMonitorProtocol = protected.Spec.ApDosMonitor.Protocol
 		dosResource.AppProtectDosMonitorTimeout = protected.Spec.ApDosMonitor.Timeout
 	}
 
-	dosResource.AppProtectDosAccessLogDst = generateDosLogDest(protected.Spec.DosAccessLogDest)
+	if protected.Spec.DosAccessLogDest != "" {
+		dosResource.AppProtectDosAccessLogDst = generateDosLogDest(protected.Spec.DosAccessLogDest)
+	}
 
 	if dosEx.DosPolicy != nil {
 		dosResource.AppProtectDosPolicyFile = appProtectDosPolicyFileName(dosEx.DosPolicy.GetNamespace(), dosEx.DosPolicy.GetName())
