@@ -25,7 +25,7 @@ The following steps describe how to use the NGINX Instance Manager API to create
 
 {{< tip >}} You can skip this step if you intend to use an existing security policy. {{< /tip >}}
 
-Create a [new security policy](https://docs.nginx.com/nginx-instance-manager/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
+Create a [new security policy](https://docs.nginx.com/nginx-instance-manager/nginx-app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
 
 Create the file `simple-policy.json` with the contents below:
 
