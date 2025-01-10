@@ -46,12 +46,12 @@ TARGET_NAP_WAFV5_IMAGE_PREFIX=${TARGET_NAP_WAFV5_IMAGE_PREFIX:-"nginx-ic-nap-v5/
 TARGET_NAP_DOS_IMAGE_PREFIX=${TARGET_NAP_DOS_IMAGE_PREFIX:-"nginx-ic-dos/nginx-plus-ingress"}
 TARGET_NAP_WAF_DOS_IMAGE_PREFIX=${TARGET_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap/nginx-plus-ingress"}
 
-declare -a OSS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine")
-declare -a PLUS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine" "-alpine-fips")
-declare -a NAP_WAF_TAG_POSTFIX_LIST=("" "-ubi" "-alpine-fips")
-declare -a NAP_WAFV5_TAG_POSTFIX_LIST=("" "-ubi" "-alpine-fips")
-declare -a NAP_DOS_TAG_POSTFIX_LIST=("" "-ubi")
-declare -a NAP_WAF_DOS_TAG_POSTFIX_LIST=("" "-ubi")
+declare -a OSS_TAG_POSTFIX_LIST=("" "-alpine")
+declare -a PLUS_TAG_POSTFIX_LIST=("" "-alpine" "-alpine-fips")
+declare -a NAP_WAF_TAG_POSTFIX_LIST=("" "-alpine-fips")
+declare -a NAP_WAFV5_TAG_POSTFIX_LIST=(""  "-alpine-fips")
+declare -a NAP_DOS_TAG_POSTFIX_LIST=("")
+declare -a NAP_WAF_DOS_TAG_POSTFIX_LIST=("")
 
 CONFIG_PATH=${CONFIG_PATH:-~/.nic-release/config}
 if [ -f "$CONFIG_PATH" ]; then
