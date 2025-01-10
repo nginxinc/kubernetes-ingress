@@ -16,12 +16,12 @@ FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:339c91471
 FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
-FROM redhat/ubi9-minimal:9.5@sha256:daa61d6103e98bccf40d7a69a0d4f8786ec390e2204fd94f7cc49053e9949360 AS ubi-minimal
-FROM golang:1.23-alpine@sha256:13aaa4b92fd4dc81683816b4b62041442e9f685deeb848897ce78c5e2fb03af7 AS golang-builder
+FROM redhat/ubi9-minimal:9.5@sha256:b87097994ed62fbf1de70bc75debe8dacf3ea6e00dd577d74503ef66452c59d6 AS ubi-minimal
+FROM golang:1.23-alpine@sha256:04ec5618ca64098b8325e064aa1de2d3efbbd022a3ac5554d49d5ece99d41ad5 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.27.3-alpine@sha256:4efa432b751239898e576a2178702fb156fc483f6d456e0ad5899b3bf5c0445a AS alpine
+FROM nginx:1.27.3-alpine@sha256:9b460c5ee96333b43a92df16351e150af717ad6522101e52d05d255cd7241064 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -102,7 +102,7 @@ USER 101
 
 
 ############################################# Base image for Alpine with NGINX Plus ##############################################
-FROM alpine:3.20@sha256:780405de0f7cf99f985dd5a4f04dfc5aae71509d89505c1ba48a88d95a0ceb7f AS alpine-plus
+FROM alpine:3.20@sha256:31687a2fdd021f85955bf2d0c2682e9c0949827560e1db546358ea094f740f12 AS alpine-plus
 ARG NGINX_PLUS_VERSION
 ARG PACKAGE_REPO
 
