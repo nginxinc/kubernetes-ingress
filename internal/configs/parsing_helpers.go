@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

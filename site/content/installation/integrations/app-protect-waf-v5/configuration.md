@@ -9,7 +9,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure [NGINX App Protect WAF v5](https://docs.nginx.com/nginx-app-protect-waf/v5/).
 
-{{< note >}} There are complete NGINX Ingress Controller with NGINX App Protect WAF [example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5). 
+{{< note >}} There are complete NGINX Ingress Controller with NGINX App Protect WAF [example resources on GitHub](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5).
 
 F5 recommends recompiling your NGINX AppProtect WAF Policy Bundles with each release of NGINX Ingress Controller. This ensures Policies remain compatible and are compiled with the latest attack signatures, bot signatures, and Ttreat campaigns.{{< /note >}}
 
@@ -64,7 +64,7 @@ spec:
 
 This example shows how to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF v5, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-{{< note >}} You can find the files for this example on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5).{{< /note >}}
+{{< note >}} You can find the files for this example on [GitHub](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5).{{< /note >}}
 
 ### Prerequisites
 
@@ -87,7 +87,7 @@ This example shows how to deploy NGINX Ingress Controller with NGINX Plus and NG
 Create the application deployment and service:
 
   ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml
   ```
 
 ### Create the Syslog service
@@ -96,7 +96,7 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 
 
    ```shell
-   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/syslog.yaml
+   kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/syslog.yaml
    ```
 
 ### Deploy the WAF Policy
@@ -107,10 +107,10 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 Create and deploy the WAF policy.
 
  ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/waf.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/waf.yaml
  ```
 
-  
+
 ### Configure load balancing
 
 {{< note >}} VirtualServer references the `waf-policy` created in Step 3.{{</ note >}}
@@ -118,7 +118,7 @@ Create and deploy the WAF policy.
 1. Create the VirtualServer Resource:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
     ```
 
 
@@ -142,8 +142,8 @@ To access the application, curl the coffee and the tea services. Use the `--reso
   ```shell
   curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP "http://webapp.example.com:$IC_HTTP_PORT/<script>"
   ```
- 
-  ```shell  
+
+  ```shell
   <html><head><title>Request Rejected</title></head><body>
   ```
 
@@ -155,7 +155,7 @@ To access the application, curl the coffee and the tea services. Use the `--reso
 
 ## Example VirtualServer configuration
 
-The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
+The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1

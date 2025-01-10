@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

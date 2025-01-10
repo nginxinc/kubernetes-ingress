@@ -3,7 +3,7 @@
 package v1
 
 import (
-	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	externaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	listers "k8s.io/client-go/listers"
 	cache "k8s.io/client-go/tools/cache"

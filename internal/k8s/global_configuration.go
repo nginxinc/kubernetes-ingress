@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginx/kubernetes-ingress/internal/configs"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
