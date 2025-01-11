@@ -7,7 +7,7 @@ import (
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
-	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+	tel "github.com/nginx/telemetry-exporter/pkg/telemetry"
 )
 
 // Exporter interface for exporters.
@@ -51,7 +51,7 @@ func NewExporter(cfg ExporterCfg) (Exporter, error) {
 
 // Data holds collected telemetry data.
 //
-//go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type Data -scheme -scheme-protocol=NICProductTelemetry -scheme-df-datatype=nic-product-telemetry -scheme-namespace=ingress.nginx.com
+//go:generate go run -tags=generator github.com/nginx/telemetry-exporter/cmd/generator -type Data -scheme -scheme-protocol=NICProductTelemetry -scheme-df-datatype=nic-product-telemetry -scheme-namespace=ingress.nginx.com
 type Data struct {
 	tel.Data
 	NICResourceCounts
@@ -59,7 +59,7 @@ type Data struct {
 
 // NICResourceCounts holds a count of NIC specific resource.
 //
-//go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type NICResourceCounts
+//go:generate go run -tags=generator github.com/nginx/telemetry-exporter/cmd/generator -type NICResourceCounts
 type NICResourceCounts struct {
 	// VirtualServers is the number of VirtualServer resources managed by the Ingress Controller.
 	VirtualServers int64

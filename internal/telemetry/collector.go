@@ -12,7 +12,7 @@ import (
 
 	"github.com/nginx/kubernetes-ingress/internal/k8s/secrets"
 
-	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+	tel "github.com/nginx/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginx/kubernetes-ingress/internal/configs"
 

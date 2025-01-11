@@ -14,7 +14,7 @@ Depending on what kind of update was made, different files will be updated,
   This file is updated if properties in NICResourceCounts are added, updated or deleted.
 
 - `internal/telemetry/data_attributes_generated.go`
-  This file is update if properties of the Data struct in the [telemetry-exporter](https://github.com/nginxinc/telemetry-exporter) library are added, updated or deleted.
+  This file is update if properties of the Data struct in the [telemetry-exporter](https://github.com/nginx/telemetry-exporter) library are added, updated or deleted.
 
 - `internal/telemetry/data.avdl`
   This file is updated if either the NICResourceCounts or the Data struct is updated.
@@ -33,5 +33,5 @@ type NICResourceCounts struct {
 
 2. An existing data point has been updated or delete
 
-This may either be a data point under `NICResourceCounts`, or a field in the common `Data` struct in [telemetry-exporter](https://github.com/nginxinc/telemetry-exporter) library.
+This may either be a data point under `NICResourceCounts`, or a field in the common `Data` struct in [telemetry-exporter](https://github.com/nginx/telemetry-exporter) library.
 For example, we may change the name of, or delete, `MyNewResources` used in the first example.
