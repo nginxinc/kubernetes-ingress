@@ -8,7 +8,7 @@ F5 NGINX Ingress Controller adheres to the support policy detailed in the follow
 
 After opening a support ticket, F5 staff will request additional information to better understand the problem.
 
-The [nginx-supportpkg-for-k8s](https://github.com/nginx/nginx-supportpkg-for-k8s) plugin collects the information needed by F5 Technical Support to assist with troubleshooting your issue.
+The [nginx-supportpkg-for-k8s](https://github.com/nginxinc/nginx-supportpkg-for-k8s) plugin collects the information needed by F5 Technical Support to assist with troubleshooting your issue.
 
 When used, the plugin will generate a tarball of the collected information which can be shared with the support channels.
 
@@ -26,7 +26,7 @@ The plugin may collect some or all of the following global and namespace-specifi
 
 This plugin **does not** collect secrets or coredumps.
 
-Visit the [project’s GitHub repository](https://github.com/nginx/nginx-supportpkg-for-k8s) for further details.
+Visit the [project’s GitHub repository](https://github.com/nginxinc/nginx-supportpkg-for-k8s) for further details.
 
 
 ## Support channels

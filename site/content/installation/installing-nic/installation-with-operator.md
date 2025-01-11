@@ -20,10 +20,10 @@ If you're using NGINX Plus, get the NGINX Ingress Controller JWT and [create a l
     - For NGINX Plus Ingress Controller, view the [Get the F5 Registry NGINX Ingress Controller image]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic for details on how to pull the image from the F5 Docker registry.
     - The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.
     - The [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic explains how to push an image to a private Docker registry.
-1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginx/nginx-ingress-helm-operator/blob/main/docs/installation.md).
-1. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginx/nginx-ingress-helm-operator/blob/main/README.md#getting-started).
+1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/docs/installation.md).
+1. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/README.md#getting-started).
 
-{{< note >}} If you're upgrading your operator installation to a later release, navigate [here](https://github.com/nginx/nginx-ingress-helm-operator/blob/main/helm-charts/nginx-ingress) and run `kubectl apply -f crds/` or `oc apply -f crds/` as a prerequisite {{< /note >}}
+{{< note >}} If you're upgrading your operator installation to a later release, navigate [here](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/helm-charts/nginx-ingress) and run `kubectl apply -f crds/` or `oc apply -f crds/` as a prerequisite {{< /note >}}
 
 ## Create the NGINX Ingress Controller manifest
 
@@ -60,7 +60,7 @@ kubectl apply -f nginx-ingress-controller.yaml
 
 A new instance of NGINX Ingress Controller will be deployed by the NGINX Ingress Operator in the `default` namespace with default parameters.
 
-To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginx/nginx-ingress-helm-operator/blob/main/docs/nginx-ingress-controller.md).
+To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/docs/nginx-ingress-controller.md).
 
 ## Troubleshooting
 
