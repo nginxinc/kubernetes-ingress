@@ -8,7 +8,7 @@ import (
 func TestValidatePort_IsValidOnValidInput(t *testing.T) {
 	t.Parallel()
 
-	ports := []string{"1", "65535"}
+	ports := []int{1, 65535}
 	for _, p := range ports {
 		if err := ValidatePort(p); err != nil {
 			t.Error(err)
@@ -16,20 +16,34 @@ func TestValidatePort_IsValidOnValidInput(t *testing.T) {
 	}
 }
 
-func TestValidatePort_ErrorsOnInvalidString(t *testing.T) {
-	t.Parallel()
-
-	if err := ValidatePort(""); err == nil {
-		t.Error("want error, got nil")
-	}
-}
-
 func TestValidatePort_ErrorsOnInvalidRange(t *testing.T) {
 	t.Parallel()
 
-	ports := []string{"0", "-1", "65536"}
+	ports := []int{0, -1, 65536}
 	for _, p := range ports {
 		if err := ValidatePort(p); err == nil {
+			t.Error("want error, got nil")
+		}
+	}
+}
+
+func TestValidateUnprivilegedPort_IsValidOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	ports := []int{1024, 65535}
+	for _, p := range ports {
+		if err := ValidateUnprivilegedPort(p); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func TestValidateUnprivilegedPort_ErrorsOnInvalidRange(t *testing.T) {
+	t.Parallel()
+
+	ports := []int{0, -1, 80, 443, 65536}
+	for _, p := range ports {
+		if err := ValidateUnprivilegedPort(p); err == nil {
 			t.Error("want error, got nil")
 		}
 	}

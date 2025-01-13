@@ -396,7 +396,7 @@ versions: 1.23-1.29.
 
 26 Mar 2024
 
-NGINX Ingress Controller and NGINX App Protect WAF users can can now view violations through NGINX Instance Manager Security Monitor.  Security Monitor can be used to build Policy bundles, reducing reload time impacts on NGINX Ingress Controller.  Read more information in [NGINX App Protect WAF Bundles](https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-bundles) and [Security Monitoring](https://docs.nginx.com/nginx-instance-manager/security-monitoring/).
+NGINX Ingress Controller and NGINX App Protect WAF users can can now view violations through NGINX Instance Manager Security Monitor.  Security Monitor can be used to build Policy bundles, reducing reload time impacts on NGINX Ingress Controller.  Read more information in [NGINX App Protect WAF Bundles](https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-bundles) and [Security Monitoring](https://docs.nginx.com/nginx-instance-manager/monitoring/security-monitoring/).
 
 When using NGINX Plus for two version [split rollouts](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#split), you can now control progressive rollouts of a new backend version without reloading NGINX using the [**-weight-changes-dynamic-reload**](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-weight-changes-dynamic-reload) command line argument.
 
