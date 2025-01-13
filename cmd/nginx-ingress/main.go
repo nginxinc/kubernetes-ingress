@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -788,6 +789,13 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 	select {
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
+			// removes .sock files after nginx exits
+			files, _ := os.ReadDir("/var/lib/nginx/")
+			for _, f := range files {
+				if !f.IsDir() && strings.HasSuffix(f.Name(), ".sock") {
+					_ = os.Remove(filepath.Join("/var/lib/nginx/", f.Name()))
+				}
+			}
 			nl.Fatalf(lbc.Logger, "nginx command exited unexpectedly with status: %v", err)
 		} else {
 			nl.Info(lbc.Logger, "nginx command exited successfully")
