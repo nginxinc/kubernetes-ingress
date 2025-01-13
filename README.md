@@ -31,7 +31,7 @@ We value community input and would love to see you at the next community call. A
 **Passcode:** `jpx5TM`
 
 **Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
-**When**: 15:00 GMT / [Convert to your timezone](https://dateful.com/convert/gmt?t=15), every other Monday.
+**When**: 16:00 GMT / [Convert to your timezone](https://dateful.com/convert/gmt?t=16), every other Monday.
 
 | **Community Call Dates** |
 | ------------------------ |
