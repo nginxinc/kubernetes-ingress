@@ -790,10 +790,18 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
 			// removes .sock files after nginx exits
-			files, _ := os.ReadDir("/var/lib/nginx/")
-			for _, f := range files {
-				if !f.IsDir() && strings.HasSuffix(f.Name(), ".sock") {
-					_ = os.Remove(filepath.Join("/var/lib/nginx/", f.Name()))
+			socketPath := "/var/lib/nginx/"
+			files, readErr := os.ReadDir(socketPath)
+			if readErr != nil {
+				nl.Errorf(lbc.Logger, "error trying to read directory %s: %v", socketPath, readErr)
+			} else {
+				for _, f := range files {
+					if !f.IsDir() && strings.HasSuffix(f.Name(), ".sock") {
+						fullPath := filepath.Join(socketPath, f.Name())
+						if removeErr := os.Remove(fullPath); removeErr != nil {
+							nl.Errorf(lbc.Logger, "error trying to remove file %s: %v", fullPath, removeErr)
+						}
+					}
 				}
 			}
 			nl.Fatalf(lbc.Logger, "nginx command exited unexpectedly with status: %v", err)
