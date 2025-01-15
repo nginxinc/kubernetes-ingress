@@ -2,19 +2,17 @@ package externaldns
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdnsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	externaldns_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/validation"
 	clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	validators "k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,16 +43,17 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 		}
 		l := nl.LoggerFromContext(ctx)
 
-		if vs.Status.ExternalEndpoints == nil {
+		if vs.Status.ExternalEndpoints == nil && len(vs.Spec.ExternalDNS.Targets) == 0 {
 			// It can take time for the external endpoints to sync - kick it back to the queue
 			nl.Info(l, "Failed to determine external endpoints - retrying")
 			return fmt.Errorf("failed to determine external endpoints")
 		}
 
-		targets, recordType, err := getValidTargets(ctx, vs.Status.ExternalEndpoints)
+		targets, recordType, err := getValidTargets(vs.Status.ExternalEndpoints, vs.Spec.ExternalDNS.Targets)
 		if err != nil {
-			nl.Error(l, "Invalid external endpoint")
-			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Invalid external endpoint")
+			errorText := fmt.Sprintf("Invalid targets: %v", err)
+			nl.Error(l, errorText)
+			rec.Event(vs, corev1.EventTypeWarning, reasonBadConfig, errorText)
 			return err
 		}
 
@@ -103,47 +102,52 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 	}
 }
 
-func getValidTargets(ctx context.Context, endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, string, error) {
-	var targets extdnsapi.Targets
-	var recordType string
-	var recordA bool
-	var recordCNAME bool
-	var recordAAAA bool
-	var err error
-	l := nl.LoggerFromContext(ctx)
-	nl.Debugf(l, "Going through endpoints %v", endpoints)
+func getValidTargets(endpoints []vsapi.ExternalEndpoint, chosenTargets extdnsapi.Targets) (extdnsapi.Targets, string, error) {
+	if len(chosenTargets) > 0 {
+		return externaldns_validation.ValidateTargetsAndDetermineRecordType(chosenTargets)
+	}
+
+	var ipv4Targets, ipv6Targets, cnameTargets []string
 	for _, e := range endpoints {
 		if e.IP != "" {
-			nl.Debugf(l, "IP is defined: %v", e.IP)
-			if errMsg := validators.IsValidIP(field.NewPath(""), e.IP); len(errMsg) > 0 {
+			ip := netutils.ParseIPSloppy(e.IP)
+			if ip == nil {
 				continue
 			}
-			ip := netutils.ParseIPSloppy(e.IP)
 			if ip.To4() != nil {
-				recordA = true
+				ipv4Targets = append(ipv4Targets, e.IP)
 			} else {
-				recordAAAA = true
+				ipv6Targets = append(ipv6Targets, e.IP)
 			}
-			targets = append(targets, e.IP)
 		} else if e.Hostname != "" {
-			nl.Debugf(l, "Hostname is defined: %v", e.Hostname)
-			targets = append(targets, e.Hostname)
-			recordCNAME = true
+			cnameTargets = append(cnameTargets, e.Hostname)
 		}
 	}
-	if len(targets) == 0 {
-		return targets, recordType, errors.New("valid targets not defined")
+
+	// priority: prefer IPv4 > IPv6 > CNAME
+	if len(ipv4Targets) > 0 {
+		if err := externaldns_validation.IsUnique(ipv4Targets); err != nil {
+			return nil, "", err
+		}
+		return ipv4Targets, "A", nil
+	} else if len(ipv6Targets) > 0 {
+		if err := externaldns_validation.IsUnique(ipv6Targets); err != nil {
+			return nil, "", err
+		}
+		return ipv6Targets, "AAAA", nil
+	} else if len(cnameTargets) > 0 {
+		if err := externaldns_validation.IsUnique(cnameTargets); err != nil {
+			return nil, "", err
+		}
+		for _, h := range cnameTargets {
+			if err := externaldns_validation.IsFullyQualifiedDomainName(h); err != nil {
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %w", externaldns_validation.ErrTypeInvalid, h, err)
+			}
+		}
+		return cnameTargets, "CNAME", nil
 	}
-	if recordA {
-		recordType = recordTypeA
-	} else if recordAAAA {
-		recordType = recordTypeAAAA
-	} else if recordCNAME {
-		recordType = recordTypeCNAME
-	} else {
-		err = errors.New("recordType could not be determined")
-	}
-	return targets, recordType, err
+
+	return nil, "", fmt.Errorf("no valid external endpoints found")
 }
 
 func buildDNSEndpoint(ctx context.Context, extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (*extdnsapi.DNSEndpoint, *extdnsapi.DNSEndpoint, error) {

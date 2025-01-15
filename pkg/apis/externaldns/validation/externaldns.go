@@ -10,7 +10,62 @@ import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	netutils "k8s.io/utils/net"
 )
+
+// ValidateTargetsAndDetermineRecordType validates chosen endpoints
+func ValidateTargetsAndDetermineRecordType(targets []string) ([]string, string, error) {
+	var recordA, recordAAAA, recordCNAME bool
+
+	for _, t := range targets {
+		if errMsg := validation.IsValidIP(field.NewPath(""), t); len(errMsg) == 0 {
+			ip := netutils.ParseIPSloppy(t)
+			if ip.To4() != nil {
+				recordA = true
+			} else {
+				recordAAAA = true
+			}
+		} else {
+			if err := IsFullyQualifiedDomainName(t); err != nil {
+				return nil, "", fmt.Errorf("%w: target %q is invalid: %w", ErrTypeInvalid, t, err)
+			}
+			recordCNAME = true
+		}
+	}
+
+	if err := IsUnique(targets); err != nil {
+		return nil, "", err
+	}
+
+	count := 0
+	if recordA {
+		count++
+	}
+	if recordAAAA {
+		count++
+	}
+	if recordCNAME {
+		count++
+	}
+
+	if count > 1 {
+		return nil, "", errors.New("multiple record types (A, AAAA, CNAME) detected; must be homogeneous")
+	}
+
+	var recordType string
+	switch {
+	case recordA:
+		recordType = "A"
+	case recordAAAA:
+		recordType = "AAAA"
+	case recordCNAME:
+		recordType = "CNAME"
+	default:
+		return nil, "", errors.New("could not determine record type from targets")
+	}
+
+	return targets, recordType, nil
+}
 
 // ValidateDNSEndpoint validates if all DNSEndpoint fields are valid.
 func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
@@ -57,15 +112,16 @@ func validateTargets(targets v1.Targets) error {
 				return fmt.Errorf("%w: target %q is invalid: %s", ErrTypeInvalid, target, errMsg[0])
 			}
 		default:
-			if err := isFullyQualifiedDomainName(target); err != nil {
+			if err := IsFullyQualifiedDomainName(target); err != nil {
 				return fmt.Errorf("%w: target %q is invalid, it should be a valid IP address or hostname", ErrTypeInvalid, target)
 			}
 		}
 	}
-	return isUnique(targets)
+	return IsUnique(targets)
 }
 
-func isUnique(targets v1.Targets) error {
+// IsUnique takes a list of targets and makes an error if a target appears more than once
+func IsUnique(targets v1.Targets) error {
 	occurred := make(map[string]bool)
 	for _, target := range targets {
 		if occurred[target] {
@@ -90,7 +146,8 @@ func validateTTL(ttl v1.TTL) error {
 	return nil
 }
 
-func isFullyQualifiedDomainName(name string) error {
+// IsFullyQualifiedDomainName checks if a string will be valid for a cname dns record
+func IsFullyQualifiedDomainName(name string) error {
 	if name == "" {
 		return fmt.Errorf("%w: name not provided", ErrTypeInvalid)
 	}

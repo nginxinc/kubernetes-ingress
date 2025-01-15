@@ -26,10 +26,11 @@ func (EventRecorder) AnnotatedEventf(runtime.Object, map[string]string, string, 
 func TestGetValidTargets(t *testing.T) {
 	t.Parallel()
 	tt := []struct {
-		name        string
-		wantTargets extdnsapi.Targets
-		wantRecord  string
-		endpoints   []vsapi.ExternalEndpoint
+		name            string
+		wantTargets     extdnsapi.Targets
+		wantRecord      string
+		endpoints       []vsapi.ExternalEndpoint
+		chosenEndpoints []string
 	}{
 		{
 			name:        "from external endpoint with IPv4",
@@ -63,21 +64,34 @@ func TestGetValidTargets(t *testing.T) {
 		},
 		{
 			name:        "from external endpoint with multiple targets",
-			wantTargets: extdnsapi.Targets{"2001:db8:0:0:0:0:2:1", "10.2.3.4"},
+			wantTargets: extdnsapi.Targets{"10.2.3.4"},
 			wantRecord:  "A",
 			endpoints: []vsapi.ExternalEndpoint{
 				{
-					IP: "2001:db8:0:0:0:0:2:1",
+					IP: "2001:db8:0:0:0:0:2:1", // This IPv6 record will be ignored, as the priority is IPv4> IPv6> CNAME
 				},
 				{
 					IP: "10.2.3.4",
 				},
 			},
 		},
+		{
+			name:        "from external endpoint with multiple targets",
+			wantTargets: extdnsapi.Targets{"1.2.3.4"},
+			wantRecord:  "A",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					IP: "10.2.3.4", // This extrenal IP will be ignored, as IPs have been chosen in the VS spec
+				},
+			},
+			chosenEndpoints: []string{
+				"1.2.3.4",
+			},
+		},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			targets, recordType, err := getValidTargets(context.Background(), tc.endpoints)
+			targets, recordType, err := getValidTargets(tc.endpoints, tc.chosenEndpoints)
 			if err != nil {
 				t.Fatal(err)
 			}

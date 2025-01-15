@@ -2,11 +2,105 @@ package validation_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/validation"
 )
+
+func TestValidateTargetsAndDetermineRecordType(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		targets    []string
+		wantErr    bool
+		wantErrMsg string
+		wantType   string
+	}{
+		{
+			name:     "single IPv4 target",
+			targets:  []string{"10.10.10.10"},
+			wantType: "A",
+		},
+		{
+			name:     "single IPv6 target",
+			targets:  []string{"2001:db8::ff00:42:8329"},
+			wantType: "AAAA",
+		},
+		{
+			name:     "single CNAME (hostname) target",
+			targets:  []string{"example.com"},
+			wantType: "CNAME",
+		},
+		{
+			name:     "multiple IPv4 targets",
+			targets:  []string{"192.168.1.1", "10.10.10.10"},
+			wantType: "A",
+		},
+		{
+			name:     "multiple IPv6 targets",
+			targets:  []string{"2001:db8::1", "2001:db8::2"},
+			wantType: "AAAA",
+		},
+		{
+			name:     "multiple hostnames",
+			targets:  []string{"foo.example.com", "bar.example.com"},
+			wantType: "CNAME",
+		},
+		{
+			name:       "mixed IPv4 and IPv6",
+			targets:    []string{"192.168.1.1", "2001:db8::1"},
+			wantErr:    true,
+			wantErrMsg: "multiple record types",
+		},
+		{
+			name:       "mixed IPv4 and CNAME",
+			targets:    []string{"192.168.1.1", "example.com"},
+			wantErr:    true,
+			wantErrMsg: "multiple record types",
+		},
+		{
+			name:       "invalid hostname",
+			targets:    []string{"not_a_valid_hostname"},
+			wantErr:    true,
+			wantErrMsg: "invalid",
+		},
+		{
+			name:       "empty targets",
+			targets:    []string{},
+			wantErr:    true,
+			wantErrMsg: "determine record type",
+		},
+		{
+			name:       "duplicate targets",
+			targets:    []string{"example.com", "example.com"},
+			wantErr:    true,
+			wantErrMsg: "expected unique targets",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc // address gosec G601
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, recordType, err := validation.ValidateTargetsAndDetermineRecordType(tc.targets)
+			if tc.wantErr && err == nil {
+				t.Fatalf("expected an error, got none")
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if tc.wantErr && err != nil && tc.wantErrMsg != "" && !strings.Contains(err.Error(), tc.wantErrMsg) {
+				t.Errorf("expected error message containing %q, got %q", tc.wantErrMsg, err.Error())
+			}
+			if !tc.wantErr && recordType != tc.wantType {
+				t.Errorf("expected record type %q, got %q", tc.wantType, recordType)
+			}
+		})
+	}
+}
 
 func TestValidateDNSEndpoint(t *testing.T) {
 	t.Parallel()
