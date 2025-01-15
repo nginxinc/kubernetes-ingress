@@ -72,7 +72,7 @@ jobs:
         uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
         with:
           images: |
-            name=ghcr.io/nginxinc/dependencies/nginx-ot,enable=true
+            name=ghcr.io/nginx/dependencies/nginx-ot,enable=true
           flavor: suffix=${{ matrix.os != 'debian' && format('-{0}', matrix.os) || '' }},onlatest=true
           tags: |
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=true

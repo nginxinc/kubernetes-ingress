@@ -100,7 +100,7 @@ jobs:
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
-          echo "forked_workflow=${{ (github.event.pull_request && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name) || github.repository != 'nginxinc/kubernetes-ingress' }}" >> $GITHUB_OUTPUT
+          echo "forked_workflow=${{ (github.event.pull_request && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name) || github.repository != 'nginx/kubernetes-ingress' }}" >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
@@ -192,9 +192,9 @@ jobs:
 
       - name: Check if Codegen changed
         run: |
-          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
+          cd ../.. && mkdir -p github.com/nginx && mv kubernetes-ingress/kubernetes-ingress github.com/nginx/ && cd github.com/nginx/kubernetes-ingress
           make update-codegen && git diff --name-only --exit-code pkg/**
-          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
+          cd ../../.. && mv github.com/nginx/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
       - name: Install gofumpt
         run: go install mvdan.cc/gofumpt@latest

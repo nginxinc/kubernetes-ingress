@@ -12,7 +12,7 @@ This document explains how the F5 NGINX Ingress Controller is designed, and how 
 The intended audience for this information is primarily the two following groups:
 
 - _Operators_ who want to know how the software works and understand how it can fail.
-- _Developers_ who want to [contribute](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md) to the project.
+- _Developers_ who want to [contribute](https://github.com/nginx/kubernetes-ingress/blob/main/CONTRIBUTING.md) to the project.
 
 We assume that the reader is familiar with core Kubernetes concepts, such as Pods, Deployments, Services, and Endpoints. For an understanding of how NGINX itself works, you can read the ["Inside NGINX: How We Designed for Performance & Scale"](https://www.nginx.com/blog/inside-nginx-how-we-designed-for-performance-scale/) blog post.
 
@@ -191,15 +191,15 @@ We also mentioned that once the cache is updated, it notifies the control loop a
 
 This section discusses the main components of NGINX Ingress Controller, which comprise the control loop:
 
-- [Controller](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L90)
+- [Controller](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L90)
   - Runs the NGINX Ingress Controller control loop.
   - Instantiates _Informers_, _Handlers_, the _Workqueue_ and additional helper components.
   - Includes the sync method), which is called by the _Workqueue_ to process a changed resource.
   - Passes changed resources to _Configurator_ to re-configure NGINX.
-- [Configurator](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/configs/configurator.go#L95)
+- [Configurator](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/configs/configurator.go#L95)
   - Generates NGINX configuration files, TLS and cert keys, and JWKs based on the Kubernetes resource.
   - Uses _Manager_ to write the generated files and reload NGINX.
-- [Manager](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/nginx/manager.go#L52)
+- [Manager](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/nginx/manager.go#L52)
   - Controls the lifecycle of NGINX (starting, reloading, quitting). See [Reloading NGINX](#reloading-nginx) for more details about reloading.
   - Manages the configuration files, TLS keys and certs, and JWKs.
 
@@ -211,7 +211,7 @@ The following diagram shows how the three components interact:
 
 #### The Controller sync method
 
-The Controller [sync](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L663) method is called by the _Workqueue_ to process a change of a resource. The method determines the _kind_ of the resource and calls the appropriate _sync_ method (Such as _syncIngress_ for Ingress resources).
+The Controller [sync](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L663) method is called by the _Workqueue_ to process a change of a resource. The method determines the _kind_ of the resource and calls the appropriate _sync_ method (Such as _syncIngress_ for Ingress resources).
 
 To explain how the sync methods work, we will examine the most important one: the _syncIngress_ method, and describe how it processes a new Ingress resource.
 
@@ -220,7 +220,7 @@ To explain how the sync methods work, we will examine the most important one: th
 1. The _Workqueue_ calls the _sync_ method and passes a workqueue element to it that includes the changed resource _kind_ and _key_ (The key is the resource namespace/name such as “default/cafe-ingress”).
 1. Using the _kind_, the _sync_ method calls the appropriate sync method and passes the resource key. For Ingress resources, the method is _syncIngress_.
 1. _syncIngress_ gets the Ingress resource from the *Ingress Store* using the key. The _Store_ is controlled by the _Ingress Informer_. In the code, we use the helper _storeToIngressLister_ type that wraps the _Store_.
-1. _syncIngress_ calls _AddOrUpdateIngress_ of the _Configuration_, passing the Ingress along. The [Configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320) is a component that represents a valid collection of load balancing configuration resources (Ingresses, VirtualServers, VirtualServerRoutes, TransportServers), ready to be converted to the NGINX configuration (see the [Configuration section](#configuration) for more details). _AddOrUpdateIngress_ returns a list of [ResourceChanges](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L59), which must be reflected in the NGINX config. Typically, for a new Ingress resource, the _Configuration_ returns only a single _ResourceChange_.
+1. _syncIngress_ calls _AddOrUpdateIngress_ of the _Configuration_, passing the Ingress along. The [Configuration](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320) is a component that represents a valid collection of load balancing configuration resources (Ingresses, VirtualServers, VirtualServerRoutes, TransportServers), ready to be converted to the NGINX configuration (see the [Configuration section](#configuration) for more details). _AddOrUpdateIngress_ returns a list of [ResourceChanges](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L59), which must be reflected in the NGINX config. Typically, for a new Ingress resource, the _Configuration_ returns only a single _ResourceChange_.
 1. _syncIngress_ calls _processChanges_, which processes the single Ingress _ResourceChange_.
     1. _processChanges_ creates an extended Ingress resource (_IngressEx_) that includes the original Ingress resource and its dependencies, such as Endpoints and Secrets, to generate the NGINX configuration. For simplicity, we don’t show this step on the diagram.
     1. _processChanges_ calls _AddOrUpdateIngress_ of the _Configurator_ and passes the extended Ingress resource.
@@ -246,7 +246,7 @@ There are two additional helper components crucial for processing changes: _Conf
 
 ##### Configuration
 
-[_Configuration_](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320) holds the latest valid state of the NGINX Ingress Controller load balancing configuration resources: Ingresses, VirtualServers, VirtualServerRoutes, TransportServers, and GlobalConfiguration.
+[_Configuration_](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320) holds the latest valid state of the NGINX Ingress Controller load balancing configuration resources: Ingresses, VirtualServers, VirtualServerRoutes, TransportServers, and GlobalConfiguration.
 
 The _Configuration_ supports add, update and delete operations on the resources. When you invoke these operations on a resource in the Configuration, it performs the following:
 
@@ -263,7 +263,7 @@ Ultimately, NGINX Ingress Controller ensures the NGINX config on the filesystem 
 
 ##### LocalSecretStore
 
-[_LocalSecretStore_](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/secrets/store.go#L32) (of the _SecretStore_ interface) holds the valid Secret resources and keeps the corresponding files on the filesystem in sync with them. Secrets are used to hold TLS certificates and keys (type `kubernetes.io/tls`), CAs (`nginx.org/ca`), JWKs (`nginx.org/jwk`), and client secrets for an OIDC provider (`nginx.org/oidc`).
+[_LocalSecretStore_](https://github.com/nginx/kubernetes-ingress/blob/v1.11.0/internal/k8s/secrets/store.go#L32) (of the _SecretStore_ interface) holds the valid Secret resources and keeps the corresponding files on the filesystem in sync with them. Secrets are used to hold TLS certificates and keys (type `kubernetes.io/tls`), CAs (`nginx.org/ca`), JWKs (`nginx.org/jwk`), and client secrets for an OIDC provider (`nginx.org/oidc`).
 
 When _Controller_ processes a change to a configuration resource like Ingress, it creates an extended version of a resource that includes the dependencies (Such as Secrets) necessary to generate the NGINX configuration. _LocalSecretStore_ allows _Controller_ to reference the filesystem for a secret using the secret key (namespace/name).
 

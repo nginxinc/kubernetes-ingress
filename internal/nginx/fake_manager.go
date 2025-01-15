@@ -6,10 +6,10 @@ import (
 	"os"
 	"path"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
-	"github.com/nginxinc/nginx-plus-go-client/v2/client"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	nic_glog "github.com/nginx/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginx/kubernetes-ingress/internal/logger/levels"
+	"github.com/nginx/nginx-plus-go-client/v2/client"
 )
 
 // FakeManager provides a fake implementation of the Manager interface.

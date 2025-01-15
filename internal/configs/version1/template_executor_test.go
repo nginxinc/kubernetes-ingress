@@ -111,7 +111,7 @@ func newTestTemplateExecutor(t *testing.T) *TemplateExecutor {
 
 // custom Main Template represents a main-template passed via ConfigMap
 var customMainTemplate = `# TEST NEW MAIN TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
+{{- /*gotype: github.com/nginx/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -480,7 +480,7 @@ mgmt {
 
 // custom Ingress Template represents an ingress-template passed via ConfigMap
 var customIngressTemplate = `# TEST NEW CUSTOM INGRESS TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.IngressNginxConfig*/ -}}
+{{- /*gotype: github.com/nginx/kubernetes-ingress/internal/configs/version1.IngressNginxConfig*/ -}}
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
 {{- range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {

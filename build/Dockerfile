@@ -11,11 +11,11 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3@sha256:a09090e9f424f206a79a816d37321db2eed349ae3bc20d16bc4cbba32eedfc17 AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:339c91471fa9159987aa45ab81f00f147d49709819e207ccc0bc4d434ece2db9 AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
-FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
+FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3@sha256:22ea809c433bf114d527a9e40faff7f7bbdcadefdf4a6c776bd7c4d230c1cf6f AS opentracing-lib
+FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:b3ff476b7214262023c017d15119c9112010d38661978bf5c3a43c3e496b3ef3 AS alpine-opentracing-lib
+FROM ghcr.io/nginx/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
+FROM ghcr.io/nginx/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
+FROM ghcr.io/nginx/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
 FROM redhat/ubi9-minimal:9.5@sha256:b87097994ed62fbf1de70bc75debe8dacf3ea6e00dd577d74503ef66452c59d6 AS ubi-minimal
 FROM golang:1.23-alpine@sha256:c23339199a08b0e12032856908589a6d41a0dab141b8b3b21f156fc571a3f1d3 AS golang-builder
 
@@ -58,14 +58,14 @@ ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-plus-8.repo ngi
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/plus-9.repo nginx-plus-9.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-8.repo app-protect-8.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-9.repo app-protect-9.repo
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-ubi-8.repo app-protect-v5-8.repo
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-ubi-9.repo app-protect-v5-9.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/nap-waf-v5-ubi-8.repo app-protect-v5-8.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/nap-waf-v5-ubi-9.repo app-protect-v5-9.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-dos-9.repo app-protect-dos-9.repo
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-debian-12.repo nap-waf-12.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-dos-debian-12.repo nap-dos-12.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-debian-12.repo nap-waf-v5-12.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/agent-debian-12.repo debian-agent-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/nap-waf-debian-12.repo nap-waf-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/nap-dos-debian-12.repo nap-dos-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/nap-waf-v5-debian-12.repo nap-waf-v5-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginx/k8s-common/main/files/agent-debian-12.repo debian-agent-12.sources
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-agent.repo nginx-agent.repo
 
 RUN --mount=from=busybox:musl,src=/bin/,dst=/bin/ printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt;" >> 90pkgs-nginx \
@@ -77,7 +77,7 @@ RUN --mount=from=busybox:musl,src=/bin/,dst=/bin/ printf "%s\n" "Acquire::https:
 	&& sed -i -e "y/0/1/" -e "s;pkgs.nginx.com;${PACKAGE_REPO};g" nginx-agent.repo app-protect-v5-?.repo \
 	&& echo HTTP_USER_AGENT="k8s-ic-$IC_VERSION${BUILD_OS##alpine-plus}-apk" > user_agent
 
-ADD --link --chown=101:0 --chmod=0755 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/patch-os.sh patch-os.sh
+ADD --link --chown=101:0 --chmod=0755 https://raw.githubusercontent.com/nginx/k8s-common/main/files/patch-os.sh patch-os.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/common.sh common.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-waf.sh nap-waf.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-dos.sh nap-dos.sh
@@ -564,13 +564,13 @@ FROM golang-builder AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
-WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
+WORKDIR /go/src/github.com/nginx/kubernetes-ingress/
 RUN apk add --no-cache git libcap
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=bind,target=/go/src/github.com/nginx/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
 	go mod download
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=bind,target=/go/src/github.com/nginx/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
 	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" \
-	-o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress \
+	-o /nginx-ingress github.com/nginx/kubernetes-ingress/cmd/nginx-ingress \
 	&& setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
 
 
@@ -578,12 +578,12 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 FROM golang-builder AS debug-builder
 ARG TARGETARCH
 
-WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
+WORKDIR /go/src/github.com/nginx/kubernetes-ingress/
 RUN apk add --no-cache git
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=bind,target=/go/src/github.com/nginx/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
 	go mod download
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
-	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -gcflags "all=-N -l" -o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+RUN --mount=type=bind,target=/go/src/github.com/nginx/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -gcflags "all=-N -l" -o /nginx-ingress github.com/nginx/kubernetes-ingress/cmd/nginx-ingress
 RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest
 
 

@@ -53,7 +53,7 @@ Here is a breakdown of what this Ingress resource definition means:
 
 To learn more about the Ingress resource, view [the official Kubernetes documentation for Ingress resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
 
-{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
+{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
 
 
 ## New features available in Kubernetes 1.18
@@ -116,10 +116,10 @@ NGINX Ingress Controller imposes the following restrictions on Ingress resources
 
 ## Advanced configuration
 
-NGINX Ingress Controller generates NGINX configuration by executing a template file that contains the configuration options. These options are set with the Ingress resource and NGINX Ingress Controller's ConfigMap. The Ingress resource only allows you to use basic NGINX features: host and path-based routing and TLS termination. 
+NGINX Ingress Controller generates NGINX configuration by executing a template file that contains the configuration options. These options are set with the Ingress resource and NGINX Ingress Controller's ConfigMap. The Ingress resource only allows you to use basic NGINX features: host and path-based routing and TLS termination.
 
 Advanced features like rewriting the request URI or inserting additional response headers are available through annotations. View the [Advanced configuration with Annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md" >}}) topic for more information.
 
-Advanced NGINX users who require more control over the generated NGINX configurations can use snippets to insert raw NGINX config. View the [Advanced configuration with Snippets]({{< relref "configuration/ingress-resources/advanced-configuration-with-snippets" >}}) topic for more information. 
+Advanced NGINX users who require more control over the generated NGINX configurations can use snippets to insert raw NGINX config. View the [Advanced configuration with Snippets]({{< relref "configuration/ingress-resources/advanced-configuration-with-snippets" >}}) topic for more information.
 
 Additionally, it is possible to customize the template, described in the [Custom templates]({{< relref "/configuration/global-configuration/custom-templates.md" >}}) topic.

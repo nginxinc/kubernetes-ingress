@@ -5,13 +5,13 @@ weight: 700
 docs: DOCS-599
 ---
 
-This document is reference material for the VirtualServer and VirtualServerRoute resources used by F5 NGINX Ingress Controller. 
+This document is reference material for the VirtualServer and VirtualServerRoute resources used by F5 NGINX Ingress Controller.
 
 VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource.
 
 They enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-The GitHub repository has [examples of the resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources) for specific use cases.
+The GitHub repository has [examples of the resources](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources) for specific use cases.
 
 ---
 
@@ -348,7 +348,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, NGINX Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as NGINX Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
@@ -657,7 +657,7 @@ proxy:
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/rewrites) example. | ``string`` | No |
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/rewrites) example. | ``string`` | No |
 {{</bootstrap-table>}}
 
 ### Action.Proxy.RequestHeaders
@@ -733,7 +733,7 @@ always: true
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing`, `$connections_waiting`, `$ssl_cipher`, `$ssl_ciphers`, `$ssl_client_cert`, `$ssl_client_escaped_cert`, `$ssl_client_fingerprint`, `$ssl_client_i_dn`, `$ssl_client_i_dn_legacy`, `$ssl_client_raw_cert`, `$ssl_client_s_dn`, `$ssl_client_s_dn_legacy`, `$ssl_client_serial`, `$ssl_client_v_end`, `$ssl_client_v_remain`, `$ssl_client_v_start`, `$ssl_client_verify`, `$ssl_curves`, `$ssl_early_data`, `$ssl_protocol`, `$ssl_server_name`, `$ssl_session_id`, `$ssl_session_reused`, `$jwt_claim_` (NGINX Plus only) and `$jwt_header_` (NGINX Plus only).
 
-{{< note >}} If `always` is false, the response header is added only if the response status code is any of `200`, `201`, `204`, `206`, `301`, `302`, `303`, `304`, `307` or `308`. {{< /note >}} 
+{{< note >}} If `always` is false, the response header is added only if the response status code is any of `200`, `201`, `204`, `206`, `301`, `302`, `303`, `304`, `307` or `308`. {{< /note >}}
 
 ### Split
 
@@ -810,7 +810,7 @@ action:
 |``splits`` | The splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No |
 {{</bootstrap-table>}}
 
-{{< note >}} A match must include exactly one of the following: `action` or `splits`. {{< /note >}} 
+{{< note >}} A match must include exactly one of the following: `action` or `splits`. {{< /note >}}
 
 ### Condition
 
@@ -826,7 +826,7 @@ The condition defines a condition in a match.
 |``value`` | The value to match the condition against. How to define a value is shown below the table. | ``string`` | Yes |
 {{</bootstrap-table>}}
 
-{{< note >}}  a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`. {{< /note >}} 
+{{< note >}}  a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`. {{< /note >}}
 
 Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme`. Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
 
@@ -840,7 +840,7 @@ The value supports two kinds of matching:
   - `!~^yes` -- negation of the previous regular expression that succeeds for strings like `YES`, `Yes123`, `noyes`. (The negation mechanism is not part of the PCRE syntax).
   - `~*no$` -- a case-insensitive regular expression that matches any string that ends with `no`. For example: `no`, `123no`, `123NO`.
 
-{{< note >}} A value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`. {{< /note >}} 
+{{< note >}} A value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`. {{< /note >}}
 
 ### ErrorPage
 

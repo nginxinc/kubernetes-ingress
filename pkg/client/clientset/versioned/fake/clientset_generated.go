@@ -3,13 +3,13 @@
 package fake
 
 import (
-	clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
-	fakek8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1/fake"
-	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
-	fakeappprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1/fake"
-	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
-	fakeexternaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1/fake"
+	clientset "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned"
+	k8sv1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
+	fakek8sv1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1/fake"
+	appprotectdosv1beta1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
+	fakeappprotectdosv1beta1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1/fake"
+	externaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
+	fakeexternaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	v1 "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )

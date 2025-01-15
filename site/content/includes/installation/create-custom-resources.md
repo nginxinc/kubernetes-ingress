@@ -23,7 +23,7 @@ The core custom CRDs are the following:
 {{%tab name="Install CRDs from single YAML"%}}
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
 ```
 
 {{%/tab%}}
