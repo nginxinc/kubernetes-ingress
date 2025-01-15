@@ -3009,7 +3009,7 @@ func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*
 				}
 			}
 		}
-		return maps.Keys(endpointSet)
+		return slices.Collect(maps.Keys(endpointSet))
 	}
 
 	return makePodEndpoints(pods, filterReadyEndpointsFrom(selectEndpointSlicesForPort(targetPort, svcEndpointSlices)))
