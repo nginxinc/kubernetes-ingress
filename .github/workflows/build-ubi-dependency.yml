@@ -19,7 +19,7 @@ on:
         default: false
 
 env:
-  IMAGE_NAME: ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le
+  IMAGE_NAME: ghcr.io/nginx/dependencies/nginx-ubi-ppc64le
 
 concurrency:
   group: ${{ github.ref_name }}-ubi-ppc64le-build

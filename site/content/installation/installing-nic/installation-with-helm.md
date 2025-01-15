@@ -46,14 +46,14 @@ kubectl apply -f crds/
 Alternatively, CRDs can be upgraded without pulling the chart by running:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
 ```
 
 In the above command, `v{{< nic-version >}}` represents the version of NGINX Ingress Controller release rather than the Helm chart version.
 
 {{< note >}} The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
 
-Check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
+Check the [release notes](https://www.github.com/nginx/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
 {{< /note >}}
 
 ### Uninstall the CRDs
@@ -75,16 +75,16 @@ Run the following commands to install the chart with the release name my-release
 - For NGINX:
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
+    helm install my-release oci://ghcr.io/nginx/charts/nginx-ingress --version {{< nic-helm-version >}}
     ```
 
 - For NGINX Plus: (This assumes you have pushed NGINX Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}} --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+    helm install my-release oci://ghcr.io/nginx/charts/nginx-ingress --version {{< nic-helm-version >}} --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
     ```
 
-These commands install the latest `edge` version of NGINX Ingress Controller from GitHub Container Registry. If you prefer using Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
+These commands install the latest `edge` version of NGINX Ingress Controller from GitHub Container Registry. If you prefer using Docker Hub, you can replace `ghcr.io/nginx/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
 
 ### Upgrade the chart
 
@@ -93,7 +93,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 To upgrade the release `my-release`:
 
 ```shell
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
+helm upgrade my-release oci://ghcr.io/nginx/charts/nginx-ingress --version {{< nic-helm-version >}}
 ```
 
 ### Uninstall the chart
@@ -114,7 +114,7 @@ To test the latest changes in NGINX Ingress Controller before a new release, you
 You can install the `edge` version by specifying the `--version` flag with the value `0.0.0-edge`:
 
 ```shell
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.0.0-edge
+helm install my-release oci://ghcr.io/nginx/charts/nginx-ingress --version 0.0.0-edge
 ```
 
 {{< warning >}} The `edge` version is not intended for production use. It is intended for testing and development purposes only. {{< /warning >}}
@@ -128,7 +128,7 @@ This step is required if you're installing the chart using its sources. It also 
 1. Pull the chart sources:
 
     ```shell
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version {{< nic-helm-version >}}
+    helm pull oci://ghcr.io/nginx/charts/nginx-ingress --untar --version {{< nic-helm-version >}}
     ```
 
 2. Change your working directory to nginx-ingress:
@@ -181,7 +181,7 @@ Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Unin
 
 ### Background
 
-In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
+In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginx/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
 When using Helm to upgrade from a version prior to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
 
 Although the advisory is to update all resources in accordance with new naming convention, to avoid downtime follow the steps listed below.
@@ -226,7 +226,7 @@ The steps you should follow depend on the Helm release name:
    It could look as follows:
 
     ```shell
-    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
+    helm upgrade nginx-ingress oci://ghcr.io/nginx/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
     ```
 
 6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
@@ -273,7 +273,7 @@ The steps you should follow depend on the Helm release name:
    It could look as follows:
 
     ```shell
-    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
+    helm upgrade test-release oci://ghcr.io/nginx/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
     ```
 
 6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:

@@ -31,10 +31,10 @@ Visit the [project’s GitHub repository](https://github.com/nginxinc/nginx-supp
 
 ## Support channels
 
-- If you experience issues with NGINX Ingress Controller, please [open an issue](https://github.com/nginxinc/kubernetes-ingress/issues/new?assignees=&labels=bug%2Cneeds+triage&projects=&template=BUG-REPORT.yml&title=%5BBug%5D%3A+) in GitHub.
+- If you experience issues with NGINX Ingress Controller, please [open an issue](https://github.com/nginx/kubernetes-ingress/issues/new?assignees=&labels=bug%2Cneeds+triage&projects=&template=BUG-REPORT.yml&title=%5BBug%5D%3A+) in GitHub.
 
-- If you have any enhancement requests, please [open a feature request](https://github.com/nginxinc/kubernetes-ingress/issues/new?assignees=&labels=proposal&projects=&template=feature_request.md&title=) in GitHub.
+- If you have any enhancement requests, please [open a feature request](https://github.com/nginx/kubernetes-ingress/issues/new?assignees=&labels=proposal&projects=&template=feature_request.md&title=) in GitHub.
 
-- If you have any ideas or suggestions to discuss, please [open an idea discussion](https://github.com/nginxinc/kubernetes-ingress/discussions/categories/ideas) in GitHub.
+- If you have any ideas or suggestions to discuss, please [open an idea discussion](https://github.com/nginx/kubernetes-ingress/discussions/categories/ideas) in GitHub.
 
 - You can contact us directly, by sending an email to [kubernetes@nginx.com](mailto:kubernetes@nginx.com).

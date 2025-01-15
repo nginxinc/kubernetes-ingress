@@ -3,8 +3,8 @@
 package fake
 
 import (
-	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
-	dosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
+	v1beta1 "github.com/nginx/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	dosv1beta1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
 	gentype "k8s.io/client-go/gentype"
 )
 
