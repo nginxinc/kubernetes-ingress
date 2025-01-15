@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/commonhelpers"
+	"github.com/nginx/kubernetes-ingress/internal/configs/commonhelpers"
 )
 
 type protocol int

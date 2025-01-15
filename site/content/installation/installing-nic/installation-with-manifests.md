@@ -30,10 +30,10 @@ Choose one of the following methods to get the NGINX Ingress Controller image:
 Clone the NGINX Ingress Controller repository using the command shown below, and replace `<version_number>` with the specific release you want to use.
 
 ```shell
-git clone https://github.com/nginxinc/kubernetes-ingress.git --branch <version_number>
+git clone https://github.com/nginx/kubernetes-ingress.git --branch <version_number>
 ```
 
-For example, if you want to use version {{< nic-version >}}, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v{{< nic-version >}}`.
+For example, if you want to use version {{< nic-version >}}, the command would be `git clone https://github.com/nginx/kubernetes-ingress.git --branch v{{< nic-version >}}`.
 
 This guide assumes you are using the latest release.
 
@@ -89,13 +89,13 @@ There are optional CRDs that are necessary if you want to use NGINX App Protect 
 {{<  note >}} This step can be skipped if you are using App Protect WAF module with policy bundles. {{<  /note >}}
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
 ```
 
 **NGINX App Protect DoS**:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
 ```
 
 {{%/tab%}}
@@ -260,17 +260,17 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
 
    1. Delete core custom resource definitions:
     ```shell
-    kubectl delete -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
+    kubectl delete -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
     ```
    2. Delete custom resource definitions for the NGINX App Protect WAF module:
 
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
     ```
 
    3. Delete custom resource definitions for the NGINX App Protect DoS module:
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
     ```
    {{%/tab%}}
 

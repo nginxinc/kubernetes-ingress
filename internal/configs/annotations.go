@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 )
 
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.

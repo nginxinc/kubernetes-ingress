@@ -445,7 +445,7 @@ sessionCookie:
 ```
 
 ## Migration with Kubernetes Ingress resources
-The other option for migrating from the community Ingress-NGINX Controller to NGINX Ingress Controller is using only [annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) and [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/) from standard Kubernetes resources, potentially relying on [mergeable Ingress types](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/ingress-resources/mergeable-ingress-types).
+The other option for migrating from the community Ingress-NGINX Controller to NGINX Ingress Controller is using only [annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) and [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/) from standard Kubernetes resources, potentially relying on [mergeable Ingress types](https://github.com/nginx/kubernetes-ingress/tree/main/examples/ingress-resources/mergeable-ingress-types).
 
 This ensures that all configuration is kept in the Ingress object.
 

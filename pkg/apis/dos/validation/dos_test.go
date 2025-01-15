@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	"github.com/nginx/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

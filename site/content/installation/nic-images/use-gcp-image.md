@@ -115,4 +115,4 @@ For options to customize your resources, see our [Configuration documentation]({
 
 ## Basic Usage
 
-To learn how to set up a basic application with NGINX Ingress Controller, refer to our [Basic Configuration Example](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/basic-configuration).
+To learn how to set up a basic application with NGINX Ingress Controller, refer to our [Basic Configuration Example](https://github.com/nginx/kubernetes-ingress/tree/main/examples/custom-resources/basic-configuration).

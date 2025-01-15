@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	internalValidation "github.com/nginxinc/kubernetes-ingress/internal/validation"
-	validation2 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	internalValidation "github.com/nginx/kubernetes-ingress/internal/validation"
+	validation2 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
+	"github.com/nginx/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"

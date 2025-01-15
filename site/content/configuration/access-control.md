@@ -33,7 +33,7 @@ IC_HTTP_PORT=<port number>
 
 Create the file _webapp.yaml_ with the following contents:
 
-{{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/webapp.yaml" >}}
+{{< ghcode "https://raw.githubusercontent.com/nginx/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/webapp.yaml" >}}
 
 Apply it using `kubectl`:
 
@@ -47,7 +47,7 @@ kubectl apply -f webapp.yaml
 
 Create a file named _access-control-policy-deny.yaml_. The highlighted _deny_ field will be used by the example application, and should be changed to the subnet of your machine.
 
-{{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-deny.yaml" "hl_lines=7-8" >}}
+{{< ghcode "https://raw.githubusercontent.com/nginx/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-deny.yaml" "hl_lines=7-8" >}}
 
 Apply the policy:
 
@@ -61,7 +61,7 @@ kubectl apply -f access-control-policy-deny.yaml
 
 Create a file named _virtual-server.yaml_ for the VirtualServer resource. The _policies_ field references the access control Policy created in the previous section.
 
-{{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/virtual-server.yaml" "hl_lines=7-8" >}}
+{{< ghcode "https://raw.githubusercontent.com/nginx/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/virtual-server.yaml" "hl_lines=7-8" >}}
 
 Apply the policy:
 
@@ -95,7 +95,7 @@ The *403* response is expected, successfully blocking your machine.
 
 Update the Policy with the file _access-control-policy-allow.yaml_, setting the _allow_ field to the subnet of your machine.
 
-{{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-allow.yaml" "hl_lines=7-8" >}}
+{{< ghcode "https://raw.githubusercontent.com/nginx/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-allow.yaml" "hl_lines=7-8" >}}
 
 Apply the Policy:
 
