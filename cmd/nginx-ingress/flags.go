@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	internalValidation "github.com/nginx/kubernetes-ingress/internal/validation"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"

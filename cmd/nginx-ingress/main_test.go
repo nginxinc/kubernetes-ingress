@@ -6,11 +6,7 @@ import (
 	"testing"
 
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
-	nic_glog "github.com/nginx/kubernetes-ingress/internal/logger/glog"
 	"github.com/nginx/kubernetes-ingress/internal/logger/levels"
-	pkgversion "k8s.io/apimachinery/pkg/version"
-	fakediscovery "k8s.io/client-go/discovery/fake"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestLogFormats(t *testing.T) {
