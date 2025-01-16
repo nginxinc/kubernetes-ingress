@@ -14,8 +14,8 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3@sha256:22ea809c433bf114d527a9e40faff7f7bbdcadefdf4a6c776bd7c4d230c1cf6f AS opentracing-lib
 FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:b3ff476b7214262023c017d15119c9112010d38661978bf5c3a43c3e496b3ef3 AS alpine-opentracing-lib
 FROM ghcr.io/nginx/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
-FROM ghcr.io/nginx/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
-FROM ghcr.io/nginx/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
+FROM ghcr.io/nginx/alpine-fips:0.2.4-alpine3.17@sha256:73de48bf4ce75fe74c3b7169e63b28edeecafac8c14cc52509becb8b98f84202 AS alpine-fips-3.17
+FROM ghcr.io/nginx/alpine-fips:0.2.4-alpine3.20@sha256:d28eeb2c22f4ef223cd3e424943451a782aa0ba1a96a1dbd20c8d90e8c4341e0 AS alpine-fips-3.20
 FROM redhat/ubi9-minimal:9.5@sha256:b87097994ed62fbf1de70bc75debe8dacf3ea6e00dd577d74503ef66452c59d6 AS ubi-minimal
 FROM golang:1.23-alpine@sha256:c23339199a08b0e12032856908589a6d41a0dab141b8b3b21f156fc571a3f1d3 AS golang-builder
 
@@ -102,7 +102,7 @@ USER 101
 
 
 ############################################# Base image for Alpine with NGINX Plus ##############################################
-FROM alpine:3.20@sha256:31687a2fdd021f85955bf2d0c2682e9c0949827560e1db546358ea094f740f12 AS alpine-plus
+FROM alpine:3.21@sha256:56fa17d2a7e7f168a043a2712e63aed1f8543aeafdcee47c58dcffe38ed51099 AS alpine-plus
 ARG NGINX_PLUS_VERSION
 ARG PACKAGE_REPO
 
@@ -135,7 +135,7 @@ RUN --mount=type=bind,from=alpine-fips-3.20,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17@sha256:8fc3dacfb6d69da8d44e42390de777e48577085db99aa4e4af35f483eb08b989 AS alpine-plus-nap-fips
+FROM alpine:3.21@sha256:56fa17d2a7e7f168a043a2712e63aed1f8543aeafdcee47c58dcffe38ed51099 AS alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -172,7 +172,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAFv5 and FIPS #############################################
-FROM alpine:3.17@sha256:8fc3dacfb6d69da8d44e42390de777e48577085db99aa4e4af35f483eb08b989 AS alpine-plus-nap-v5-fips
+FROM alpine:3.21@sha256:56fa17d2a7e7f168a043a2712e63aed1f8543aeafdcee47c58dcffe38ed51099 AS alpine-plus-nap-v5-fips
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
