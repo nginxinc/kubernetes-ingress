@@ -85,7 +85,7 @@ jobs:
 
       - name: Push to OCI registries
         run: |
-          helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginxinc/charts
+          helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginx/charts
           helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
 
       - name: Checkout Repository

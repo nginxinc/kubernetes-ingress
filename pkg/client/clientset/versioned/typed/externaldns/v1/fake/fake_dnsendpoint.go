@@ -3,8 +3,8 @@
 package fake
 
 import (
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
-	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
+	v1 "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
+	externaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
 	gentype "k8s.io/client-go/gentype"
 )
 

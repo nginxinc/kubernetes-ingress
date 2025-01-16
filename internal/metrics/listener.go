@@ -10,13 +10,13 @@ import (
 	"strconv"
 	"time"
 
-	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
-	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
+	prometheusClient "github.com/nginx/nginx-prometheus-exporter/client"
+	nginxCollector "github.com/nginx/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	v1 "k8s.io/api/core/v1"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 )
 
 // NewNginxMetricsClient creates an NginxClient to fetch stats from NGINX over an unix socket

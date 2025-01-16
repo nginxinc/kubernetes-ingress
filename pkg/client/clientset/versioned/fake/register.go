@@ -3,9 +3,9 @@
 package fake
 
 import (
-	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
-	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	k8sv1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
+	appprotectdosv1beta1 "github.com/nginx/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	externaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
