@@ -20,18 +20,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/nginx/kubernetes-ingress/internal/telemetry"
-	"golang.org/x/exp/maps"
-
 	"github.com/nginx/kubernetes-ingress/internal/k8s/appprotect"
 	"github.com/nginx/kubernetes-ingress/internal/k8s/appprotectdos"
+	"github.com/nginx/kubernetes-ingress/internal/telemetry"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/rest"
 
@@ -3009,7 +3009,7 @@ func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*
 				}
 			}
 		}
-		return maps.Keys(endpointSet)
+		return slices.Collect(maps.Keys(endpointSet))
 	}
 
 	return makePodEndpoints(pods, filterReadyEndpointsFrom(selectEndpointSlicesForPort(targetPort, svcEndpointSlices)))
@@ -3147,7 +3147,7 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 				endpointSet[podEndpoint] = struct{}{}
 			}
 		}
-		return maps.Keys(endpointSet)
+		return slices.Collect(maps.Keys(endpointSet))
 	}
 
 	endpoints := makePodEndpoints(targetPort, filterReadyEndpointsFrom(selectEndpointSlicesForPort(targetPort, endpointSlices)))
