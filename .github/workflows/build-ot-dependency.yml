@@ -50,7 +50,7 @@ jobs:
           echo "nginx_version=${nginx_version}" >> $GITHUB_OUTPUT
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
         with:
           platforms: arm,arm64,ppc64le,s390x
 
@@ -72,7 +72,7 @@ jobs:
         uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
         with:
           images: |
-            name=ghcr.io/nginxinc/dependencies/nginx-ot,enable=true
+            name=ghcr.io/nginx/dependencies/nginx-ot,enable=true
           flavor: suffix=${{ matrix.os != 'debian' && format('-{0}', matrix.os) || '' }},onlatest=true
           tags: |
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=true
@@ -80,7 +80,7 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
-        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v6.12.0
         with:
           file: ./Dockerfile
           context: "."

@@ -3,7 +3,7 @@
 package v1
 
 import (
-	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	configurationv1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	listers "k8s.io/client-go/listers"
 	cache "k8s.io/client-go/tools/cache"

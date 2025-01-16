@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginx/kubernetes-ingress/internal/configs"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )

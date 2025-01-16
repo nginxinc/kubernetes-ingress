@@ -115,7 +115,7 @@ kubectl apply -f nms-basic-auth.yaml
 
 If you need to update the basic-auth credentials for NGINX Instance Manager in the future, update the `username` and `password` fields, and apply the changes by running the command again. Usage Reporting will automatically detect the changes, using the new username and password without redeployment.
 
-Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
+Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginx/kubernetes-ingress/v{{< nic-version >}}/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
 
 ```yaml
     args:
