@@ -10,9 +10,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	"github.com/nginxinc/kubernetes-ingress/internal/validation"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	"github.com/nginx/kubernetes-ingress/internal/validation"
 )
 
 const (
