@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	nic_logger "github.com/nginx/kubernetes-ingress/internal/logger"
+	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

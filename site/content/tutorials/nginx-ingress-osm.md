@@ -10,7 +10,7 @@ weight: 1800
 
 This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
 
-Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](https://github.com/nginxinc/kubernetes-ingress): the free as well as the NGINX Plus versions.
+Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](https://github.com/nginx/kubernetes-ingress): the free as well as the NGINX Plus versions.
 
 Below is a link to the official F5 NGINX Ingress Controller documentation.
 [F5 NGINX Ingress controller](https://docs.nginx.com/nginx-ingress-controller/)

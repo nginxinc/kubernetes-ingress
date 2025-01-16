@@ -88,7 +88,7 @@ Events:
 
 Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` and NGINX Ingress Controller will reject `cafe-virtual-server`.
 
-{{< note >}} You can configure multiple hosts for Ingress resources, and its possible that an Ingress resource can be the winner for some of its hosts and a loser for the others. 
+{{< note >}} You can configure multiple hosts for Ingress resources, and its possible that an Ingress resource can be the winner for some of its hosts and a loser for the others.
 
 For example, if `cafe-ingress` had an additional rule host rule for `pub.example.com`, NGINX Ingress Controller would not reject the Ingress. Instead, it would allow `cafe-ingress` to handle `pub.example.com`. {{< /note >}}
 
@@ -96,11 +96,11 @@ For example, if `cafe-ingress` had an additional rule host rule for `pub.example
 
 ### Merging configuration for the same host
 
-It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces. 
+It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces.
 
 The [Cross-namespace configuration]({{< relref "configuration/ingress-resources/cross-namespace-configuration.md">}}) topic has more information.
 
-It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/cross-namespace-configuration) on GitHub.
+It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/cross-namespace-configuration) on GitHub.
 
 It is *not* possible to merge configuration for multiple TransportServer resources.
 

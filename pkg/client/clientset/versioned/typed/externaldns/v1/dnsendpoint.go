@@ -5,8 +5,8 @@ package v1
 import (
 	context "context"
 
-	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
-	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
+	externaldnsv1 "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
+	scheme "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

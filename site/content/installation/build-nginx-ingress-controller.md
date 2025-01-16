@@ -7,7 +7,7 @@ product: NIC
 docs: DOCS-1453
 ---
 
-This document describes how to build an F5 NGINX Ingress Controller image from source code and upload it to a private Docker registry. 
+This document describes how to build an F5 NGINX Ingress Controller image from source code and upload it to a private Docker registry.
 
 It also includes information on the Makefile targets and variables.
 
@@ -23,7 +23,7 @@ To get started, you need the following software installed on your machine:
 - [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 - For NGINX Plus users, download the certificate (_nginx-repo.crt_) and key (_nginx-repo.key_) from [MyF5](https://my.f5.com).
 
-Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed. 
+Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed.
 
 You can download the precompiled binary file or build NGINX Ingress Controller in a Docker container.
 
@@ -42,14 +42,14 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 2. Clone the NGINX Ingress Controller GitHub repository. Replace `<version_number>` with the version of NGINX Ingress Controller you want.
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch <version_number>
+    git clone https://github.com/nginx/kubernetes-ingress.git --branch <version_number>
     cd kubernetes-ingress
     ```
 
     For instance if you want to clone version v{{< nic-version >}}, the commands to run would be:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v{{< nic-version >}}
+    git clone https://github.com/nginx/kubernetes-ingress.git --branch v{{< nic-version >}}
     cd kubernetes-ingress
     ```
 
@@ -195,7 +195,7 @@ The _Makefile_ includes several key variables. You have the option to either mod
 
 If you prefer not to build your own NGINX Ingress Controller image, you can use pre-built images. Here are your options:
 
-**NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress) or [GitHub](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
+**NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress) or [GitHub](https://github.com/nginx/kubernetes-ingress/pkgs/container/kubernetes-ingress).
 
 **NGINX Plus Ingress Controller**: You have two options for this:
 

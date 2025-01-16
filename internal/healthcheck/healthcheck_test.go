@@ -10,12 +10,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	nic_glog "github.com/nginx/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginx/kubernetes-ingress/internal/logger/levels"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
-	"github.com/nginxinc/nginx-plus-go-client/v2/client"
+	"github.com/nginx/kubernetes-ingress/internal/healthcheck"
+	"github.com/nginx/nginx-plus-go-client/v2/client"
 )
 
 // testHandler creates http handler for testing HealthServer.

@@ -294,14 +294,14 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      - name: Certify UBI OSS images in quay
-        uses: ./.github/actions/certify-openshift-image
-        continue-on-error: true
-        with:
-          image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
-          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
-          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
-          preflight_version: 1.11.1
+      # - name: Certify UBI OSS images in quay
+      #   uses: ./.github/actions/certify-openshift-image
+      #   continue-on-error: true
+      #   with:
+      #     image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
+      #     project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+      #     pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
+      #     preflight_version: 1.11.1
 
   operator:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
@@ -404,19 +404,19 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@108e752101152582ed409c5faed859a891e0d7aa # v1.0.7
+        uses: nginx/aws-marketplace-publish@accf7b4c725796b744f2ee27acc2488d76f63d32 # v1.0.8
         continue-on-error: true
         with:
           version: ${{ inputs.nic_version }}
           product-id: ${{ secrets[matrix.product_id] }}
           registry: ${{ matrix.image }}
-          release-notes: https://github.com/nginxinc/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}
+          release-notes: https://github.com/nginx/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}
           description: |
             Best-in-class traffic management solution for services in Amazon EKS.
             This is the official implementation of NGINX Ingress Controller (based on NGINX Plus) from NGINX.
           usage-instructions: |
             This container requires Kubernetes and can be deployed to EKS.
-            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/v${{ inputs.nic_version }}/deployments
+            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginx/kubernetes-ingress/tree/v${{ inputs.nic_version }}/deployments
             Use this image instead of building your own.
 
   binaries:
@@ -601,7 +601,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "NGINX Ingress Controller v${{ inputs.nic_version }} is out! Check it out: https://github.com/nginxinc/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}"
+                    "text": "NGINX Ingress Controller v${{ inputs.nic_version }} is out! Check it out: https://github.com/nginx/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}"
                   }
                 }
               ]
@@ -621,7 +621,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
