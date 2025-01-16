@@ -1,10 +1,10 @@
 ---
-docs: DOCS-617
-doctypes:
-- concept
 title: Technical specifications
 toc: true
 weight: 200
+doctype: reference
+product: NIC
+docs: DOCS-617
 ---
 
 This page describes technical specifications for F5 NGINX Ingress Controller, such as its version compatibility with Kubernetes and other NGINX software.
@@ -37,8 +37,6 @@ We test NGINX Ingress Controller on a range of Kubernetes platforms for each rel
 | 3.2.1 | 1.22 - 1.27 | 0.18.1 | 1.5.1 | 1.25.2 / R30 |
 | 3.1.1 | 1.22 - 1.26 | 0.17.1 | 1.4.2 | 1.23.4 / R29 |
 | 3.0.2 | 1.21 - 1.26 | 0.16.2 | 1.3.1 | 1.23.3 / R28 |
-| 2.4.2 | 1.19 - 1.25 | 0.15.2 | 1.2.1 | 1.23.2 / R28 |
-| 2.3.1 | 1.19 - 1.24 | 0.14.1 | 1.1.0 | 1.23.1 / R27 |
 {{% /bootstrap-table %}}
 
 ---
