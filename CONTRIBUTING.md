@@ -20,7 +20,7 @@ considering contributing!
 
 ## Ask a Question
 
-To ask a question please use [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions).
+To ask a question please use [Github Discussions](https://github.com/nginx/kubernetes-ingress/discussions).
 
 You can also join our [Community Slack](https://community.nginx.org/joinslack) which has a wider NGINX audience.
 
@@ -31,8 +31,8 @@ Please reserve GitHub issues for feature requests and bugs rather than general q
 Follow our [Installation Guide](https://docs.nginx.com/nginx-ingress-controller/installation/) to
 get NGINX Ingress Controller up and running.
 
-Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/site) and
-[configuration](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples) examples
+Read the [documentation](https://github.com/nginx/kubernetes-ingress/tree/main/site) and
+[configuration](https://github.com/nginx/kubernetes-ingress/tree/main/examples) examples
 
 ### Project Structure
 
