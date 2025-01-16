@@ -104,7 +104,7 @@ func newTestTemplateExecutor(t *testing.T) *TemplateExecutor {
 
 // custom VStemplate represents the virtualserver template passed via ConfigMap
 var customTestVStemplate = `# TEST CUSTOM VIRTUALSERVER TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
+{{- /*gotype: github.com/nginx/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}512k{{ end }};
@@ -823,7 +823,7 @@ server {
 
 // custom TStemplate represents the transportserver template passed via ConfigMap
 var customTestTStemplate = `# TEST CUSTOM TRANSPORTSERVER TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.TransportServerConfig*/ -}}
+{{- /*gotype: github.com/nginx/kubernetes-ingress/internal/configs/version2.TransportServerConfig*/ -}}
 {{- range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} 512k;

@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/gkampitakis/go-snaps/snaps"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginx/kubernetes-ingress/internal/nginx"
 )
 
 var fakeManager = nginx.NewFakeManager("/etc/nginx")

@@ -9,7 +9,7 @@ weight: 200
 
 This page explains how to use the GlobalConfiguration resource to define the global configuration parameters of F5 NGINX Ingress Controller.
 
-The resource supports configuring listeners for TCP and UDP load balancing, and is implemented as a [Custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). 
+The resource supports configuring listeners for TCP and UDP load balancing, and is implemented as a [Custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
 Listeners are required by [TransportServer resources]({{< relref "/configuration/transportserver-resource.md" >}}) and can be used to [configure custom listeners for VirtualServers]({{< relref "tutorials/virtual-server-with-custom-listener-ports.md" >}}).
 
@@ -180,4 +180,4 @@ The events section includes a Warning event with the AddedOrUpdatedWithError rea
 
 ## Using IPV4 and IPV6 Addresses with GlobalConfiguration
 
-You can customize the IPv4 and IPv6 Address listeners in the global configuration and apply them to your VirtualServer resources. See the corresponding example [here](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/custom-ip-listeners/virtualserver/)
+You can customize the IPv4 and IPv6 Address listeners in the global configuration and apply them to your VirtualServer resources. See the corresponding example [here](https://github.com/nginx/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/custom-ip-listeners/virtualserver/)
