@@ -1227,7 +1227,7 @@ func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.
 		{
 			desc:       "no endpoints selected on nil endpoint port",
 			targetPort: 8080,
-			want:       []podEndpoint{},
+			want:       nil,
 			pods: []*api_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
@@ -1267,7 +1267,7 @@ func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.
 		{
 			desc:       "no endpoints selected on nil endpoint condition",
 			targetPort: 8080,
-			want:       []podEndpoint{},
+			want:       nil,
 			pods: []*api_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
