@@ -1426,8 +1426,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1474,8 +1473,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -1740,8 +1738,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1788,8 +1785,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -8024,8 +8020,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -8072,8 +8067,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
