@@ -569,7 +569,7 @@ func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.Err
 	return allErrs
 }
 
-var rateLimitKeySpecialVariables = []string{"arg_", "http_", "cookie_"}
+var rateLimitKeySpecialVariables = []string{"arg_", "http_", "cookie_", "jwt_claim_"}
 
 // rateLimitKeyVariables includes NGINX variables allowed to be used in a rateLimit policy key.
 var rateLimitKeyVariables = map[string]bool{
