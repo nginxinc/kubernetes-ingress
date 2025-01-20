@@ -303,8 +303,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     js_var $header_query_value "${http_x_header_name}${http_other_header}${arg_myQuery}${arg_myOtherQuery}";
@@ -400,8 +399,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -749,8 +747,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -842,8 +839,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -1430,8 +1426,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1478,8 +1473,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -1744,8 +1738,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1792,8 +1785,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -2126,8 +2118,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -2210,8 +2201,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -2494,8 +2484,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -2577,8 +2566,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -2918,8 +2906,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -3001,8 +2988,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -3340,8 +3326,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -3423,8 +3408,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -3762,8 +3746,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -3845,8 +3828,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -4184,8 +4166,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -4267,8 +4248,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -4606,8 +4586,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -4689,8 +4668,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -5028,8 +5006,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -5111,8 +5088,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -5450,8 +5426,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -5533,8 +5508,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -5874,8 +5848,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -5957,8 +5930,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -6298,8 +6270,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -6381,8 +6352,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -6722,8 +6692,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -6805,8 +6774,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -7146,8 +7114,7 @@ server {gunzip on;
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -7229,8 +7196,7 @@ server {gunzip on;
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -7570,8 +7536,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -7653,8 +7618,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -8056,8 +8020,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -8104,8 +8067,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;
@@ -8439,8 +8401,7 @@ server {
     allow all;
     limit_req_log_level error;
     limit_req_status 503;
-    limit_req zone=pol_rl_test_test_test burst=5
-         delay=10;
+    limit_req zone=pol_rl_test_test_test burst=5 delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
@@ -8522,8 +8483,7 @@ server {
         deny all;
         deny 127.0.0.1;
         allow all;
-        limit_req zone=loc_pol_rl_test_test_test
-            ;
+        limit_req zone=loc_pol_rl_test_test_test;
 
         
         proxy_ssl_certificate egress-mtls-secret.pem;

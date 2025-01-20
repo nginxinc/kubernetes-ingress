@@ -140,7 +140,7 @@ server {
 
     {{- range $rl := $s.LimitReqs }}
     limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
-        {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
+        {{- if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{- end }}
 
     {{- if $s.APIKeyEnabled}}
@@ -261,7 +261,7 @@ server {
 
         {{- range $rl := $l.LimitReqs }}
         limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
-            {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
+            {{- if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
         {{- end }}
 
         {{- with $l.BasicAuth }}
