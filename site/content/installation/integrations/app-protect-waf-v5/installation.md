@@ -382,7 +382,7 @@ Add `volumeMounts` as below:
 
 ```yaml
 ...
-- image: <my_docker_registery>:<version_tag>
+- image: <my_docker_registry>:<version_tag>
   imagePullPolicy: IfNotPresent
   name: nginx-plus-ingress
   volumeMounts:
@@ -401,7 +401,7 @@ Add `readOnlyRootFilesystem` to the NIC container and set valut to `true` as bel
 
 ```yaml
 ...
-- image: <my_docker_registery>:<version_tag>
+- image: <my_docker_registry>:<version_tag>
   imagePullPolicy: IfNotPresent
   name: nginx-plus-ingress
   ...
