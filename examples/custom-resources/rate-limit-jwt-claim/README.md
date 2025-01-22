@@ -50,7 +50,19 @@ Note that the VirtualServer references the policy `rate-limit-jwt` created in St
 
 ## Step 4 - Test the Configuration
 
-Let's test the configuration. If you access the application at a rate that exceeds one request per second, NGINX will
+The JWT payload used in this testing looks like:
+
+```json
+{
+  "name": "Quotation System",
+  "sub": "quotes",
+  "iss": "My API Gateway"
+}
+```
+
+In this test we are relying on the NGINX Plus `ngx_http_auth_jwt_module` to extract the `sub` claim from the JWT payload into the `$jwt_claim_sub` variable and use this as the rate limiting `key`.
+
+Let's test the configuration.  If you access the application at a rate that exceeds one request per second, NGINX will
 start rejecting your requests:
 
 ```console
