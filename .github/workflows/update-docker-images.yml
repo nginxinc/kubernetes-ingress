@@ -106,7 +106,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -143,7 +143,7 @@ jobs:
           ref: v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -212,7 +212,7 @@ jobs:
         working-directory: ./tests
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ steps.k8s.outputs.cluster }}
           path: ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html

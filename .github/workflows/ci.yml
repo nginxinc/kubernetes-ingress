@@ -92,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.check.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -148,7 +148,7 @@ jobs:
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '""' }}
           k8s-version: ${{ matrix.k8s != '' && matrix.k8s || env.K8S_VERSION }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -167,7 +167,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -234,7 +234,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.check.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -264,7 +264,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -339,7 +339,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.type }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: 'trivy-results-${{ matrix.type }}.sarif'
           path: 'trivy-results-${{ matrix.type }}.sarif'
@@ -373,7 +373,7 @@ jobs:
       - name: Package
         run: helm package --version ${{ steps.var.outputs.helm_version }} ${{ env.HELM_CHART_DIR }}
       - name: Upload Chart
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ steps.var.outputs.helm_version }}.tgz
@@ -393,7 +393,7 @@ jobs:
       - name: Remove previous Chart
         run: rm -f ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}/nginx-ingress-${{ needs.package-helm.outputs.version }}.tgz
       - name: Retrieve latest Helm Chart
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: helm-chart
           path: ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}
