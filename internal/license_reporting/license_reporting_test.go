@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
-	"github.com/nginxinc/nginx-plus-go-client/v2/client"
+	nic_glog "github.com/nginx/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginx/kubernetes-ingress/internal/logger/levels"
+	"github.com/nginx/nginx-plus-go-client/v2/client"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"

@@ -14,11 +14,11 @@ import (
 	"strings"
 	"time"
 
-	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	license_reporting "github.com/nginx/kubernetes-ingress/internal/license_reporting"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	"github.com/nginx/kubernetes-ingress/internal/metrics/collectors"
 
-	"github.com/nginxinc/nginx-plus-go-client/v2/client"
+	"github.com/nginx/nginx-plus-go-client/v2/client"
 )
 
 const (

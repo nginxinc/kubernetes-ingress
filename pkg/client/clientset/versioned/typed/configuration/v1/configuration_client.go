@@ -5,8 +5,8 @@ package v1
 import (
 	http "net/http"
 
-	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
+	configurationv1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
+	scheme "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

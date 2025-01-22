@@ -10,19 +10,19 @@ import (
 	"testing"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	"github.com/nginx/kubernetes-ingress/internal/telemetry"
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginx/kubernetes-ingress/internal/configs"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginx/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginx/kubernetes-ingress/internal/metrics/collectors"
+	"github.com/nginx/kubernetes-ingress/internal/nginx"
+	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1227,7 +1227,7 @@ func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.
 		{
 			desc:       "no endpoints selected on nil endpoint port",
 			targetPort: 8080,
-			want:       []podEndpoint{},
+			want:       nil,
 			pods: []*api_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
@@ -1267,7 +1267,7 @@ func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.
 		{
 			desc:       "no endpoints selected on nil endpoint condition",
 			targetPort: 8080,
-			want:       []podEndpoint{},
+			want:       nil,
 			pods: []*api_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{

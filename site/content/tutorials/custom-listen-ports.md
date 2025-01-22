@@ -24,7 +24,7 @@ If you are using `Ingress` resource you will need to modify:
 - `nginx-ingress.tmpl` if using NGINX OSS
 
 In this example, we will use the `nginx-virtualserver.tmpl` template to change the port from 80 to 85.
-You can find the [nginx-virtualserver template files in our repository](https://github.com/nginxinc/kubernetes-ingress/tree/main/internal/configs/version2).
+You can find the [nginx-virtualserver template files in our repository](https://github.com/nginx/kubernetes-ingress/tree/main/internal/configs/version2).
 
 We start by modifying `nginx-virtualserver.tmpl` to change the port setting:
 

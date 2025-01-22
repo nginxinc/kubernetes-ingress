@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 )
 
 // verifyClient is a client for verifying the config version.

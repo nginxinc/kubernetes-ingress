@@ -9,7 +9,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginx/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -111,7 +111,7 @@ rateLimit:
   zoneSize: 10M
   key: ${binary_remote_addr}
 ```
-{{< note >}} 
+{{< note >}}
 
 The feature is implemented using the NGINX [ngx_http_limit_req_module](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html).
 
@@ -192,10 +192,13 @@ data:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
+|``suppliedIn`` | `header` or `query`. | | Yes |
 |``suppliedIn.header`` | An array of headers that the API Key may appear in. | ``string[]`` | No |
 |``suppliedIn.query`` | An array of query params that the API Key may appear in. | ``string[]`` | No |
 |``clientSecret`` | The name of the Kubernetes secret that stores the API Key(s). It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/apikey``, and the API Key(s) must be stored in a key: val format where each key is a unique clientID and each value is a unique base64 encoded API Key  | ``string`` | Yes |
 {{% /table %}}
+
+{{<important>}}An APIKey Policy must include a minimum of one of the `suppliedIn.header` or `suppliedIn.query` parameters.  Both can also be supplied.{{</important>}}
 
 #### APIKey Merging Behavior
 
@@ -463,7 +466,7 @@ data:
 
 2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL file.
 
-{{< note >}} 
+{{< note >}}
 
 This configuration option should only be used when using a CRL that is larger than 1MiB.
 
@@ -590,14 +593,14 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 {{< note >}}
 
-The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
+The feature is implemented using the [reference implementation](https://github.com/nginx/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
 
 {{< /note >}}
 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginx/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 {{< warning >}}
 

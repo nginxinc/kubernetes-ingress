@@ -27,7 +27,7 @@ To build a custom NGINX Ingress Controller image with specific modules, you must
 First, clone the NGINX Ingress Controller repository:
 
 ```shell
-git clone git@github.com:nginxinc/kubernetes-ingress.git
+git clone git@github.com:nginx/kubernetes-ingress.git
 ```
 
 Once you have cloned the repository, edit the `Dockerfile` located in the `build` directory.

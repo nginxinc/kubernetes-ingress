@@ -25,7 +25,7 @@ The following steps describe how to use the NGINX Instance Manager API to create
 
 {{< tip >}} You can skip this step if you intend to use an existing security policy. {{< /tip >}}
 
-Create a [new security policy](https://docs.nginx.com/nginx-instance-manager/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
+Create a [new security policy](https://docs.nginx.com/nginx-instance-manager/nginx-app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
 
 Create the file `simple-policy.json` with the contents below:
 
@@ -82,7 +82,7 @@ It is one of two unique IDs we will use to download the bundle: it will be refer
 
 ## Create a new security bundle
 
-Once you have created (Or selected) a security policy, [create a security bundle](https://docs.nginx.com/nginx-instance-manager/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use.
+Once you have created (Or selected) a security policy, [create a security bundle](https://docs.nginx.com/nginx-instance-manager/nginx-app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use.
 
 You can check which version is installed in NGINX Instance Manager by checking the operating system packages. If the wrong version is noted in the JSON payload, you will receive an error similar to below:
 

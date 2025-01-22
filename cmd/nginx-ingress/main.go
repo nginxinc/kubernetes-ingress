@@ -10,27 +10,28 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	cr_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	conf_scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
-	"github.com/nginxinc/nginx-plus-go-client/v2/client"
-	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
+	"github.com/nginx/kubernetes-ingress/internal/configs"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginx/kubernetes-ingress/internal/healthcheck"
+	"github.com/nginx/kubernetes-ingress/internal/k8s"
+	"github.com/nginx/kubernetes-ingress/internal/k8s/secrets"
+	license_reporting "github.com/nginx/kubernetes-ingress/internal/license_reporting"
+	"github.com/nginx/kubernetes-ingress/internal/metrics"
+	"github.com/nginx/kubernetes-ingress/internal/metrics/collectors"
+	"github.com/nginx/kubernetes-ingress/internal/nginx"
+	cr_validation "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
+	k8s_nginx "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned"
+	conf_scheme "github.com/nginx/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
+	"github.com/nginx/nginx-plus-go-client/v2/client"
+	nginxCollector "github.com/nginx/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,9 +46,9 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/record"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
+	nic_glog "github.com/nginx/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginx/kubernetes-ingress/internal/logger/levels"
 )
 
 // Injected during build
@@ -788,6 +789,21 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 	select {
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
+			// removes .sock files after nginx exits
+			socketPath := "/var/lib/nginx/"
+			files, readErr := os.ReadDir(socketPath)
+			if readErr != nil {
+				nl.Errorf(lbc.Logger, "error trying to read directory %s: %v", socketPath, readErr)
+			} else {
+				for _, f := range files {
+					if !f.IsDir() && strings.HasSuffix(f.Name(), ".sock") {
+						fullPath := filepath.Join(socketPath, f.Name())
+						if removeErr := os.Remove(fullPath); removeErr != nil {
+							nl.Errorf(lbc.Logger, "error trying to remove file %s: %v", fullPath, removeErr)
+						}
+					}
+				}
+			}
 			nl.Fatalf(lbc.Logger, "nginx command exited unexpectedly with status: %v", err)
 		} else {
 			nl.Info(lbc.Logger, "nginx command exited successfully")

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	clusterInfo "github.com/nginxinc/kubernetes-ingress/internal/common_cluster_info"
+	clusterInfo "github.com/nginx/kubernetes-ingress/internal/common_cluster_info"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
