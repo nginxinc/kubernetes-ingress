@@ -384,7 +384,7 @@ class TestRateLimitingPolicies:
             src,
             virtual_server_setup.namespace,
         )
-        wait_before_test(10)
+        wait_before_test()
 
         policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         occur = []
@@ -393,17 +393,15 @@ class TestRateLimitingPolicies:
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "Authorization": f"Bearer {token}"},
         )
-        # wait_before_test(120)
         print(resp.status_code)
+        wait_before_test()
         assert resp.status_code == 200
         while time.perf_counter() < t_end:
             resp = requests.get(
                 virtual_server_setup.backend_1_url,
                 headers={"host": virtual_server_setup.vs_host, "Authorization": f"Bearer {token}"},
             )
-            print(resp.status_code)
             occur.append(resp.status_code)
-        wait_before_test(300)
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
         assert (
