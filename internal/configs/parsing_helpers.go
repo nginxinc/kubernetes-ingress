@@ -306,7 +306,7 @@ func ParsePortList(s string) ([]int, error) {
 }
 
 func parsePort(value string) (int, error) {
-	port, err := strconv.ParseInt(value, 10, 16)
+	port, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return 0, fmt.Errorf("unable to parse port as integer: %w", err)
 	}
