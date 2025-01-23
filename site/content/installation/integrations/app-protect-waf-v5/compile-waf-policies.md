@@ -1,8 +1,10 @@
 ---
-docs: DOCS-000
 title: Compile NGINX App Protect WAF policies using NGINX Instance Manager
-toc: true
 weight: 300
+toc: true
+type: how-to
+product: NIC
+docs: DOCS-000
 ---
 
 ## Overview
@@ -15,11 +17,16 @@ By using NGINX Instance Manager to compile WAF policies, the policy bundle can a
 
 The following steps describe how to use the NGINX Instance Manager API to create a new security policy, compile a bundle, then add it to NGINX Ingress Controller.
 
+---
+
 ## Before you start
+
 ### Requirements
 - A working [NGINX Instance Manager](https://docs.nginx.com/nginx-instance-manager/deploy/) instance.
 - An [NGINX Instance Manager user](https://docs.nginx.com/nginx-instance-manager/admin-guide/rbac/overview-rbac/) for API requests.
 - A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation.md" >}}).
+
+---
 
 ## Create a new security policy
 
@@ -79,6 +86,8 @@ Take note of the *uid* field: `"uid": "6af9f261-658b-4be1-b07a-cebd83e917a1"`
 It is one of two unique IDs we will use to download the bundle: it will be referenced as *policy-UID*.
 
 {{< /important >}}
+
+---
 
 ## Create a new security bundle
 
@@ -180,6 +189,8 @@ It is one of two unique IDs we will use to download the bundle: it will be refer
 
 {{< /important >}}
 
+---
+
 ## Download the security bundle
 
 Use a GET request to download the security bundle using the policy and bundle IDs:
@@ -196,7 +207,9 @@ curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658
      | jq -r '.content' | base64 -d > security-policy-bundle.tgz
 ```
 
-## Add volumes and volumeMounts to NGINX Ingress Controller
+---
+
+## Add volumes and volumeMounts
 
 To use WAF security bundles, your NGINX Ingress Controller instance must have *volumes* and *volumeMounts*. Precise paths are used to detect when bundles are uploaded to the cluster.
 
@@ -210,7 +223,7 @@ persistentVolumeClaim:
 
 volumeMounts:
 - name: <volume_mount_name>
-    mountPath: /etc/nginx/waf/bundles
+    mountPath: /etc/app_protect/bundles
 ```
 
 A full example of a deployment file with `volumes` and `volumeMounts` could look like the following:
@@ -281,7 +294,7 @@ spec:
             - NET_BIND_SERVICE
         volumeMounts:
         -  name: bundle-mount
-           mountPath: /etc/nginx/waf/bundles
+           mountPath: /etc/app_protect/bundles
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -297,9 +310,11 @@ spec:
           - -external-service=nginx-ingress
 ```
 
+---
+
 ## Create WAF policy
 
-To process a bundle, you must create a new WAF policy. This policy is added to `/etc/nginx/waf/bundles`, allowing NGINX Ingress Controller to load it into WAF.
+To process a bundle, you must create a new WAF policy. This policy is added to `/etc/app_protect/bundles`, allowing NGINX Ingress Controller to load it into WAF.
 
 The example below shows the required WAF policy, and the *apBundle* and *apLogConf* fields you must use for the security bundle binary file (A tar ball).
 
@@ -317,6 +332,8 @@ spec:
         apLogBundle: "<bundle-name>.tgz"
         logDest: "<security-log-destination-URL>"
 ```
+
+---
 
 ## Create VirtualServer resource and apply policy
 
@@ -341,12 +358,14 @@ spec:
       pass: webapp
 ```
 
+---
+
 ## Upload the security bundle
 
-To finish adding a security bundle, the binary file to the NGINX Ingress Controller pods.
+To finish adding a security bundle, upload the binary file to the NGINX Ingress Controller pods.
 
 ```shell
-kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/nginx/waf/bundles<bundle_name>.tgz
+kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/app_protect/bundles<bundle_name>.tgz -c nginx-plus-ingress
 ```
 
 Once the bundle has been uploaded to the cluster, NGINX Ingress Controller will detect and automatically load the new WAF policy.
