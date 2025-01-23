@@ -24,6 +24,9 @@ rl_vs_invalid = f"{TEST_DATA}/rate-limit/spec/virtual-server-invalid.yaml"
 rl_vs_override_spec = f"{TEST_DATA}/rate-limit/spec/virtual-server-override.yaml"
 rl_vs_override_route = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-override-route.yaml"
 rl_vs_override_spec_route = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-override-spec-route.yaml"
+rl_vs_jwt_claim_sub = f"{TEST_DATA}/rate-limit/spec/virtual-server-jwt-claim-sub.yaml"
+rl_pol_jwt_claim_sub = f"{TEST_DATA}/rate-limit/policies/rate-limit-jwt-claim-sub.yaml"
+token = f"{TEST_DATA}/jwt-policy/token.jwt"
 
 
 @pytest.mark.policies
@@ -357,3 +360,53 @@ class TestRateLimitingPolicies:
             and policy_info["status"]["reason"] == "AddedOrUpdated"
             and policy_info["status"]["state"] == "Valid"
         )
+
+    @pytest.mark.skip_for_nginx_oss
+    @pytest.mark.parametrize("src", [rl_vs_jwt_claim_sub])
+    def test_rl_policy_jwt_claim_sub(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        src,
+    ):
+        """
+        Test if rate-limiting policy is working with 1 rps using $jwt_claim_sub as the rate limit key
+        """
+        print(f"Create rl policy")
+        pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_jwt_claim_sub, test_namespace)
+        print(f"Patch vs with policy: {src}")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            src,
+            virtual_server_setup.namespace,
+        )
+        wait_before_test()
+
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        occur = []
+        t_end = time.perf_counter() + 1
+        resp = requests.get(
+            virtual_server_setup.backend_1_url,
+            headers={"host": virtual_server_setup.vs_host, "Authorization": f"Bearer {token}"},
+        )
+        print(resp.status_code)
+        wait_before_test()
+        assert resp.status_code == 200
+        while time.perf_counter() < t_end:
+            resp = requests.get(
+                virtual_server_setup.backend_1_url,
+                headers={"host": virtual_server_setup.vs_host, "Authorization": f"Bearer {token}"},
+            )
+            occur.append(resp.status_code)
+        delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
+        self.restore_default_vs(kube_apis, virtual_server_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
+        assert occur.count(200) <= 1
