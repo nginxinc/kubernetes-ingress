@@ -48,6 +48,10 @@ split_clients {{ $sc.Source }} {{ $sc.Variable }} {
 }
 {{- end }}
 
+{{- range $claim := .AuthJwtClaimSet }}
+auth_jwt_claim_set {{ $claim.Variable }} {{ $claim.Claims}}
+{{- end }}
+
 {{- range $m := .Maps }}
 map {{ $m.Source }} {{ $m.Variable }} {
     {{- range $p := $m.Parameters }}

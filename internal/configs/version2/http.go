@@ -18,6 +18,7 @@ type VirtualServerConfig struct {
 	KeyVals                 []KeyVal
 	LimitReqZones           []LimitReqZone
 	Maps                    []Map
+	AuthJwtClaimSet         []AuthJwtClaimSet
 	Server                  Server
 	SpiffeCerts             bool
 	SpiffeClientCerts       bool
@@ -26,6 +27,12 @@ type VirtualServerConfig struct {
 	Upstreams               []Upstream
 	DynamicSSLReloadEnabled bool
 	StaticSSLPath           string
+}
+
+// AuthJwtClaimSet #TODO
+type AuthJwtClaimSet struct {
+	Variable string
+	Claims   string
 }
 
 // Upstream defines an upstream.

@@ -93,6 +93,20 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 	t.Log(string(got))
 }
 
+func TestExecuteVirtualServerTemplate_RendersTemplateWithRateLimitJWTClaim(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithRateLimitJWTClaim)
+	if err != nil {
+		t.Error(err)
+	}
+	//if !bytes.Contains(got, []byte("auth_jwt_claim_set $jwt_default_webapp_group_consumer_group_type consumer_group type;")) {
+	//	t.Error("want no directive, got `gunzip on` directive")
+	//}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
 func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
@@ -2745,6 +2759,272 @@ var (
 						TrustedCert:    "trusted-cert.pem",
 						SessionReuse:   true,
 						ServerName:     true,
+					},
+				},
+				{
+					Path:                     "@loc0",
+					ProxyConnectTimeout:      "30s",
+					ProxyReadTimeout:         "31s",
+					ProxySendTimeout:         "32s",
+					ClientMaxBodySize:        "1m",
+					ProxyPass:                "http://coffee-v1",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "5s",
+					ProxyInterceptErrors:     true,
+					ErrorPages: []ErrorPage{
+						{
+							Name:         "@error_page_1",
+							Codes:        "400 500",
+							ResponseCode: 200,
+						},
+						{
+							Name:         "@error_page_2",
+							Codes:        "500",
+							ResponseCode: 0,
+						},
+					},
+				},
+				{
+					Path:                     "@loc1",
+					ProxyConnectTimeout:      "30s",
+					ProxyReadTimeout:         "31s",
+					ProxySendTimeout:         "32s",
+					ClientMaxBodySize:        "1m",
+					ProxyPass:                "http://coffee-v2",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "5s",
+				},
+				{
+					Path:                "@loc2",
+					ProxyConnectTimeout: "30s",
+					ProxyReadTimeout:    "31s",
+					ProxySendTimeout:    "32s",
+					ClientMaxBodySize:   "1m",
+					ProxyPass:           "http://coffee-v2",
+					GRPCPass:            "grpc://coffee-v3",
+				},
+				{
+					Path:                     "@match_loc_0",
+					ProxyConnectTimeout:      "30s",
+					ProxyReadTimeout:         "31s",
+					ProxySendTimeout:         "32s",
+					ClientMaxBodySize:        "1m",
+					ProxyPass:                "http://coffee-v2",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "5s",
+				},
+				{
+					Path:                     "@match_loc_default",
+					ProxyConnectTimeout:      "30s",
+					ProxyReadTimeout:         "31s",
+					ProxySendTimeout:         "32s",
+					ClientMaxBodySize:        "1m",
+					ProxyPass:                "http://coffee-v1",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "5s",
+				},
+				{
+					Path:                 "/return",
+					ProxyInterceptErrors: true,
+					ErrorPages: []ErrorPage{
+						{
+							Name:         "@return_0",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
+			},
+			ErrorPageLocations: []ErrorPageLocation{
+				{
+					Name:        "@vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0",
+					DefaultType: "application/json",
+					Return: &Return{
+						Code: 200,
+						Text: "Hello World",
+					},
+					Headers: nil,
+				},
+				{
+					Name:        "@vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1",
+					DefaultType: "",
+					Return: &Return{
+						Code: 200,
+						Text: "Hello World",
+					},
+					Headers: []Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=test",
+						},
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie2=test; Secure",
+						},
+					},
+				},
+			},
+			ReturnLocations: []ReturnLocation{
+				{
+					Name:        "@return_0",
+					DefaultType: "text/html",
+					Return: Return{
+						Code: 200,
+						Text: "Hello!",
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerCfgWithRateLimitJWTClaim = VirtualServerConfig{
+		LimitReqZones: []LimitReqZone{
+			{
+				ZoneName: "pol_rl_test_test_test", Rate: "10r/s", ZoneSize: "10m", Key: "$url",
+			},
+		},
+		Upstreams: []Upstream{},
+		AuthJwtClaimSet: []AuthJwtClaimSet{
+			{
+				Variable: "$jwt_default_webapp_group_consumer_group_type",
+				Claims:   "consumer_group type",
+			},
+		},
+		Maps: []Map{
+			{
+				Source:   "$jwt_default_webapp_group_consumer_group_type",
+				Variable: "$rate_limit_default_webapp_group_consumer_group_type",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "Group3",
+					},
+					{
+						Value:  "Gold",
+						Result: "Group1",
+					},
+					{
+						Value:  "Silver",
+						Result: "Group2",
+					},
+					{
+						Value:  "Bronze",
+						Result: "Group3",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_gold",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group1",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_silver",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group2",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_bronze",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group3",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+		},
+		HTTPSnippets: []string{"# HTTP snippet"},
+		Server: Server{
+			ServerName:    "example.com",
+			StatusZone:    "example.com",
+			ProxyProtocol: true,
+			SSL: &SSL{
+				HTTP2:          true,
+				Certificate:    "cafe-secret.pem",
+				CertificateKey: "cafe-secret.pem",
+			},
+			TLSRedirect: &TLSRedirect{
+				BasedOn: "$scheme",
+				Code:    301,
+			},
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Allow:           []string{"127.0.0.1"},
+			Deny:            []string{"127.0.0.1"},
+			LimitReqs: []LimitReq{
+				{
+					ZoneName: "pol_rl_test_test_test",
+					Delay:    10,
+					Burst:    5,
+				},
+			},
+			LimitReqOptions: LimitReqOptions{
+				LogLevel:   "error",
+				RejectCode: 503,
+			},
+			Locations: []Location{
+				{
+					Path:     "/",
+					Snippets: []string{"# location snippet"},
+					Allow:    []string{"127.0.0.1"},
+					Deny:     []string{"127.0.0.1"},
+					LimitReqs: []LimitReq{
+						{
+							ZoneName: "loc_pol_rl_test_test_test",
+						},
+					},
+					ProxyConnectTimeout:      "30s",
+					ProxyReadTimeout:         "31s",
+					ProxySendTimeout:         "32s",
+					ClientMaxBodySize:        "1m",
+					ProxyBuffering:           true,
+					ProxyBuffers:             "8 4k",
+					ProxyBufferSize:          "4k",
+					ProxyMaxTempFileSize:     "1024m",
+					ProxyPass:                "http://test-upstream",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "5s",
+					Internal:                 true,
+					ProxyPassRequestHeaders:  false,
+					ProxyPassHeaders:         []string{"Host"},
+					ProxyPassRewrite:         "$request_uri",
+					ProxyHideHeaders:         []string{"Header"},
+					ProxyIgnoreHeaders:       "Cache",
+					Rewrites:                 []string{"$request_uri $request_uri", "$request_uri $request_uri"},
+					AddHeaders: []AddHeader{
+						{
+							Header: Header{
+								Name:  "Header-Name",
+								Value: "Header Value",
+							},
+							Always: true,
+						},
 					},
 				},
 				{
