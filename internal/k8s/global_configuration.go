@@ -98,7 +98,7 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		}
 
 		if updateErr != nil {
-			eventTitle += nl.EventReasonAddedOrUpdatedWithError
+			eventTitle += nl.EventReasonUpdatedWithError
 			eventType = api_v1.EventTypeWarning
 			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
 		}
