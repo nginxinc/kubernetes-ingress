@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	nic_logger "github.com/nginx/kubernetes-ingress/internal/logger"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
@@ -228,7 +229,7 @@ func TestAddInvalidIngress(t *testing.T) {
 		{
 			Object:  ing,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: `spec.rules[1].host: Duplicate value: "foo.example.com"`,
 		},
 	}
@@ -267,7 +268,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedProblems := []ConfigurationProblem{
 		{
 			Object:  minion1,
-			Reason:  "NoIngressMasterFound",
+			Reason:  nl.EventReasonNoIngressMasterFound,
 			Message: "Ingress master is invalid or doesn't exist",
 		},
 	}
@@ -435,7 +436,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 		{
 			Object:  invalidMinion1,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: `[spec.rules[1].host: Duplicate value: "example.com", spec.rules: Too many: 2: must have at most 1 items]`,
 		},
 	}
@@ -517,7 +518,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  updatedMinion2,
-			Reason:  "NoIngressMasterFound",
+			Reason:  nl.EventReasonNoIngressMasterFound,
 			Message: "Ingress master is invalid or doesn't exist",
 		},
 	}
@@ -560,7 +561,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  updatedMinion1,
-			Reason:  "NoIngressMasterFound",
+			Reason:  nl.EventReasonNoIngressMasterFound,
 			Message: "Ingress master is invalid or doesn't exist",
 		},
 	}
@@ -598,7 +599,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  updatedMinion2,
-			Reason:  "NoIngressMasterFound",
+			Reason:  nl.EventReasonNoIngressMasterFound,
 			Message: "Ingress master is invalid or doesn't exist",
 		},
 	}
@@ -709,7 +710,7 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  minion2,
-			Reason:  "NoIngressMasterFound",
+			Reason:  nl.EventReasonNoIngressMasterFound,
 			Message: "Ingress master is invalid or doesn't exist",
 		},
 	}
@@ -1089,7 +1090,7 @@ func TestAddInvalidVirtualServer(t *testing.T) {
 		{
 			Object:  vs,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "VirtualServer default/virtualserver was rejected with error: spec.host: Required value",
 		},
 	}
@@ -1192,7 +1193,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems := []ConfigurationProblem{
 		{
 			Object:  vsr1,
-			Reason:  "NoVirtualServerFound",
+			Reason:  nl.EventReasonNoVirtualServerFound,
 			Message: "VirtualServer is invalid or doesn't exist",
 		},
 	}
@@ -1306,7 +1307,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 		{
 			Object:  invalidVSR1,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "VirtualServerRoute default/virtualserverroute-1 was rejected with error: spec.host: Required value",
 		},
 	}
@@ -1358,7 +1359,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  invalidForVSVSR1,
-			Reason:  "Ignored",
+			Reason:  nl.EventReasonIgnored,
 			Message: "VirtualServer default/virtualserver ignores VirtualServerRoute",
 		},
 	}
@@ -1410,7 +1411,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  updatedVSR2,
-			Reason:  "NoVirtualServerFound",
+			Reason:  nl.EventReasonNoVirtualServerFound,
 			Message: "VirtualServer is invalid or doesn't exist",
 		},
 	}
@@ -1441,7 +1442,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  vsr1,
-			Reason:  "NoVirtualServerFound",
+			Reason:  nl.EventReasonNoVirtualServerFound,
 			Message: "VirtualServer is invalid or doesn't exist",
 		},
 	}
@@ -1469,7 +1470,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  updatedVSR2,
-			Reason:  "NoVirtualServerFound",
+			Reason:  nl.EventReasonNoVirtualServerFound,
 			Message: "VirtualServer is invalid or doesn't exist",
 		},
 	}
@@ -1540,7 +1541,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedProblems = []ConfigurationProblem{
 		{
 			Object:  vsr2,
-			Reason:  "NoVirtualServerFound",
+			Reason:  nl.EventReasonNoVirtualServerFound,
 			Message: "VirtualServer is invalid or doesn't exist",
 		},
 	}
@@ -1577,7 +1578,7 @@ func TestAddInvalidVirtualServerRoute(t *testing.T) {
 		{
 			Object:  vsr,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "VirtualServerRoute default/virtualserverroute was rejected with error: spec.host: Required value",
 		},
 	}
@@ -1678,7 +1679,7 @@ func TestHostCollisions(t *testing.T) {
 		{
 			Object:  ts,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Host is taken by another resource",
 		},
 	}
@@ -1714,7 +1715,7 @@ func TestHostCollisions(t *testing.T) {
 		{
 			Object:  vs,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Host is taken by another resource",
 		},
 	}
@@ -1766,7 +1767,7 @@ func TestHostCollisions(t *testing.T) {
 		{
 			Object:  regularIng2,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "All hosts are taken by other resources",
 		},
 	}
@@ -2295,7 +2296,7 @@ func TestAddInvalidTransportServer(t *testing.T) {
 		{
 			Object:  ts,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "TransportServer default/transportserver was rejected with error: spec.listener.name: Required value",
 		},
 	}
@@ -2385,7 +2386,7 @@ func TestAddTransportServerWithNonExistingListener(t *testing.T) {
 		{
 			Object:  ts,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: `Listener tcp-7777 doesn't exist`,
 		},
 	}
@@ -2618,7 +2619,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		{
 			Object:  ts1,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 doesn't exist",
 		},
 	}
@@ -2691,13 +2692,13 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		{
 			Object:  ts1,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 doesn't exist",
 		},
 		{
 			Object:  ts2,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-8888 doesn't exist",
 		},
 	}
@@ -3412,7 +3413,7 @@ func TestPortCollisions(t *testing.T) {
 		{
 			Object:  ts2,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 with host empty host is taken by another resource",
 		},
 	}
@@ -3432,7 +3433,7 @@ func TestPortCollisions(t *testing.T) {
 		{
 			Object:  ts3,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 with host empty host is taken by another resource",
 		},
 	}
@@ -3523,7 +3524,7 @@ func TestChallengeIngressToVSR(t *testing.T) {
 		{
 			Object:  ing,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "spec.rules: Forbidden: challenge Ingress must have exactly 1 rule defined",
 		},
 	}
@@ -3542,7 +3543,7 @@ func TestChallengeIngressToVSR(t *testing.T) {
 		{
 			Object:  ing,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "spec.rules.HTTP.Paths: Forbidden: challenge Ingress must have exactly 1 path defined",
 		},
 	}
@@ -4806,7 +4807,7 @@ func TestTransportServerListenerHostCollisions(t *testing.T) {
 		{
 			Object:  ts2,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 with host example.com is taken by another resource",
 		},
 	}
@@ -4861,7 +4862,7 @@ func TestTransportServerListenerHostCollisions(t *testing.T) {
 		{
 			Object:  ts5,
 			IsError: false,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: "Listener tcp-7777 with host empty host is taken by another resource",
 		},
 	}

@@ -120,13 +120,13 @@ func (lr *LicenseReporter) checkLicenseExpiry(ctx context.Context) {
 	if expiring, days := licenseExpiring(licenseData); expiring {
 		licenseEventText = fmt.Sprintf("License expiring in %d day(s)", days)
 		nl.Warn(l, licenseEventText)
-		lr.Config.EventLog.Event(lr.Config.Pod, api_v1.EventTypeWarning, "LicenseExpiry", licenseEventText)
+		lr.Config.EventLog.Event(lr.Config.Pod, api_v1.EventTypeWarning, nl.EventReasonLicenseExpiry, licenseEventText)
 	}
 	var usageGraceEventText string
 	if ending, days := usageGraceEnding(licenseData); ending {
 		usageGraceEventText = fmt.Sprintf("Usage reporting grace period ending in %d day(s)", days)
 		nl.Warn(l, usageGraceEventText)
-		lr.Config.EventLog.Event(lr.Config.Pod, api_v1.EventTypeWarning, "UsageGraceEnding", usageGraceEventText)
+		lr.Config.EventLog.Event(lr.Config.Pod, api_v1.EventTypeWarning, nl.EventReasonUsageGraceEnding, usageGraceEventText)
 	}
 }
 

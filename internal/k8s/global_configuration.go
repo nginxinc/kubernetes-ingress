@@ -87,18 +87,18 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
 
 	if gcExists {
-		eventTitle := "Updated"
+		eventTitle := nl.EventReasonUpdated
 		eventType := api_v1.EventTypeNormal
 		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
 
 		if validationErr != nil {
-			eventTitle = "AddedOrUpdatedWithError"
+			eventTitle = nl.EventReasonAddedOrUpdatedWithError
 			eventType = api_v1.EventTypeWarning
 			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
 		}
 
 		if updateErr != nil {
-			eventTitle += "WithError"
+			eventTitle += nl.EventReasonAddedOrUpdatedWithError
 			eventType = api_v1.EventTypeWarning
 			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
 		}
