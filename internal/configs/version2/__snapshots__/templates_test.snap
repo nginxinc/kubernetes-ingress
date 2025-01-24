@@ -7081,7 +7081,8 @@ map $http_x_version $match_0_0 {
 # HTTP snippet
 limit_req_zone $url zone=pol_rl_test_test_test:10m rate=10r/s;
 
-server {gunzip on;
+server {
+    gunzip on;
     listen 80 proxy_protocol;
     listen [::]:80 proxy_protocol;
 
