@@ -237,22 +237,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -681,22 +676,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -1110,16 +1100,12 @@ upstream vs_default_cafe_tea {
     zone vs_default_cafe_tea ;
     server 10.0.0.20:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
-
-    
 }
 
 upstream vs_default_cafe_coffee {
     zone vs_default_cafe_coffee ;
     server 10.0.0.30:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
-
-    
 }
 
 proxy_cache_path /var/cache/nginx/jwks_uri_cafe levels=1 keys_zone=jwks_uri_cafe:1m max_size=10m;
@@ -1240,16 +1226,12 @@ upstream vs_default_cafe_tea {
     zone vs_default_cafe_tea ;
     server 10.0.0.20:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
-
-    
 }
 
 upstream vs_default_cafe_coffee {
     zone vs_default_cafe_coffee ;
     server 10.0.0.30:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
-
-    
 }
 
 proxy_cache_path /var/cache/nginx/jwks_uri_cafe levels=1 keys_zone=jwks_uri_cafe:1m max_size=10m;
@@ -2053,22 +2035,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -2418,22 +2395,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -2840,22 +2812,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -3262,22 +3229,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -3682,22 +3644,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -4102,22 +4059,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -4522,22 +4474,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -4942,22 +4889,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -5362,22 +5304,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -5782,22 +5719,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -6295,22 +6227,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s samesite=strict path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {
@@ -7160,22 +7087,17 @@ upstream test-upstream {
     keepalive 32;
     queue 10 timeout=60s;
     sticky cookie test expires=25s path=/tea;
-
     ntlm;
 }
 
 upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
-
-    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
-
-    
 }
 
 split_clients $request_id $split_0 {

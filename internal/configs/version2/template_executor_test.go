@@ -134,7 +134,9 @@ upstream {{ $u.Name }} {
         {{- end }}
     {{- end }}
 
-    {{ if $u.NTLM }}ntlm;{{ end }}
+    {{- if $u.NTLM }}
+    ntlm;
+    {{- end }}
 }
 {{ end }}
 
