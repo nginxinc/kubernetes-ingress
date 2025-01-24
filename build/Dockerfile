@@ -11,8 +11,8 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3@sha256:22ea809c433bf114d527a9e40faff7f7bbdcadefdf4a6c776bd7c4d230c1cf6f AS opentracing-lib
-FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:b3ff476b7214262023c017d15119c9112010d38661978bf5c3a43c3e496b3ef3 AS alpine-opentracing-lib
+FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3@sha256:df0bc4cd632cdfaa00439cc3fa5728d654c5531fbdfdd67150c22288e08b534a AS opentracing-lib
+FROM ghcr.io/nginx/dependencies/nginx-ot:nginx-1.27.3-alpine@sha256:396d403c25c0ee0372ec517c1eab23cabc7f6a7230e8c6a68a52425076a939a0 AS alpine-opentracing-lib
 FROM ghcr.io/nginx/dependencies/nginx-ubi-ppc64le:nginx-1.27.3@sha256:4cda07664f09f16d780d1e803b9748c31489ea21c463bbcca50d9dcf26081a6f AS ubi-ppc64le
 FROM ghcr.io/nginx/alpine-fips:0.2.4-alpine3.17@sha256:73de48bf4ce75fe74c3b7169e63b28edeecafac8c14cc52509becb8b98f84202 AS alpine-fips-3.17
 FROM ghcr.io/nginx/alpine-fips:0.2.4-alpine3.20@sha256:d28eeb2c22f4ef223cd3e424943451a782aa0ba1a96a1dbd20c8d90e8c4341e0 AS alpine-fips-3.20
@@ -439,7 +439,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAF #############################################
-FROM redhat/ubi8@sha256:37cdac4ec130a64050d6df4e1f2ef3f53868bea55d11f623d141f139ee342bd8 AS ubi-8-plus-nap
+FROM redhat/ubi8@sha256:2e863fb65e595839633113300a0c6709e9af81523a30001290068265c121a927 AS ubi-8-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -484,7 +484,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAFv5  #############################################
-FROM redhat/ubi8@sha256:37cdac4ec130a64050d6df4e1f2ef3f53868bea55d11f623d141f139ee342bd8 AS ubi-8-plus-nap-v5
+FROM redhat/ubi8@sha256:2e863fb65e595839633113300a0c6709e9af81523a30001290068265c121a927 AS ubi-8-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
