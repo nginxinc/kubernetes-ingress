@@ -320,7 +320,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListenerHTTPSOnly
 func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2On(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
-	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithHTTP2On)
 	if err != nil {
 		t.Error(err)
 	}
@@ -384,7 +384,7 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2Off(t *testing
 func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2On(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINX(t)
-	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithHTTP2On)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1460,6 +1460,24 @@ var (
 						Code: 200,
 						Text: "Hello!",
 					},
+				},
+			},
+		},
+	}
+
+	virtualServerCfgWithHTTP2On = VirtualServerConfig{
+		Server: Server{
+			ServerName:    "example.com",
+			StatusZone:    "example.com",
+			ProxyProtocol: true,
+			SSL: &SSL{
+				HTTP2:          true,
+				Certificate:    "cafe-secret.pem",
+				CertificateKey: "cafe-secret.pem",
+			},
+			Locations: []Location{
+				{
+					Path: "/",
 				},
 			},
 		},
