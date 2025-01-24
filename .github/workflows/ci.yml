@@ -36,7 +36,7 @@ jobs:
     outputs:
       docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
       some_docs: ${{ github.event.pull_request && steps.docs.outputs.some_docs == 'true' }}
-      k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
+      k8s_latest: "1.32.0"
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
