@@ -306,18 +306,9 @@ server {
     js_var $apikey_auth_token $apikey_auth_hash;
     auth_request /_validate_apikey_njs;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     app_protect_dos_enable on;
     app_protect_dos_name "my-dos-coffee";
@@ -741,18 +732,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     app_protect_dos_enable on;
     app_protect_dos_name "my-dos-coffee";
@@ -2099,18 +2081,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     app_protect_dos_enable on;
     # server snippet
@@ -2460,18 +2433,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -2877,18 +2841,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -3292,18 +3247,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -3707,18 +3653,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -4122,18 +4059,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -4537,18 +4465,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -4952,18 +4871,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -5367,18 +5277,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -5784,18 +5685,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -6771,18 +6663,9 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable on;
-        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
-        
-
-        
-
-        
     app_protect_security_log_enable on;
-        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-        
-        
     
     # server snippet
     location /split {
@@ -7110,6 +6993,41 @@ server {
 
         
     
+}
+
+---
+
+[TestVirtualServerForNginxPlusWithWAFApBundle - 1]
+
+
+server {
+    listen 80;
+    listen [::]:80;
+
+
+    server_name example.com;
+    status_zone example.com;
+    set $resource_type "virtualserver";
+    set $resource_name "";
+    set $resource_namespace "";
+
+    server_tokens "";
+    app_protect_enable on;
+    app_protect_policy_file /fake/bundle/path/NginxDefaultPolicy.tgz;
+    app_protect_security_log_enable on;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
+    
+
+    
+
+    
+    location / {
+        set $service "";
+        status_zone "";
+
+        
+        set $default_connection_header close;
+    }
 }
 
 ---

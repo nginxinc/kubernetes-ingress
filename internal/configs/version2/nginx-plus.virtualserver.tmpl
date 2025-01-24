@@ -267,20 +267,20 @@ server {
 
     {{- with $s.WAF }}
     app_protect_enable {{ .Enable }};
-        {{ if .ApPolicy }}
+        {{- if .ApPolicy }}
     app_protect_policy_file {{ .ApPolicy }};
-        {{ end }}
+        {{- end }}
 
-        {{ if .ApBundle }}
+        {{- if .ApBundle }}
     app_protect_policy_file {{ .ApBundle }};
-        {{ end }}
+        {{- end }}
 
-        {{ if .ApSecurityLogEnable }}
+        {{- if .ApSecurityLogEnable }}
     app_protect_security_log_enable on;
-        {{ range $logconf := .ApLogConf }}
+        {{- range $logconf := .ApLogConf }}
     app_protect_security_log {{ $logconf }};
-        {{ end }}
-        {{ end }}
+        {{- end }}
+        {{- end }}
     {{ end }}
 
     {{- with $s.Dos }}
