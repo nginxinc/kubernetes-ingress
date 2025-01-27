@@ -100,6 +100,23 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithRateLimitJWTClaim(t *te
 	if err != nil {
 		t.Error(err)
 	}
+	wantedStrings := []string{
+		"auth_jwt_claim_set",
+		"$rate_limit_default_webapp_group_consumer_group_type",
+		"$jwt_default_webapp_group_consumer_group_type",
+		"Group1",
+		"Group2",
+		"Group3",
+		"$http_bronze",
+		"$http_silver",
+		"$http_gold",
+	}
+	for _, value := range wantedStrings {
+		if !bytes.Contains(got, []byte(value)) {
+			t.Errorf("didn't get `%s`", value)
+		}
+	}
+
 	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
