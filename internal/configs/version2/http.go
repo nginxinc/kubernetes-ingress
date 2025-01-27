@@ -29,7 +29,7 @@ type VirtualServerConfig struct {
 	StaticSSLPath           string
 }
 
-// AuthJwtClaimSet #TODO
+// AuthJwtClaimSet defines the values for the `auth_jwt_claim_set` directive
 type AuthJwtClaimSet struct {
 	Variable string
 	Claims   string
