@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	nic_logger "github.com/nginx/kubernetes-ingress/internal/logger"
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
@@ -17,7 +16,7 @@ import (
 func createTestConfiguration() *Configuration {
 	lbc := LoadBalancerController{
 		ingressClass: "nginx",
-		Logger:       nic_logger.LoggerFromContext(context.Background()),
+		Logger:       nl.LoggerFromContext(context.Background()),
 	}
 	isPlus := false
 	appProtectEnabled := false
