@@ -6738,11 +6738,13 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Secret: "/etc/nginx/secrets/default-jwt-secret",
-					Realm:  "My Test API",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Secret: "/etc/nginx/secrets/default-jwt-secret",
+						Realm:  "My Test API",
+					},
+					JWKSEnabled: false,
 				},
-				JWKSAuthEnabled: false,
 			},
 			msg: "jwt reference",
 		},
@@ -6769,18 +6771,20 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Key:   "default/jwt-policy-2",
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "443",
-						JwksPath:   "/keys",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Key:   "default/jwt-policy-2",
+						Realm: "My Test API",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "https",
+							JwksHost:   "idp.example.com",
+							JwksPort:   "443",
+							JwksPath:   "/keys",
+						},
+						KeyCache: "1h",
 					},
-					KeyCache: "1h",
+					JWKSEnabled: true,
 				},
-				JWKSAuthEnabled: true,
 			},
 			msg: "Basic jwks example",
 		},
@@ -6807,18 +6811,20 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Key:   "default/jwt-policy-2",
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "",
-						JwksPath:   "/keys",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Key:   "default/jwt-policy-2",
+						Realm: "My Test API",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "https",
+							JwksHost:   "idp.example.com",
+							JwksPort:   "",
+							JwksPath:   "/keys",
+						},
+						KeyCache: "1h",
 					},
-					KeyCache: "1h",
+					JWKSEnabled: true,
 				},
-				JWKSAuthEnabled: true,
 			},
 			msg: "Basic jwks example, no port in JwksURI",
 		},
@@ -7584,9 +7590,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Secret: "/etc/nginx/secrets/default-jwt-secret",
-					Realm:  "test",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Secret: "/etc/nginx/secrets/default-jwt-secret",
+						Realm:  "test",
+					},
 				},
 			},
 			expectedWarnings: Warnings{

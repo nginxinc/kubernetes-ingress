@@ -423,10 +423,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
-	if policiesCfg.JWKSAuthEnabled {
-		jwtAuthKey := policiesCfg.JWTAuth.Key
-		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
-		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
+	if policiesCfg.JWTAuth.JWKSEnabled {
+		jwtAuthKey := policiesCfg.JWTAuth.Auth.Key
+		policiesCfg.JWTAuth.List = make(map[string]*version2.JWTAuth)
+		policiesCfg.JWTAuth.List[jwtAuthKey] = policiesCfg.JWTAuth.Auth
 	}
 
 	if policiesCfg.APIKeyEnabled {
@@ -582,16 +582,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
-		if routePoliciesCfg.JWKSAuthEnabled {
-			policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+		if routePoliciesCfg.JWTAuth.JWKSEnabled {
+			policiesCfg.JWTAuth.JWKSEnabled = routePoliciesCfg.JWTAuth.JWKSEnabled
 
-			if policiesCfg.JWTAuthList == nil {
-				policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+			if policiesCfg.JWTAuth.List == nil {
+				policiesCfg.JWTAuth.List = make(map[string]*version2.JWTAuth)
 			}
 
-			jwtAuthKey := routePoliciesCfg.JWTAuth.Key
-			if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
-				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+			jwtAuthKey := routePoliciesCfg.JWTAuth.Auth.Key
+			if _, exists := policiesCfg.JWTAuth.List[jwtAuthKey]; !exists {
+				policiesCfg.JWTAuth.List[jwtAuthKey] = routePoliciesCfg.JWTAuth.Auth
 			}
 		}
 		if routePoliciesCfg.APIKeyEnabled {
@@ -722,16 +722,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
-			if routePoliciesCfg.JWKSAuthEnabled {
-				policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+			if routePoliciesCfg.JWTAuth.JWKSEnabled {
+				policiesCfg.JWTAuth.JWKSEnabled = routePoliciesCfg.JWTAuth.JWKSEnabled
 
-				if policiesCfg.JWTAuthList == nil {
-					policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+				if policiesCfg.JWTAuth.List == nil {
+					policiesCfg.JWTAuth.List = make(map[string]*version2.JWTAuth)
 				}
 
-				jwtAuthKey := routePoliciesCfg.JWTAuth.Key
-				if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
-					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+				jwtAuthKey := routePoliciesCfg.JWTAuth.Auth.Key
+				if _, exists := policiesCfg.JWTAuth.List[jwtAuthKey]; !exists {
+					policiesCfg.JWTAuth.List[jwtAuthKey] = routePoliciesCfg.JWTAuth.Auth
 				}
 			}
 			if routePoliciesCfg.APIKeyEnabled {
@@ -863,10 +863,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			Deny:                      policiesCfg.Deny,
 			LimitReqOptions:           policiesCfg.RateLimit.Options,
 			LimitReqs:                 policiesCfg.RateLimit.Reqs,
-			JWTAuth:                   policiesCfg.JWTAuth,
+			JWTAuth:                   policiesCfg.JWTAuth.Auth,
 			BasicAuth:                 policiesCfg.BasicAuth,
-			JWTAuthList:               policiesCfg.JWTAuthList,
-			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
+			JWTAuthList:               policiesCfg.JWTAuth.List,
+			JWKSAuthEnabled:           policiesCfg.JWTAuth.JWKSEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			APIKey:                    policiesCfg.APIKey,
@@ -898,13 +898,18 @@ type rateLimit struct {
 	Options version2.LimitReqOptions
 }
 
+// jwtAuth hold the configuration for the JWTAuth & JWKSAuth Policies
+type jwtAuth struct {
+	Auth        *version2.JWTAuth
+	List        map[string]*version2.JWTAuth
+	JWKSEnabled bool
+}
+
 type policiesCfg struct {
 	Allow           []string
 	Deny            []string
 	RateLimit       rateLimit
-	JWTAuth         *version2.JWTAuth
-	JWTAuthList     map[string]*version2.JWTAuth
-	JWKSAuthEnabled bool
+	JWTAuth         jwtAuth
 	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
@@ -1060,7 +1065,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 	secretRefs map[string]*secrets.SecretReference,
 ) *validationResults {
 	res := newValidationResults()
-	if p.JWTAuth != nil {
+	if p.JWTAuth.Auth != nil {
 		res.addWarningf("Multiple jwt policies in the same context is not valid. JWT policy %s will be ignored", polKey)
 		return res
 	}
@@ -1081,7 +1086,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 			return res
 		}
 
-		p.JWTAuth = &version2.JWTAuth{
+		p.JWTAuth.Auth = &version2.JWTAuth{
 			Secret: secretRef.Path,
 			Realm:  jwtAuth.Realm,
 			Token:  jwtAuth.Token,
@@ -1097,14 +1102,14 @@ func (p *policiesCfg) addJWTAuthConfig(
 			JwksPath:   uri.Path,
 		}
 
-		p.JWTAuth = &version2.JWTAuth{
+		p.JWTAuth.Auth = &version2.JWTAuth{
 			Key:      polKey,
 			JwksURI:  *JwksURI,
 			Realm:    jwtAuth.Realm,
 			Token:    jwtAuth.Token,
 			KeyCache: jwtAuth.KeyCache,
 		}
-		p.JWKSAuthEnabled = true
+		p.JWTAuth.JWKSEnabled = true
 		return res
 	}
 	return res
@@ -1662,7 +1667,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.Deny = cfg.Deny
 	location.LimitReqOptions = cfg.RateLimit.Options
 	location.LimitReqs = cfg.RateLimit.Reqs
-	location.JWTAuth = cfg.JWTAuth
+	location.JWTAuth = cfg.JWTAuth.Auth
 	location.BasicAuth = cfg.BasicAuth
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
