@@ -6587,21 +6587,23 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: RateLimit{
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "notice",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+					},
+					Options: version2.LimitReqOptions{
+						LogLevel:   "notice",
+						RejectCode: 503,
 					},
 				},
 			},
@@ -6639,30 +6641,32 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: RateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							Key:      "test2",
+							ZoneSize: "20M",
+							Rate:     "20r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
-					{
-						Key:      "test2",
-						ZoneSize: "20M",
-						Rate:     "20r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "error",
+						RejectCode: 503,
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "error",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
 				},
 			},
@@ -6689,26 +6693,29 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "5r/s",
-						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+				RateLimit: RateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "5r/s",
+							ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+						},
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "notice",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "notice",
+						RejectCode: 503,
+					},
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+						},
 					},
 				},
 			},
 			msg: "rate limit reference with scale",
 		},
+
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
@@ -7397,30 +7404,32 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			policyOpts: policyOptions{},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: RateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							Key:      "test2",
+							ZoneSize: "20M",
+							Rate:     "20r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
-					{
-						Key:      "test2",
-						ZoneSize: "20M",
-						Rate:     "20r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "error",
+						RejectCode: 503,
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "error",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
 				},
 			},

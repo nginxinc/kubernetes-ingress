@@ -454,7 +454,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	var healthChecks []version2.HealthCheck
 	var limitReqZones []version2.LimitReqZone
 
-	limitReqZones = append(limitReqZones, policiesCfg.LimitReqZones...)
+	limitReqZones = append(limitReqZones, policiesCfg.RateLimit.Zones...)
 
 	// generate upstreams for VirtualServer
 	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
@@ -604,7 +604,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
 			}
 		}
-		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
+		limitReqZones = append(limitReqZones, routePoliciesCfg.RateLimit.Zones...)
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
 
@@ -745,7 +745,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				}
 			}
 
-			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
+			limitReqZones = append(limitReqZones, routePoliciesCfg.RateLimit.Zones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
 
@@ -861,8 +861,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			TLSPassthrough:            vsc.isTLSPassthrough,
 			Allow:                     policiesCfg.Allow,
 			Deny:                      policiesCfg.Deny,
-			LimitReqOptions:           policiesCfg.LimitReqOptions,
-			LimitReqs:                 policiesCfg.LimitReqs,
+			LimitReqOptions:           policiesCfg.RateLimit.Options,
+			LimitReqs:                 policiesCfg.RateLimit.Reqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
 			BasicAuth:                 policiesCfg.BasicAuth,
 			JWTAuthList:               policiesCfg.JWTAuthList,
@@ -891,12 +891,17 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	return vsCfg, vsc.warnings
 }
 
+// RateLimit hold the configuration for the ratelimiting Policy
+type RateLimit struct {
+	Reqs    []version2.LimitReq
+	Zones   []version2.LimitReqZone
+	Options version2.LimitReqOptions
+}
+
 type policiesCfg struct {
 	Allow           []string
 	Deny            []string
-	LimitReqOptions version2.LimitReqOptions
-	LimitReqZones   []version2.LimitReqZone
-	LimitReqs       []version2.LimitReq
+	RateLimit       RateLimit
 	JWTAuth         *version2.JWTAuth
 	JWTAuthList     map[string]*version2.JWTAuth
 	JWKSAuthEnabled bool
@@ -994,20 +999,20 @@ func (p *policiesCfg) addRateLimitConfig(
 ) *validationResults {
 	res := newValidationResults()
 	rlZoneName := fmt.Sprintf("pol_rl_%v_%v_%v_%v", polNamespace, polName, vsNamespace, vsName)
-	p.LimitReqs = append(p.LimitReqs, generateLimitReq(rlZoneName, rateLimit))
-	p.LimitReqZones = append(p.LimitReqZones, generateLimitReqZone(rlZoneName, rateLimit, podReplicas))
-	if len(p.LimitReqs) == 1 {
-		p.LimitReqOptions = generateLimitReqOptions(rateLimit)
+	p.RateLimit.Reqs = append(p.RateLimit.Reqs, generateLimitReq(rlZoneName, rateLimit))
+	p.RateLimit.Zones = append(p.RateLimit.Zones, generateLimitReqZone(rlZoneName, rateLimit, podReplicas))
+	if len(p.RateLimit.Reqs) == 1 {
+		p.RateLimit.Options = generateLimitReqOptions(rateLimit)
 	} else {
 		curOptions := generateLimitReqOptions(rateLimit)
-		if curOptions.DryRun != p.LimitReqOptions.DryRun {
-			res.addWarningf("RateLimit policy %s with limit request option dryRun='%v' is overridden to dryRun='%v' by the first policy reference in this context", polKey, curOptions.DryRun, p.LimitReqOptions.DryRun)
+		if curOptions.DryRun != p.RateLimit.Options.DryRun {
+			res.addWarningf("RateLimit policy %s with limit request option dryRun='%v' is overridden to dryRun='%v' by the first policy reference in this context", polKey, curOptions.DryRun, p.RateLimit.Options.DryRun)
 		}
-		if curOptions.LogLevel != p.LimitReqOptions.LogLevel {
-			res.addWarningf("RateLimit policy %s with limit request option logLevel='%v' is overridden to logLevel='%v' by the first policy reference in this context", polKey, curOptions.LogLevel, p.LimitReqOptions.LogLevel)
+		if curOptions.LogLevel != p.RateLimit.Options.LogLevel {
+			res.addWarningf("RateLimit policy %s with limit request option logLevel='%v' is overridden to logLevel='%v' by the first policy reference in this context", polKey, curOptions.LogLevel, p.RateLimit.Options.LogLevel)
 		}
-		if curOptions.RejectCode != p.LimitReqOptions.RejectCode {
-			res.addWarningf("RateLimit policy %s with limit request option rejectCode='%v' is overridden to rejectCode='%v' by the first policy reference in this context", polKey, curOptions.RejectCode, p.LimitReqOptions.RejectCode)
+		if curOptions.RejectCode != p.RateLimit.Options.RejectCode {
+			res.addWarningf("RateLimit policy %s with limit request option rejectCode='%v' is overridden to rejectCode='%v' by the first policy reference in this context", polKey, curOptions.RejectCode, p.RateLimit.Options.RejectCode)
 		}
 	}
 	return res
@@ -1655,8 +1660,8 @@ func removeDuplicateLimitReqZones(rlz []version2.LimitReqZone) []version2.LimitR
 func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.Allow = cfg.Allow
 	location.Deny = cfg.Deny
-	location.LimitReqOptions = cfg.LimitReqOptions
-	location.LimitReqs = cfg.LimitReqs
+	location.LimitReqOptions = cfg.RateLimit.Options
+	location.LimitReqs = cfg.RateLimit.Reqs
 	location.JWTAuth = cfg.JWTAuth
 	location.BasicAuth = cfg.BasicAuth
 	location.EgressMTLS = cfg.EgressMTLS
