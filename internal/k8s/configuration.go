@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/nginx/kubernetes-ingress/internal/configs"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginx/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
@@ -469,7 +470,7 @@ func (c *Configuration) AddOrUpdateIngress(ing *networking.Ingress) ([]ResourceC
 		p := ConfigurationProblem{
 			Object:  ing,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: validationError.Error(),
 		}
 		problems = append(problems, p)
@@ -535,7 +536,7 @@ func (c *Configuration) AddOrUpdateVirtualServer(vs *conf_v1.VirtualServer) ([]R
 		p := ConfigurationProblem{
 			Object:  vs,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", getResourceKey(&vs.ObjectMeta), validationError.Error()),
 		}
 		problems = append(problems, p)
@@ -584,7 +585,7 @@ func (c *Configuration) AddOrUpdateVirtualServerRoute(vsr *conf_v1.VirtualServer
 		p := ConfigurationProblem{
 			Object:  vsr,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: fmt.Sprintf("VirtualServerRoute %s was rejected with error: %s", getResourceKey(&vsr.ObjectMeta), validationError.Error()),
 		}
 		problems = append(problems, p)
@@ -711,7 +712,7 @@ func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1.TransportServer) 
 		p := ConfigurationProblem{
 			Object:  ts,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: fmt.Sprintf("TransportServer %s was rejected with error: %s", getResourceKey(&ts.ObjectMeta), validationErr.Error()),
 		}
 		problems = append(problems, p)
@@ -1091,7 +1092,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 			p := ConfigurationProblem{
 				Object:  tsc.TransportServer,
 				IsError: false,
-				Reason:  "Rejected",
+				Reason:  nl.EventReasonRejected,
 				Message: fmt.Sprintf("Listener %s doesn't exist", listenerName),
 			}
 			problems[tsc.GetKeyWithKind()] = p
@@ -1102,7 +1103,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 			p := ConfigurationProblem{
 				Object:  tsc.TransportServer,
 				IsError: false,
-				Reason:  "Rejected",
+				Reason:  nl.EventReasonRejected,
 				Message: fmt.Sprintf("Listener %s with host %s is taken by another resource", listenerName, hostDescription),
 			}
 			problems[tsc.GetKeyWithKind()] = p
@@ -1125,7 +1126,7 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 				p := ConfigurationProblem{
 					Object:  impl.Ingress,
 					IsError: false,
-					Reason:  "Rejected",
+					Reason:  nl.EventReasonRejected,
 					Message: "All hosts are taken by other resources",
 				}
 				problems[r.GetKeyWithKind()] = p
@@ -1137,7 +1138,7 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 				p := ConfigurationProblem{
 					Object:  impl.VirtualServer,
 					IsError: false,
-					Reason:  "Rejected",
+					Reason:  nl.EventReasonRejected,
 					Message: "Host is taken by another resource",
 				}
 				problems[r.GetKeyWithKind()] = p
@@ -1149,7 +1150,7 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 				p := ConfigurationProblem{
 					Object:  impl.TransportServer,
 					IsError: false,
-					Reason:  "Rejected",
+					Reason:  nl.EventReasonRejected,
 					Message: "Host is taken by another resource",
 				}
 				problems[r.GetKeyWithKind()] = p
@@ -1228,7 +1229,7 @@ func (c *Configuration) addProblemsForOrphanMinions(problems map[string]Configur
 			p := ConfigurationProblem{
 				Object:  ing,
 				IsError: false,
-				Reason:  "NoIngressMasterFound",
+				Reason:  nl.EventReasonNoIngressMasterFound,
 				Message: "Ingress master is invalid or doesn't exist",
 			}
 			k := getResourceKeyWithKind(ingressKind, &ing.ObjectMeta)
@@ -1248,7 +1249,7 @@ func (c *Configuration) addProblemsForOrphanOrIgnoredVsrs(problems map[string]Co
 			p := ConfigurationProblem{
 				Object:  vsr,
 				IsError: false,
-				Reason:  "NoVirtualServerFound",
+				Reason:  nl.EventReasonNoVirtualServerFound,
 				Message: "VirtualServer is invalid or doesn't exist",
 			}
 			k := getResourceKeyWithKind(virtualServerRouteKind, &vsr.ObjectMeta)
@@ -1268,7 +1269,7 @@ func (c *Configuration) addProblemsForOrphanOrIgnoredVsrs(problems map[string]Co
 			p := ConfigurationProblem{
 				Object:  vsr,
 				IsError: false,
-				Reason:  "Ignored",
+				Reason:  nl.EventReasonIgnored,
 				Message: fmt.Sprintf("VirtualServer %s ignores VirtualServerRoute", getResourceKey(&vsConfig.VirtualServer.ObjectMeta)),
 			}
 			k := getResourceKeyWithKind(virtualServerRouteKind, &vsr.ObjectMeta)

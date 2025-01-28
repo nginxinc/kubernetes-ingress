@@ -6,6 +6,7 @@ import (
 
 	"github.com/nginx/kubernetes-ingress/internal/configs"
 	"github.com/nginx/kubernetes-ingress/internal/k8s/appprotectcommon"
+	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	"github.com/nginx/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"github.com/nginx/kubernetes-ingress/pkg/apis/dos/validation"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -117,7 +118,7 @@ func (ci *Configuration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured)
 	op := AddOrUpdate
 	if err != nil {
 		op = Delete
-		problems = append(problems, Problem{Object: policyObj, Reason: "Rejected", Message: err.Error()})
+		problems = append(problems, Problem{Object: policyObj, Reason: nl.EventReasonRejected, Message: err.Error()})
 	}
 
 	changes = append(changes, Change{Op: op, Resource: policy})
@@ -140,7 +141,7 @@ func (ci *Configuration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructure
 	op := AddOrUpdate
 	if err != nil {
 		op = Delete
-		problems = append(problems, Problem{Object: logConfObj, Reason: "Rejected", Message: err.Error()})
+		problems = append(problems, Problem{Object: logConfObj, Reason: nl.EventReasonRejected, Message: err.Error()})
 	}
 
 	changes = append(changes, Change{Op: op, Resource: logConf})
@@ -162,7 +163,7 @@ func (ci *Configuration) AddOrUpdateDosProtectedResource(protectedConf *v1beta1.
 	ci.dosProtectedResource[resNsName] = protectedEx
 	if err != nil {
 		return []Change{{Op: Delete, Resource: protectedEx}},
-			[]Problem{{Object: protectedConf, Reason: "Rejected", Message: err.Error()}}
+			[]Problem{{Object: protectedConf, Reason: nl.EventReasonRejected, Message: err.Error()}}
 	}
 	if protectedEx.Obj.Spec.ApDosPolicy != "" {
 		policyReference := protectedEx.Obj.Spec.ApDosPolicy
@@ -173,7 +174,7 @@ func (ci *Configuration) AddOrUpdateDosProtectedResource(protectedConf *v1beta1.
 		_, err := ci.getPolicy(policyReference)
 		if err != nil {
 			return []Change{{Op: Delete, Resource: protectedEx}},
-				[]Problem{{Object: protectedConf, Reason: "Rejected", Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosPolicy: %s", policyReference, err.Error())}}
+				[]Problem{{Object: protectedConf, Reason: nl.EventReasonRejected, Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosPolicy: %s", policyReference, err.Error())}}
 		}
 	}
 	if protectedEx.Obj.Spec.DosSecurityLog != nil && protectedEx.Obj.Spec.DosSecurityLog.ApDosLogConf != "" {
@@ -185,7 +186,7 @@ func (ci *Configuration) AddOrUpdateDosProtectedResource(protectedConf *v1beta1.
 		_, err := ci.getLogConf(logConfReference)
 		if err != nil {
 			return []Change{{Op: Delete, Resource: protectedEx}},
-				[]Problem{{Object: protectedConf, Reason: "Rejected", Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosLogConf: %s", logConfReference, err.Error())}}
+				[]Problem{{Object: protectedConf, Reason: nl.EventReasonRejected, Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosLogConf: %s", logConfReference, err.Error())}}
 		}
 	}
 	return []Change{{Op: AddOrUpdate, Resource: protectedEx}}, nil
