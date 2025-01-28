@@ -7085,17 +7085,19 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				APIKey: &version2.APIKey{
-					Header:  []string{"X-API-Key"},
-					Query:   []string{"api-key"},
-					MapName: "apikey_auth_client_name_default_test_api_key_policy",
-				},
-				APIKeyEnabled:   true,
-				APIKeyClientMap: nil,
-				APIKeyClients: []apiKeyClient{
-					{
-						ClientID:  "client1",
-						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+				APIKey: apiKeyAuth{
+					Key: &version2.APIKey{
+						Header:  []string{"X-API-Key"},
+						Query:   []string{"api-key"},
+						MapName: "apikey_auth_client_name_default_test_api_key_policy",
+					},
+					Enabled:   true,
+					ClientMap: nil,
+					Clients: []apiKeyClient{
+						{
+							ClientID:  "client1",
+							HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+						},
 					},
 				},
 			},
@@ -7126,17 +7128,19 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				APIKey: &version2.APIKey{
-					Header:  []string{"X-API-Key"},
-					Query:   []string{"api-key"},
-					MapName: "apikey_auth_client_name_default_test_api_key_policy",
-				},
-				APIKeyEnabled:   true,
-				APIKeyClientMap: nil,
-				APIKeyClients: []apiKeyClient{
-					{
-						ClientID:  "client1",
-						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+				APIKey: apiKeyAuth{
+					Key: &version2.APIKey{
+						Header:  []string{"X-API-Key"},
+						Query:   []string{"api-key"},
+						MapName: "apikey_auth_client_name_default_test_api_key_policy",
+					},
+					Enabled:   true,
+					ClientMap: nil,
+					Clients: []apiKeyClient{
+						{
+							ClientID:  "client1",
+							HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+						},
 					},
 				},
 			},

@@ -429,10 +429,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		policiesCfg.JWTAuth.List[jwtAuthKey] = policiesCfg.JWTAuth.Auth
 	}
 
-	if policiesCfg.APIKeyEnabled {
-		apiMapName := policiesCfg.APIKey.MapName
-		policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
-		policiesCfg.APIKeyClientMap[apiMapName] = policiesCfg.APIKeyClients
+	if policiesCfg.APIKey.Enabled {
+		apiMapName := policiesCfg.APIKey.Key.MapName
+		policiesCfg.APIKey.ClientMap = make(map[string][]apiKeyClient)
+		policiesCfg.APIKey.ClientMap[apiMapName] = policiesCfg.APIKey.Clients
 	}
 
 	dosCfg := generateDosCfg(dosResources[""])
@@ -594,14 +594,14 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policiesCfg.JWTAuth.List[jwtAuthKey] = routePoliciesCfg.JWTAuth.Auth
 			}
 		}
-		if routePoliciesCfg.APIKeyEnabled {
-			policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
-			apiMapName := routePoliciesCfg.APIKey.MapName
-			if policiesCfg.APIKeyClientMap == nil {
-				policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
+		if routePoliciesCfg.APIKey.Enabled {
+			policiesCfg.APIKey.Enabled = routePoliciesCfg.APIKey.Enabled
+			apiMapName := routePoliciesCfg.APIKey.Key.MapName
+			if policiesCfg.APIKey.ClientMap == nil {
+				policiesCfg.APIKey.ClientMap = make(map[string][]apiKeyClient)
 			}
-			if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
-				policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
+			if _, exists := policiesCfg.APIKey.ClientMap[apiMapName]; !exists {
+				policiesCfg.APIKey.ClientMap[apiMapName] = routePoliciesCfg.APIKey.Clients
 			}
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.RateLimit.Zones...)
@@ -734,14 +734,14 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					policiesCfg.JWTAuth.List[jwtAuthKey] = routePoliciesCfg.JWTAuth.Auth
 				}
 			}
-			if routePoliciesCfg.APIKeyEnabled {
-				policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
-				apiMapName := routePoliciesCfg.APIKey.MapName
-				if policiesCfg.APIKeyClientMap == nil {
-					policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
+			if routePoliciesCfg.APIKey.Enabled {
+				policiesCfg.APIKey.Enabled = routePoliciesCfg.APIKey.Enabled
+				apiMapName := routePoliciesCfg.APIKey.Key.MapName
+				if policiesCfg.APIKey.ClientMap == nil {
+					policiesCfg.APIKey.ClientMap = make(map[string][]apiKeyClient)
 				}
-				if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
-					policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
+				if _, exists := policiesCfg.APIKey.ClientMap[apiMapName]; !exists {
+					policiesCfg.APIKey.ClientMap[apiMapName] = routePoliciesCfg.APIKey.Clients
 				}
 			}
 
@@ -812,7 +812,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		}
 	}
 
-	for mapName, apiKeyClients := range policiesCfg.APIKeyClientMap {
+	for mapName, apiKeyClients := range policiesCfg.APIKey.ClientMap {
 		maps = append(maps, *generateAPIKeyClientMap(mapName, apiKeyClients))
 	}
 
@@ -869,8 +869,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			JWKSAuthEnabled:           policiesCfg.JWTAuth.JWKSEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
-			APIKey:                    policiesCfg.APIKey,
-			APIKeyEnabled:             policiesCfg.APIKeyEnabled,
+			APIKey:                    policiesCfg.APIKey.Key,
+			APIKeyEnabled:             policiesCfg.APIKey.Enabled,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
 			Dos:                       dosCfg,
@@ -905,6 +905,14 @@ type jwtAuth struct {
 	JWKSEnabled bool
 }
 
+// apiKeyAuth hold the configuration for the APIKey Policy
+type apiKeyAuth struct {
+	Enabled   bool
+	Key       *version2.APIKey
+	Clients   []apiKeyClient
+	ClientMap map[string][]apiKeyClient
+}
+
 type policiesCfg struct {
 	Allow           []string
 	Deny            []string
@@ -914,10 +922,7 @@ type policiesCfg struct {
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
-	APIKeyEnabled   bool
-	APIKey          *version2.APIKey
-	APIKeyClients   []apiKeyClient
-	APIKeyClientMap map[string][]apiKeyClient
+	APIKey          apiKeyAuth
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -1369,7 +1374,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 	secretRefs map[string]*secrets.SecretReference,
 ) *validationResults {
 	res := newValidationResults()
-	if p.APIKey != nil {
+	if p.APIKey.Key != nil {
 		res.addWarningf(
 			"Multiple API Key policies in the same context is not valid. API Key policy %s will be ignored",
 			polKey,
@@ -1394,7 +1399,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 		return res
 	}
 
-	p.APIKeyClients = generateAPIKeyClients(secretRef.Secret.Data)
+	p.APIKey.Clients = generateAPIKeyClients(secretRef.Secret.Data)
 
 	mapName := fmt.Sprintf(
 		"apikey_auth_client_name_%s_%s_%s",
@@ -1402,12 +1407,12 @@ func (p *policiesCfg) addAPIKeyConfig(
 		rfc1123ToSnake(vsName),
 		strings.Split(rfc1123ToSnake(polKey), "/")[1],
 	)
-	p.APIKey = &version2.APIKey{
+	p.APIKey.Key = &version2.APIKey{
 		Header:  apiKey.SuppliedIn.Header,
 		Query:   apiKey.SuppliedIn.Query,
 		MapName: mapName,
 	}
-	p.APIKeyEnabled = true
+	p.APIKey.Enabled = true
 	return res
 }
 
@@ -1672,7 +1677,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF
-	location.APIKey = cfg.APIKey
+	location.APIKey = cfg.APIKey.Key
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 
