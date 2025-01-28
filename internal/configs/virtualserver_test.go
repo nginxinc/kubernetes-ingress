@@ -6587,7 +6587,7 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				RateLimit: RateLimit{
+				RateLimit: rateLimit{
 					Reqs: []version2.LimitReq{
 						{
 							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
@@ -6641,7 +6641,7 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				RateLimit: RateLimit{
+				RateLimit: rateLimit{
 					Zones: []version2.LimitReqZone{
 						{
 							Key:      "test",
@@ -6693,7 +6693,7 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				RateLimit: RateLimit{
+				RateLimit: rateLimit{
 					Zones: []version2.LimitReqZone{
 						{
 							Key:      "test",
@@ -7404,7 +7404,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			policyOpts: policyOptions{},
 			expected: policiesCfg{
-				RateLimit: RateLimit{
+				RateLimit: rateLimit{
 					Zones: []version2.LimitReqZone{
 						{
 							Key:      "test",

@@ -891,8 +891,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	return vsCfg, vsc.warnings
 }
 
-// RateLimit hold the configuration for the ratelimiting Policy
-type RateLimit struct {
+// rateLimit hold the configuration for the ratelimiting Policy
+type rateLimit struct {
 	Reqs    []version2.LimitReq
 	Zones   []version2.LimitReqZone
 	Options version2.LimitReqOptions
@@ -901,7 +901,7 @@ type RateLimit struct {
 type policiesCfg struct {
 	Allow           []string
 	Deny            []string
-	RateLimit       RateLimit
+	RateLimit       rateLimit
 	JWTAuth         *version2.JWTAuth
 	JWTAuthList     map[string]*version2.JWTAuth
 	JWKSAuthEnabled bool
