@@ -1,7 +1,9 @@
 ---
 title: Policy resources
-toc: true
 weight: 500
+toc: true
+type: how-to
+product: NIC
 docs: DOCS-596
 ---
 
@@ -593,7 +595,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 {{< note >}}
 
-The feature is implemented using the [reference implementation](https://github.com/nginx/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
+The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
 
 {{< /note >}}
 
