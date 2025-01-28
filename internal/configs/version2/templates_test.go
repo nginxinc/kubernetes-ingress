@@ -93,6 +93,34 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 	t.Log(string(got))
 }
 
+func TestExecuteVirtualServerTemplate_RendersTemplateWithRateLimitJWTClaim(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithRateLimitJWTClaim)
+	if err != nil {
+		t.Error(err)
+	}
+	wantedStrings := []string{
+		"auth_jwt_claim_set",
+		"$rate_limit_default_webapp_group_consumer_group_type",
+		"$jwt_default_webapp_group_consumer_group_type",
+		"Group1",
+		"Group2",
+		"Group3",
+		"$http_bronze",
+		"$http_silver",
+		"$http_gold",
+	}
+	for _, value := range wantedStrings {
+		if !bytes.Contains(got, []byte(value)) {
+			t.Errorf("didn't get `%s`", value)
+		}
+	}
+
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
 func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
@@ -1535,6 +1563,104 @@ var (
 				{
 					Path: "/",
 				},
+			},
+		},
+	}
+
+	virtualServerCfgWithRateLimitJWTClaim = VirtualServerConfig{
+		LimitReqZones: []LimitReqZone{
+			{
+				ZoneName: "pol_rl_test_test_test", Rate: "10r/s", ZoneSize: "10m", Key: "$url",
+			},
+		},
+		Upstreams: []Upstream{},
+		AuthJwtClaimSet: []AuthJwtClaimSet{
+			{
+				Variable: "$jwt_default_webapp_group_consumer_group_type",
+				Claims:   "consumer_group type",
+			},
+		},
+		Maps: []Map{
+			{
+				Source:   "$jwt_default_webapp_group_consumer_group_type",
+				Variable: "$rate_limit_default_webapp_group_consumer_group_type",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "Group3",
+					},
+					{
+						Value:  "Gold",
+						Result: "Group1",
+					},
+					{
+						Value:  "Silver",
+						Result: "Group2",
+					},
+					{
+						Value:  "Bronze",
+						Result: "Group3",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_gold",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group1",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_silver",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group2",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+			{
+				Source:   "$rate_limit_default_webapp_group_consumer_group_type",
+				Variable: "$http_bronze",
+				Parameters: []Parameter{
+					{
+						Value:  "default",
+						Result: "''",
+					},
+					{
+						Value:  "Group3",
+						Result: "$jwt_claim_sub",
+					},
+				},
+			},
+		},
+		HTTPSnippets: []string{"# HTTP snippet"},
+		Server: Server{
+			ServerName:   "example.com",
+			StatusZone:   "example.com",
+			ServerTokens: "off",
+			LimitReqs: []LimitReq{
+				{
+					ZoneName: "pol_rl_test_test_test",
+					Delay:    10,
+					Burst:    5,
+				},
+			},
+			LimitReqOptions: LimitReqOptions{
+				LogLevel:   "error",
+				RejectCode: 503,
 			},
 		},
 	}
