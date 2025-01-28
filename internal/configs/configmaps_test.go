@@ -788,6 +788,151 @@ func TestParseMGMTConfigMapUsageReportEndpoint(t *testing.T) {
 	}
 }
 
+func TestParseZoneSync(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *ConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync": "true",
+				},
+			},
+			want: &ConfigParams{
+				ZoneSync: true,
+			},
+			msg: "zone-sync set to true",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync": "false",
+				},
+			},
+			want: &ConfigParams{
+				ZoneSync: false,
+			},
+			msg: "zone-sync set to false",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, _ := ParseConfigMap(context.Background(), test.configMap, true, false, false, false, makeEventLogger())
+			if result.ZoneSync != test.want.ZoneSync {
+				t.Errorf("ZoneSync: want %v, got %v", test.want.ZoneSync, result.ZoneSync)
+			}
+		})
+	}
+}
+
+func TestParseZoneSyncPort(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *ConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "1234",
+				},
+			},
+			want: &ConfigParams{
+				ZoneSyncPort: 1234,
+			},
+			msg: "zone-sync-port set to 1234",
+		},
+	}
+
+	nginxPlus := true
+	hasAppProtect := true
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, _ := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+			if result.ZoneSyncPort != test.want.ZoneSyncPort {
+				t.Errorf("ZoneSyncPort: want %v, got %v", test.want.ZoneSyncPort, result.ZoneSyncPort)
+			}
+		})
+	}
+}
+
+func TestParseZoneSyncPortErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		configOk  bool
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "0",
+				},
+			},
+			configOk: false,
+			msg:      "port out of range (0)",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "-1",
+				},
+			},
+			configOk: false,
+			msg:      "port out of range (negative)",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "65536",
+				},
+			},
+			configOk: false,
+			msg:      "port out of range (greater than 65535)",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "not-a-number",
+				},
+			},
+			configOk: false,
+			msg:      "invalid non-numeric port",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port": "",
+				},
+			},
+			configOk: false,
+			msg:      "missing port value",
+		},
+	}
+
+	nginxPlus := true
+	hasAppProtect := true
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			_, err := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+			if err == !test.configOk {
+				t.Error("Expected error, got nil")
+			}
+		})
+	}
+}
+
 func makeEventLogger() record.EventRecorder {
 	return record.NewFakeRecorder(1024)
 }

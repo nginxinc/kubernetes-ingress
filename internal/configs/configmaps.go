@@ -400,6 +400,33 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		}
 	}
 
+	if zoneSync, exists, err := GetMapKeyAsBool(cfgm.Data, "zone-sync", cfgm); exists {
+		if err != nil {
+			nl.Error(l, err)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			configOk = false
+		} else {
+			cfgParams.ZoneSync = zoneSync
+		}
+	}
+
+	if zoneSyncPort, exists, err := GetMapKeyAsInt(cfgm.Data, "zone-sync-port", cfgm); exists {
+		if err != nil {
+			nl.Error(l, err)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			configOk = false
+		} else {
+			statusPortValidationError := validation.ValidatePort(zoneSyncPort)
+			if statusPortValidationError != nil {
+				nl.Error(l, statusPortValidationError)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, statusPortValidationError.Error())
+				configOk = false
+			} else {
+				cfgParams.ZoneSyncPort = zoneSyncPort
+			}
+		}
+	}
+
 	if upstreamZoneSize, exists := cfgm.Data["upstream-zone-size"]; exists {
 		cfgParams.UpstreamZoneSize = upstreamZoneSize
 	}
@@ -778,6 +805,11 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		}
 	}
 
+	var zoneSyncConfig version1.ZoneSyncConfig = version1.ZoneSyncConfig{
+		ZoneSync:     config.ZoneSync,
+		ZoneSyncPort: config.ZoneSyncPort,
+	}
+
 	nginxCfg := &version1.MainConfig{
 		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
@@ -851,6 +883,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		InternalRouteServerName:            staticCfgParams.InternalRouteServerName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,
 		OIDC:                               staticCfgParams.EnableOIDC,
+		ZoneSyncConfig:                     zoneSyncConfig,
 		DynamicSSLReloadEnabled:            staticCfgParams.DynamicSSLReload,
 		StaticSSLPath:                      staticCfgParams.StaticSSLPath,
 		NginxVersion:                       staticCfgParams.NginxVersion,

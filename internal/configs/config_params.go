@@ -91,6 +91,9 @@ type ConfigParams struct {
 	VariablesHashBucketSize                uint64
 	VariablesHashMaxSize                   uint64
 
+	ZoneSync     bool
+	ZoneSyncPort int
+
 	RealIPHeader    string
 	RealIPRecursive bool
 	SetRealIPFrom   []string
