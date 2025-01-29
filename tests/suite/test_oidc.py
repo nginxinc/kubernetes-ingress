@@ -3,7 +3,6 @@ import base64
 import pytest
 import requests
 import yaml
-from _datetime import datetime
 from playwright.sync_api import Error, sync_playwright
 from settings import DEPLOYMENTS, TEST_DATA
 from suite.utils.policy_resources_utils import delete_policy
@@ -23,7 +22,6 @@ from suite.utils.vs_vsr_resources_utils import (
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
-from urllib3.util import connection
 
 keycloak_src = f"{TEST_DATA}/oidc/keycloak.yaml"
 keycloak_vs_src = f"{TEST_DATA}/oidc/virtual-server-idp.yaml"
@@ -48,7 +46,7 @@ class KeycloakSetup:
 
 @pytest.fixture(scope="class")
 def keycloak_setup(request, kube_apis, test_namespace, ingress_controller_endpoint, virtual_server_setup):
-    
+
     # Create Keycloak resources and setup Keycloak idp
 
     secret_name = create_secret_from_yaml(
@@ -101,6 +99,7 @@ def keycloak_setup(request, kube_apis, test_namespace, ingress_controller_endpoi
             delete_virtual_server(kube_apis.custom_objects, keycloak_vs_name, test_namespace)
             delete_common_app(kube_apis, "keycloak", test_namespace)
             delete_secret(kube_apis.v1, secret_name, test_namespace)
+
     request.addfinalizer(fin)
 
     return KeycloakSetup(encoded_secret)

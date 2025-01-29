@@ -16,4 +16,3 @@ spec:
     - name: oidc-policy
     action:
       pass: backend1
-
