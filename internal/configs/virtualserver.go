@@ -923,18 +923,19 @@ type apiKeyAuth struct {
 }
 
 type policiesCfg struct {
-	Allow           []string
-	Deny            []string
-	RateLimit       rateLimit
-	JWTAuth         jwtAuth
-	BasicAuth       *version2.BasicAuth
-	IngressMTLS     *version2.IngressMTLS
-	EgressMTLS      *version2.EgressMTLS
-	OIDC            bool
-	APIKey          apiKeyAuth
-	WAF             *version2.WAF
-	ErrorReturn     *version2.Return
-	BundleValidator bundleValidator
+	Allow            []string
+	Deny             []string
+	RateLimit        rateLimit
+	JWTAuth          jwtAuth
+	AuthJwtClaimSets []*version2.AuthJwtClaimSet
+	BasicAuth        *version2.BasicAuth
+	IngressMTLS      *version2.IngressMTLS
+	EgressMTLS       *version2.EgressMTLS
+	OIDC             bool
+	APIKey           apiKeyAuth
+	WAF              *version2.WAF
+	ErrorReturn      *version2.Return
+	BundleValidator  bundleValidator
 }
 
 type bundleValidator interface {
