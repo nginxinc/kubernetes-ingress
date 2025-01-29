@@ -90,9 +90,7 @@ type ConfigParams struct {
 	UseClusterIP                           bool
 	VariablesHashBucketSize                uint64
 	VariablesHashMaxSize                   uint64
-
-	ZoneSync     bool
-	ZoneSyncPort int
+	ZoneSync                               ZoneSync
 
 	RealIPHeader    string
 	RealIPRecursive bool
@@ -176,6 +174,13 @@ type GlobalConfigParams struct {
 type Listener struct {
 	Port     int
 	Protocol string
+}
+
+// ZoneSync holds zone sync values for state sharing.
+type ZoneSync struct {
+	EnableZoneSync bool
+	Port           int
+	Domain         string
 }
 
 // MGMTSecrets holds mgmt block secret names

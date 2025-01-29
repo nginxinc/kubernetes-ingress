@@ -2,7 +2,11 @@ package configs
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
+
+	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
@@ -792,7 +796,7 @@ func TestParseZoneSync(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
-		want      *ConfigParams
+		want      *ZoneSync
 		msg       string
 	}{
 		{
@@ -801,8 +805,8 @@ func TestParseZoneSync(t *testing.T) {
 					"zone-sync": "true",
 				},
 			},
-			want: &ConfigParams{
-				ZoneSync: true,
+			want: &ZoneSync{
+				EnableZoneSync: true,
 			},
 			msg: "zone-sync set to true",
 		},
@@ -812,8 +816,8 @@ func TestParseZoneSync(t *testing.T) {
 					"zone-sync": "false",
 				},
 			},
-			want: &ConfigParams{
-				ZoneSync: false,
+			want: &ZoneSync{
+				EnableZoneSync: false,
 			},
 			msg: "zone-sync set to false",
 		},
@@ -822,8 +826,8 @@ func TestParseZoneSync(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			result, _ := ParseConfigMap(context.Background(), test.configMap, true, false, false, false, makeEventLogger())
-			if result.ZoneSync != test.want.ZoneSync {
-				t.Errorf("ZoneSync: want %v, got %v", test.want.ZoneSync, result.ZoneSync)
+			if result.ZoneSync.EnableZoneSync != test.want.EnableZoneSync {
+				t.Errorf("EnableZoneSync: want %v, got %v", test.want.EnableZoneSync, result.ZoneSync)
 			}
 		})
 	}
@@ -833,7 +837,7 @@ func TestParseZoneSyncPort(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
-		want      *ConfigParams
+		want      *ZoneSync
 		msg       string
 	}{
 		{
@@ -842,8 +846,8 @@ func TestParseZoneSyncPort(t *testing.T) {
 					"zone-sync-port": "1234",
 				},
 			},
-			want: &ConfigParams{
-				ZoneSyncPort: 1234,
+			want: &ZoneSync{
+				Port: 1234,
 			},
 			msg: "zone-sync-port set to 1234",
 		},
@@ -857,8 +861,8 @@ func TestParseZoneSyncPort(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			result, _ := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
-			if result.ZoneSyncPort != test.want.ZoneSyncPort {
-				t.Errorf("ZoneSyncPort: want %v, got %v", test.want.ZoneSyncPort, result.ZoneSyncPort)
+			if result.ZoneSync.Port != test.want.Port {
+				t.Errorf("Port: want %v, got %v", test.want.Port, result.ZoneSync.EnableZoneSync)
 			}
 		})
 	}
@@ -928,6 +932,42 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 			_, err := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if err == !test.configOk {
 				t.Error("Expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestMultipleNamespaces(t *testing.T) {
+	testCases := []struct {
+		name      string
+		namespace string
+		want      string
+	}{
+		{
+			name:      "nginx-ingress",
+			namespace: "nginx-ingress",
+			want:      "nginx-ingress-headless.nginx-ingress.svc.cluster.local",
+		},
+		{
+			name:      "my-release-nginx-ingress",
+			namespace: "my-release-nginx-ingress",
+			want:      "my-release-nginx-ingress-headless.my-release-nginx-ingress.svc.cluster.local",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_ = os.Setenv("POD_NAMESPACE", tc.namespace)
+
+			zoneSyncConfig := version1.ZoneSyncConfig{
+				EnableZoneSync: true,
+				Domain: fmt.Sprintf("%s-headless.%s.svc.cluster.local",
+					os.Getenv("POD_NAMESPACE"),
+					os.Getenv("POD_NAMESPACE")),
+			}
+
+			if zoneSyncConfig.Domain != tc.want {
+				t.Errorf("want %q, got %q", tc.want, zoneSyncConfig.Domain)
 			}
 		})
 	}

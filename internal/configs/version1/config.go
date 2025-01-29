@@ -191,8 +191,9 @@ type Location struct {
 
 // ZoneSyncConfig is tbe configuration for the zone_sync directives for state sharing.
 type ZoneSyncConfig struct {
-	ZoneSync     bool
-	ZoneSyncPort int
+	EnableZoneSync bool
+	Port           int
+	Domain         string
 }
 
 // MGMTConfig is tbe configuration for the MGMT block.
