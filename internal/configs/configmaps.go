@@ -403,7 +403,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if zoneSync, exists, err := GetMapKeyAsBool(cfgm.Data, "zone-sync", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			if nginxPlus {
@@ -411,7 +411,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "zone-sync")
 				nl.Warn(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -420,14 +420,14 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if zoneSyncPort, exists, err := GetMapKeyAsInt(cfgm.Data, "zone-sync-port", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			if cfgParams.ZoneSync.EnableZoneSync {
 				portValidationError := validation.ValidatePort(zoneSyncPort)
 				if portValidationError != nil {
 					nl.Error(l, portValidationError)
-					eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, portValidationError.Error())
+					eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, portValidationError.Error())
 					configOk = false
 				} else {
 					cfgParams.ZoneSync.Port = zoneSyncPort
@@ -435,7 +435,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync' to be enabled", cfgm.Namespace, cfgm.Name, "zone-sync-port")
 				nl.Warn(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}

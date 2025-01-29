@@ -843,11 +843,13 @@ func TestParseZoneSyncPort(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync":      "true",
 					"zone-sync-port": "1234",
 				},
 			},
 			want: &ZoneSync{
-				Port: 1234,
+				EnableZoneSync: true,
+				Port:           1234,
 			},
 			msg: "zone-sync-port set to 1234",
 		},
@@ -862,7 +864,7 @@ func TestParseZoneSyncPort(t *testing.T) {
 		t.Run(test.msg, func(t *testing.T) {
 			result, _ := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if result.ZoneSync.Port != test.want.Port {
-				t.Errorf("Port: want %v, got %v", test.want.Port, result.ZoneSync.EnableZoneSync)
+				t.Errorf("Port: want %v, got %v", test.want.Port, result.ZoneSync.Port)
 			}
 		})
 	}
