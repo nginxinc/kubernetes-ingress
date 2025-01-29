@@ -79,7 +79,6 @@ const (
 	typeKeyword                                     = "type"
 	helmReleaseType                                 = "helm.sh/release.v1"
 	splitClientAmountWhenWeightChangesDynamicReload = 101
-	secretDeletedReason                             = "SecretDeleted"
 )
 
 var (
@@ -935,12 +934,12 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	resourceExes := lbc.createExtendedResources(resources)
 	warnings, updateErr := lbc.configurator.UpdateConfig(resourceExes)
 
-	eventTitle := "Updated"
+	eventTitle := nl.EventReasonUpdated
 	eventType := api_v1.EventTypeNormal
 	eventWarningMessage := ""
 
 	if updateErr != nil {
-		eventTitle = "UpdatedWithError"
+		eventTitle = nl.EventReasonUpdatedWithError
 		eventType = api_v1.EventTypeWarning
 		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
 	}
@@ -951,17 +950,17 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 
 	if lbc.configMap != nil {
 		if isNGINXConfigValid {
-			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeNormal, "Updated", fmt.Sprintf("ConfigMap %s/%s updated without error", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeNormal, nl.EventReasonUpdated, fmt.Sprintf("ConfigMap %s/%s updated without error", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
 		} else {
-			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeWarning, nl.EventReasonUpdatedWithError, fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
 		}
 	}
 
 	if lbc.mgmtConfigMap != nil {
 		if !mgmtConfigHasWarnings {
-			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeNormal, "Updated", fmt.Sprintf("MGMT ConfigMap %s/%s updated without error", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
+			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeNormal, nl.EventReasonUpdated, fmt.Sprintf("MGMT ConfigMap %s/%s updated without error", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
 		} else {
-			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("MGMT ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
+			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeWarning, nl.EventReasonUpdatedWithError, fmt.Sprintf("MGMT ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
 		}
 	}
 
@@ -1357,7 +1356,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 // UpdateVirtualServerStatusAndEventsOnDelete updates the virtual server status and events
 func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vsConfig *VirtualServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
-	eventTitle := "Rejected"
+	eventTitle := nl.EventReasonRejected
 	eventWarningMessage := ""
 	state := ""
 
@@ -1376,7 +1375,7 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vs
 	if eventWarningMessage != "" {
 		if deleteErr != nil {
 			eventType = api_v1.EventTypeWarning
-			eventTitle = "RejectedWithError"
+			eventTitle = nl.EventReasonRejectedWithError
 			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
 			state = conf_v1.StateInvalid
 		}
@@ -1398,7 +1397,7 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vs
 
 // UpdateIngressStatusAndEventsOnDelete updates the ingress status and events.
 func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(ingConfig *IngressConfiguration, changeError string, deleteErr error) {
-	eventTitle := "Rejected"
+	eventTitle := nl.EventReasonRejected
 	eventWarningMessage := ""
 
 	// Ingress either became invalid or lost all its hosts
@@ -1413,7 +1412,7 @@ func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(ingConfi
 	// (some other Ingress Controller will handle it)
 	if eventWarningMessage != "" {
 		if deleteErr != nil {
-			eventTitle = "RejectedWithError"
+			eventTitle = nl.EventReasonRejectedWithError
 			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
 		}
 
@@ -1449,27 +1448,27 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 
 func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConfig *IngressConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
-	eventTitle := "AddedOrUpdated"
+	eventTitle := nl.EventReasonAddedOrUpdated
 	eventWarningMessage := ""
 	eventWarningSuffix := ""
 
 	if len(ingConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
 		eventWarningSuffix = "; "
 	}
 
 	if messages, ok := warnings[ingConfig.Ingress]; ok {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("%s%swith warning(s): %v", eventWarningMessage, eventWarningSuffix, formatWarningMessages(messages))
 		eventWarningSuffix = "; "
 	}
 
 	if operationErr != nil {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithError"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithError
 		eventWarningMessage = fmt.Sprintf("%s%sbut was not applied: %v", eventWarningMessage, eventWarningSuffix, operationErr)
 	}
 
@@ -1483,7 +1482,7 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConf
 
 	for _, fm := range ingConfig.Minions {
 		minionEventType := api_v1.EventTypeNormal
-		minionEventTitle := "AddedOrUpdated"
+		minionEventTitle := nl.EventReasonAddedOrUpdated
 		minionEventWarningMessage := ""
 		minionEventWarningSuffix := ""
 
@@ -1491,21 +1490,21 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConf
 
 		if len(minionChangeWarnings) > 0 {
 			minionEventType = api_v1.EventTypeWarning
-			minionEventTitle = "AddedOrUpdatedWithWarning"
+			minionEventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 			minionEventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(minionChangeWarnings))
 			minionEventWarningSuffix = "; "
 		}
 
 		if messages, ok := warnings[fm.Ingress]; ok {
 			minionEventType = api_v1.EventTypeWarning
-			minionEventTitle = "AddedOrUpdatedWithWarning"
+			minionEventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 			minionEventWarningMessage = fmt.Sprintf("%s%swith warning(s): %v", minionEventWarningMessage, minionEventWarningSuffix, formatWarningMessages(messages))
 			minionEventWarningSuffix = "; "
 		}
 
 		if operationErr != nil {
 			minionEventType = api_v1.EventTypeWarning
-			minionEventTitle = "AddedOrUpdatedWithError"
+			minionEventTitle = nl.EventReasonAddedOrUpdatedWithError
 			minionEventWarningMessage = fmt.Sprintf("%s%s; but was not applied: %v", minionEventWarningMessage, minionEventWarningSuffix, operationErr)
 			minionEventWarningSuffix = "; "
 		}
@@ -1534,24 +1533,24 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConf
 
 func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig *IngressConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
-	eventTitle := "AddedOrUpdated"
+	eventTitle := nl.EventReasonAddedOrUpdated
 	eventWarningMessage := ""
 
 	if len(ingConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
 	}
 
 	if messages, ok := warnings[ingConfig.Ingress]; ok {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
 	}
 
 	if operationErr != nil {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithError"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithError
 		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
 	}
 
@@ -1568,27 +1567,27 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig
 
 func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *VirtualServerConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
-	eventTitle := "AddedOrUpdated"
+	eventTitle := nl.EventReasonAddedOrUpdated
 	eventWarningMessage := ""
 	state := conf_v1.StateValid
 
 	if len(vsConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(vsConfig.Warnings))
 		state = conf_v1.StateWarning
 	}
 
 	if messages, ok := warnings[vsConfig.VirtualServer]; ok {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
 		state = conf_v1.StateWarning
 	}
 
 	if operationErr != nil {
 		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithError"
+		eventTitle = nl.EventReasonAddedOrUpdatedWithError
 		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
 		state = conf_v1.StateInvalid
 	}
@@ -1605,20 +1604,20 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *
 
 	for _, vsr := range vsConfig.VirtualServerRoutes {
 		vsrEventType := api_v1.EventTypeNormal
-		vsrEventTitle := "AddedOrUpdated"
+		vsrEventTitle := nl.EventReasonAddedOrUpdated
 		vsrEventWarningMessage := ""
 		vsrState := conf_v1.StateValid
 
 		if messages, ok := warnings[vsr]; ok {
 			vsrEventType = api_v1.EventTypeWarning
-			vsrEventTitle = "AddedOrUpdatedWithWarning"
+			vsrEventTitle = nl.EventReasonAddedOrUpdatedWithWarning
 			vsrEventWarningMessage = fmt.Sprintf(" with warning(s): %v", formatWarningMessages(messages))
 			vsrState = conf_v1.StateWarning
 		}
 
 		if operationErr != nil {
 			vsrEventType = api_v1.EventTypeWarning
-			vsrEventTitle = "AddedOrUpdatedWithError"
+			vsrEventTitle = nl.EventReasonAddedOrUpdatedWithError
 			vsrEventWarningMessage = fmt.Sprintf(" %s; but was not applied:%v", vsrEventWarningMessage, operationErr)
 			vsrState = conf_v1.StateInvalid
 		}
@@ -1780,7 +1779,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 			lbc.handleRegularSecretDeletion(resources)
 		}
 		if lbc.isSpecialSecret(key) {
-			lbc.recorder.Eventf(lbc.metadata.pod, conf_v1.StateWarning, secretDeletedReason, "A special secret [%s] was deleted.  Retaining the secret on this pod but this will affect new pods.", key)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonSecretDeleted, "A special secret [%s] was deleted.  Retaining the secret on this pod but this will affect new pods.", key)
 			nl.Warnf(lbc.Logger, "A special Secret %v was removed. Retaining the Secret.", key)
 		}
 		return
@@ -1853,7 +1852,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes, !lbc.configurator.DynamicSSLReloadEnabled())
 	if addOrUpdateErr != nil {
 		nl.Errorf(lbc.Logger, "Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
-		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonUpdatedWithError, "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
@@ -1884,7 +1883,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 
 	// When the MGMT Configmap updates, we don't need to reload here, we are reloading in updateAllConfigs().
 	if !reload {
-		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeNormal, "SecretUpdated", "the special Secret %v was updated", secretNsName)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeNormal, nl.EventReasonSecretUpdated, "the special Secret %v was updated", secretNsName)
 		return
 	}
 
@@ -1909,7 +1908,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		}
 	}
 
-	lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeNormal, "SecretUpdated", "the special Secret %v was updated", secretNsName)
+	lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeNormal, nl.EventReasonSecretUpdated, "the special Secret %v was updated", secretNsName)
 }
 
 // writeSpecialSecrets generates content and writes the secret to disk
@@ -1924,7 +1923,7 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, sp
 		err := lbc.configurator.AddOrUpdateLicenseSecret(secret)
 		if err != nil {
 			nl.Error(lbc.Logger, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "the license Secret %v was updated, but not applied: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonUpdatedWithError, "the license Secret %v was updated, but not applied: %v", secretNsName, err)
 			return false
 		}
 	case secrets.SecretTypeCA:
@@ -1945,7 +1944,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		err := lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonRejected, "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 			return false
 		}
 	}
@@ -1953,7 +1952,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		err := lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonRejected, "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 			return false
 		}
 	}
@@ -1961,7 +1960,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		err := secrets.ValidateLicenseSecret(secret)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonRejected, "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 			return false
 		}
 	}
@@ -1969,7 +1968,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		err := secrets.ValidateCASecret(secret)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonRejected, "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 			return false
 		}
 	}
@@ -1977,7 +1976,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		err := secrets.ValidateTLSSecret(secret)
 		if err != nil {
 			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonRejected, "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 			return false
 		}
 	}
@@ -1995,7 +1994,7 @@ func (lbc *LoadBalancerController) performNGINXReload(secret *api_v1.Secret) boo
 	secretNsName := generateSecretNSName(secret)
 	if err := lbc.configurator.Reload(false); err != nil {
 		nl.Errorf(lbc.Logger, "error when reloading NGINX when updating the special Secrets: %v", err)
-		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, nl.EventReasonUpdatedWithError, "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return false
 	}
 	return true
@@ -3513,7 +3512,7 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 		p := ConfigurationProblem{
 			Object:  vsNew,
 			IsError: true,
-			Reason:  "Rejected",
+			Reason:  nl.EventReasonRejected,
 			Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", getResourceKey(&vsNew.ObjectMeta), validationError.Error()),
 		}
 		problems = append(problems, p)

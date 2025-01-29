@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	minimumInterval    = 60
-	invalidValueReason = "InvalidValue"
+	minimumInterval = 60
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -39,7 +38,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s: 'server-tokens' must be a bool for OSS, ignoring", cfgm.GetNamespace(), cfgm.GetName())
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		} else {
@@ -55,7 +54,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			if parsedMethod, err := ParseLBMethodForPlus(lbMethod); err != nil {
 				errorText := fmt.Sprintf("ConfigMap %s/%s: invalid value for 'lb-method': %q: %v, ignoring", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			} else {
 				cfgParams.LBMethod = parsedMethod
@@ -64,7 +63,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			if parsedMethod, err := ParseLBMethod(lbMethod); err != nil {
 				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			} else {
 				cfgParams.LBMethod = parsedMethod
@@ -115,7 +114,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if HTTP2, exists, err := GetMapKeyAsBool(cfgm.Data, "http2", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.HTTP2 = HTTP2
@@ -125,7 +124,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if redirectToHTTPS, exists, err := GetMapKeyAsBool(cfgm.Data, "redirect-to-https", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.RedirectToHTTPS = redirectToHTTPS
@@ -135,7 +134,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if sslRedirect, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-redirect", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.SSLRedirect = sslRedirect
@@ -145,7 +144,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if hsts, exists, err := GetMapKeyAsBool(cfgm.Data, "hsts", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			parsingErrors := false
@@ -153,21 +152,21 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			hstsMaxAge, existsMA, err := GetMapKeyAsInt64(cfgm.Data, "hsts-max-age", cfgm)
 			if existsMA && err != nil {
 				nl.Error(l, err)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 				parsingErrors = true
 				configOk = false
 			}
 			hstsIncludeSubdomains, existsIS, err := GetMapKeyAsBool(cfgm.Data, "hsts-include-subdomains", cfgm)
 			if existsIS && err != nil {
 				nl.Error(l, err)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 				parsingErrors = true
 				configOk = false
 			}
 			hstsBehindProxy, existsBP, err := GetMapKeyAsBool(cfgm.Data, "hsts-behind-proxy", cfgm)
 			if existsBP && err != nil {
 				nl.Error(l, err)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 				parsingErrors = true
 				configOk = false
 			}
@@ -175,7 +174,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			if parsingErrors {
 				errorText := fmt.Sprintf("ConfigMap %s/%s: there are configuration issues with HSTS settings, ignoring all HSTS options", cfgm.GetNamespace(), cfgm.GetName())
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			} else {
 				cfgParams.HSTS = hsts
@@ -195,7 +194,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if proxyProtocol, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-protocol", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.ProxyProtocol = proxyProtocol
@@ -210,7 +209,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				nl.Error(l, errorText)
 				configOk = false
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			}
 		} else {
 			cfgParams.RealIPHeader = realIPHeader
@@ -224,7 +223,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if realIPRecursive, exists, err := GetMapKeyAsBool(cfgm.Data, "real-ip-recursive", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.RealIPRecursive = realIPRecursive
@@ -238,7 +237,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if sslPreferServerCiphers, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-prefer-server-ciphers", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.MainServerSSLPreferServerCiphers = sslPreferServerCiphers
@@ -262,7 +261,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if !strings.HasPrefix(accessLog, "syslog:") {
 			errorText := fmt.Sprintf("ConfigMap %s/%s: invalid value for 'access-log': %q, ignoring", cfgm.GetNamespace(), cfgm.GetName(), accessLog)
 			nl.Warn(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configOk = false
 		} else {
 			cfgParams.MainAccessLog = accessLog
@@ -272,7 +271,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if accessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "access-log-off", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			if accessLogOff {
@@ -306,7 +305,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if defaultServerAccessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "default-server-access-log-off", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.DefaultServerAccessLogOff = defaultServerAccessLogOff
@@ -320,7 +319,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if proxyBuffering, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-buffering", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.ProxyBuffering = proxyBuffering
@@ -358,7 +357,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if _, exists, err := GetMapKeyAsInt(cfgm.Data, "worker-processes", cfgm); exists {
 		if err != nil && cfgm.Data["worker-processes"] != "auto" {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.MainWorkerProcesses = cfgm.Data["worker-processes"]
@@ -384,7 +383,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if keepalive, exists, err := GetMapKeyAsInt(cfgm.Data, "keepalive", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.Keepalive = keepalive
@@ -394,7 +393,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if maxFails, exists, err := GetMapKeyAsInt(cfgm.Data, "max-fails", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.MaxFails = maxFails
@@ -484,7 +483,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		} else {
 			errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "resolver-addresses")
 			nl.Warn(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configOk = false
 		}
 	}
@@ -492,7 +491,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if resolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "resolver-ipv6", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			if nginxPlus {
@@ -500,7 +499,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "resolver-ipv6")
 				nl.Warn(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -512,7 +511,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		} else {
 			errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "resolver-valid")
 			nl.Warn(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configOk = false
 		}
 	}
@@ -523,7 +522,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		} else {
 			errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "resolver-timeout")
 			nl.Warn(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configOk = false
 		}
 	}
@@ -535,7 +534,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if keepaliveRequests, exists, err := GetMapKeyAsInt64(cfgm.Data, "keepalive-requests", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.MainKeepaliveRequests = keepaliveRequests
@@ -545,7 +544,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if varHashBucketSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-bucket-size", cfgm, true); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.VariablesHashBucketSize = varHashBucketSize
@@ -555,7 +554,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if varHashMaxSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-max-size", cfgm, false); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			cfgParams.VariablesHashMaxSize = varHashMaxSize
@@ -577,7 +576,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if openTracing, exists, err := GetMapKeyAsBool(cfgm.Data, "opentracing", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
 			if cfgParams.MainOpenTracingLoadModule {
@@ -585,7 +584,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			} else {
 				errorText := "ConfigMap key 'opentracing' requires both 'opentracing-tracer' and 'opentracing-tracer-config' keys configured, Opentracing will be disabled, ignoring"
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -603,7 +602,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 					appProtectFailureModeAction,
 				)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -619,7 +618,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 					appProtectCompressedRequestsAction,
 				)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -639,7 +638,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 					appProtectCPUThresholds,
 				)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -655,7 +654,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 					appProtectPhysicalMemoryThresholds,
 				)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -672,7 +671,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 					appProtectReconnectPeriod,
 				)
 				nl.Error(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
 		}
@@ -722,7 +721,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 			nl.Error(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		} else {
 			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
@@ -736,7 +735,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 	if resolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "resolver-ipv6", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configWarnings = true
 		} else {
 			mgmtCfgParams.ResolverIPV6 = BoolToPointerBool(resolverIpv6)
@@ -751,7 +750,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 			nl.Error(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		} else {
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
@@ -764,7 +763,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the usage-report-endpoint key: got %q: %v. Using default endpoint.", cfgm.GetNamespace(), cfgm.GetName(), endpoint, err)
 			nl.Error(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		} else {
 			mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
@@ -777,13 +776,13 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the interval key: got %q: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, err)
 			nl.Error(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		}
 		if t.Seconds() < minimumInterval {
 			errorText := fmt.Sprintf("Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
 			nl.Error(l, errorText)
-			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 			mgmtCfgParams.Interval = ""
 		} else {
