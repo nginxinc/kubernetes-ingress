@@ -74,7 +74,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", msg)
+			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, nl.EventReasonRejected, msg)
 
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
@@ -84,7 +84,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			}
 		} else {
 			msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
+			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, nl.EventReasonAddedOrUpdated, msg)
 
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)

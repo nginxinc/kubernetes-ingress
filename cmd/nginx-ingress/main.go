@@ -1068,7 +1068,7 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 		for key, value := range labels {
 			fmt.Fprintf(labelsString, "%s=\"%s\", ", key, value)
 		}
-		eventLog.Eventf(newPod, api_v1.EventTypeNormal, "UpdatePodLabel", "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
+		eventLog.Eventf(newPod, api_v1.EventTypeNormal, nl.EventReasonUpdatePodLabel, "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
 		nl.Infof(l, "Pod label updated: %s", pod.ObjectMeta.Name)
 		podUpdated = true
 	}
