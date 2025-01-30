@@ -168,7 +168,7 @@ class TestOIDC:
         create_items_from_yaml(kube_apis, svc_src, ingress_controller_prerequisites.namespace)
 
         with sync_playwright() as playwright:
-            run_oidc(playwright.chromium, ingress_controller_endpoint.public_ip)
+            run_oidc(playwright.chromium, ingress_controller_endpoint.public_ip, ingress_controller_endpoint.port_ssl)
 
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -183,9 +183,9 @@ class TestOIDC:
         )
 
 
-def run_oidc(browser_type, ip_address):
+def run_oidc(browser_type, ip_address, port):
 
-    browser = browser_type.launch(headless=True, args=[f"--host-resolver-rules=MAP * {ip_address}"])
+    browser = browser_type.launch(headless=True, args=[f"--host-resolver-rules=MAP * {ip_address}:{port}"])
     context = browser.new_context(ignore_https_errors=True)
 
     try:
