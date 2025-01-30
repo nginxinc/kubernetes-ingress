@@ -15,7 +15,7 @@ WORKDIR /workspace/tests
 
 COPY --link tests/requirements.txt /workspace/tests/
 RUN pip install --require-hashes -r requirements.txt --no-deps
-RUN playwright install chromium
+RUN playwright install --with-deps chromium
 
 COPY --link deployments /workspace/deployments
 COPY --link config /workspace/config
