@@ -1,4 +1,5 @@
 import base64
+import secrets
 
 import pytest
 import requests
@@ -23,6 +24,8 @@ from suite.utils.vs_vsr_resources_utils import (
     patch_virtual_server_from_yaml,
 )
 
+username = "nginx-user-" + secrets.token_hex(4)
+password = secrets.token_hex(8)
 keycloak_src = f"{TEST_DATA}/oidc/keycloak.yaml"
 keycloak_vs_src = f"{TEST_DATA}/oidc/virtual-server-idp.yaml"
 oidc_secret_src = f"{TEST_DATA}/oidc/client-secret.yaml"
@@ -71,9 +74,9 @@ def keycloak_setup(request, kube_apis, test_namespace, ingress_controller_endpoi
     create_user_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/admin/realms/master/users"
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}", "Host": keycloak_address}
     user_payload = {
-        "username": "nginx-user",
+        "username": username,
         "enabled": True,
-        "credentials": [{"type": "password", "value": "test", "temporary": False}],
+        "credentials": [{"type": "password", "value": password, "temporary": False}],
     }
     response = requests.post(create_user_url, headers=headers, json=user_payload, verify=False)
 
@@ -193,9 +196,9 @@ def run_oidc(browser_type, ip_address, port):
 
         page.goto("https://virtual-server-tls.example.com")
         page.wait_for_selector('input[name="username"]')
-        page.fill('input[name="username"]', "nginx-user")
+        page.fill('input[name="username"]', username)
         page.wait_for_selector('input[name="password"]', timeout=5000)
-        page.fill('input[name="password"]', "test")
+        page.fill('input[name="password"]', password)
 
         with page.expect_navigation():
             page.click('input[type="submit"]')
