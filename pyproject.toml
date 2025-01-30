@@ -45,6 +45,7 @@ markers =[
     "hsts",
     "ingresses",
     "multi_ns",
+    "oidc",
     "policies",
     "policies_rl",
     "policies_jwt",
