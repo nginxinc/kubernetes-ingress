@@ -23,12 +23,9 @@ import (
 )
 
 const (
-	reasonBadConfig         = "BadConfig"
-	reasonCreateDNSEndpoint = "CreateDNSEndpoint"
-	reasonUpdateDNSEndpoint = "UpdateDNSEndpoint"
-	recordTypeA             = "A"
-	recordTypeAAAA          = "AAAA"
-	recordTypeCNAME         = "CNAME"
+	recordTypeA     = "A"
+	recordTypeAAAA  = "AAAA"
+	recordTypeCNAME = "CNAME"
 )
 
 var vsGVK = vsapi.SchemeGroupVersion.WithKind("VirtualServer")
@@ -54,7 +51,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 		targets, recordType, err := getValidTargets(ctx, vs.Status.ExternalEndpoints)
 		if err != nil {
 			nl.Error(l, "Invalid external endpoint")
-			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Invalid external endpoint")
+			rec.Eventf(vs, corev1.EventTypeWarning, nl.EventReasonBadConfig, "Invalid external endpoint")
 			return err
 		}
 
@@ -63,7 +60,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(ctx, nsi.extdnslister, vs, targets, recordType)
 		if err != nil {
 			nl.Errorf(l, "incorrect DNSEndpoint config for VirtualServer resource: %s", err)
-			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
+			rec.Eventf(vs, corev1.EventTypeWarning, nl.EventReasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
 			return err
 		}
 
@@ -80,11 +77,11 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 					return fmt.Errorf("DNSEndpoint has already been created")
 				}
 				nl.Errorf(l, "Error creating DNSEndpoint for VirtualServer resource: %v", err)
-				rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Error creating DNSEndpoint for VirtualServer resource %s", err)
+				rec.Eventf(vs, corev1.EventTypeWarning, nl.EventReasonBadConfig, "Error creating DNSEndpoint for VirtualServer resource %s", err)
 				return err
 			}
-			rec.Eventf(vs, corev1.EventTypeNormal, reasonCreateDNSEndpoint, "Successfully created DNSEndpoint %q", newDNSEndpoint.Name)
-			rec.Eventf(dep, corev1.EventTypeNormal, reasonCreateDNSEndpoint, "Successfully created DNSEndpoint for VirtualServer %q", vs.Name)
+			rec.Eventf(vs, corev1.EventTypeNormal, nl.EventReasonCreateDNSEndpoint, "Successfully created DNSEndpoint %q", newDNSEndpoint.Name)
+			rec.Eventf(dep, corev1.EventTypeNormal, nl.EventReasonCreateDNSEndpoint, "Successfully created DNSEndpoint for VirtualServer %q", vs.Name)
 		}
 
 		// Update existing DNSEndpoint object
@@ -93,11 +90,11 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 			dep, err = client.ExternaldnsV1().DNSEndpoints(updateDNSEndpoint.Namespace).Update(ctx, updateDNSEndpoint, metav1.UpdateOptions{})
 			if err != nil {
 				nl.Errorf(l, "Error updating DNSEndpoint endpoint for VirtualServer resource: %v", err)
-				rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Error updating DNSEndpoint for VirtualServer resource: %s", err)
+				rec.Eventf(vs, corev1.EventTypeWarning, nl.EventReasonBadConfig, "Error updating DNSEndpoint for VirtualServer resource: %s", err)
 				return err
 			}
-			rec.Eventf(vs, corev1.EventTypeNormal, reasonUpdateDNSEndpoint, "Successfully updated DNSEndpoint %q", updateDNSEndpoint.Name)
-			rec.Eventf(dep, corev1.EventTypeNormal, reasonUpdateDNSEndpoint, "Successfully updated DNSEndpoint for VirtualServer %q", vs.Name)
+			rec.Eventf(vs, corev1.EventTypeNormal, nl.EventReasonUpdateDNSEndpoint, "Successfully updated DNSEndpoint %q", updateDNSEndpoint.Name)
+			rec.Eventf(dep, corev1.EventTypeNormal, nl.EventReasonUpdateDNSEndpoint, "Successfully updated DNSEndpoint for VirtualServer %q", vs.Name)
 		}
 		return nil
 	}
