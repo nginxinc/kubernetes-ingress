@@ -1,13 +1,13 @@
 ---
-docs: DOCS-583
-doctypes:
-- ''
 title: Build NGINX Ingress Controller with NGINX App Protect DoS
-toc: true
 weight: 100
+toc: true
+type: how-to
+product: NIC
+docs: DOCS-583
 ---
 
-This document explains how to build an image for NGINX Ingress Controller with NGINX App Protect DoS from source code.
+This document explains how to build an image for F5 NGINX Ingress Controller with NGINX App Protect DoS from source code.
 
 {{<call-out "tip" "Pre-built image alternatives" >}}If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -180,7 +180,7 @@ kubectl apply -f config/crd/bases/appprotectdos.f5.com_dosprotectedresources.yam
 
 ### Helm Chart
 
-The App Protect DoS Arbitrator can be installed using the [NGINX App Protect DoS Helm Chart](https://github.com/nginx/nap-dos-arbitrator-helm-chart).
+The App Protect DoS Arbitrator can be installed using the [NGINX App Protect DoS Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart).
 If you have the NGINX Helm Repository already added, you can install the App Protect DoS Arbitrator by running the following command:
 
 ```shell
