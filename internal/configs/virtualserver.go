@@ -927,7 +927,7 @@ type policiesCfg struct {
 	Deny             []string
 	RateLimit        rateLimit
 	JWTAuth          jwtAuth
-	AuthJWTClaimSets []*version2.AuthJWTClaimSet
+	AuthJWTClaimSets []version2.AuthJWTClaimSet
 	BasicAuth        *version2.BasicAuth
 	IngressMTLS      *version2.IngressMTLS
 	EgressMTLS       *version2.EgressMTLS
