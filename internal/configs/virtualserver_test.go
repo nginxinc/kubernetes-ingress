@@ -6587,21 +6587,23 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: rateLimit{
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "notice",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+					},
+					Options: version2.LimitReqOptions{
+						LogLevel:   "notice",
+						RejectCode: 503,
 					},
 				},
 			},
@@ -6639,30 +6641,32 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: rateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							Key:      "test2",
+							ZoneSize: "20M",
+							Rate:     "20r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
-					{
-						Key:      "test2",
-						ZoneSize: "20M",
-						Rate:     "20r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "error",
+						RejectCode: 503,
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "error",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
 				},
 			},
@@ -6689,26 +6693,29 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "5r/s",
-						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+				RateLimit: rateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "5r/s",
+							ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+						},
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "notice",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "notice",
+						RejectCode: 503,
+					},
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+						},
 					},
 				},
 			},
 			msg: "rate limit reference with scale",
 		},
+
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
@@ -6731,11 +6738,13 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Secret: "/etc/nginx/secrets/default-jwt-secret",
-					Realm:  "My Test API",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Secret: "/etc/nginx/secrets/default-jwt-secret",
+						Realm:  "My Test API",
+					},
+					JWKSEnabled: false,
 				},
-				JWKSAuthEnabled: false,
 			},
 			msg: "jwt reference",
 		},
@@ -6762,18 +6771,20 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Key:   "default/jwt-policy-2",
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "443",
-						JwksPath:   "/keys",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Key:   "default/jwt-policy-2",
+						Realm: "My Test API",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "https",
+							JwksHost:   "idp.example.com",
+							JwksPort:   "443",
+							JwksPath:   "/keys",
+						},
+						KeyCache: "1h",
 					},
-					KeyCache: "1h",
+					JWKSEnabled: true,
 				},
-				JWKSAuthEnabled: true,
 			},
 			msg: "Basic jwks example",
 		},
@@ -6800,18 +6811,20 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Key:   "default/jwt-policy-2",
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "",
-						JwksPath:   "/keys",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Key:   "default/jwt-policy-2",
+						Realm: "My Test API",
+						JwksURI: version2.JwksURI{
+							JwksScheme: "https",
+							JwksHost:   "idp.example.com",
+							JwksPort:   "",
+							JwksPath:   "/keys",
+						},
+						KeyCache: "1h",
 					},
-					KeyCache: "1h",
+					JWKSEnabled: true,
 				},
-				JWKSAuthEnabled: true,
 			},
 			msg: "Basic jwks example, no port in JwksURI",
 		},
@@ -7072,17 +7085,19 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				APIKey: &version2.APIKey{
-					Header:  []string{"X-API-Key"},
-					Query:   []string{"api-key"},
-					MapName: "apikey_auth_client_name_default_test_api_key_policy",
-				},
-				APIKeyEnabled:   true,
-				APIKeyClientMap: nil,
-				APIKeyClients: []apiKeyClient{
-					{
-						ClientID:  "client1",
-						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+				APIKey: apiKeyAuth{
+					Key: &version2.APIKey{
+						Header:  []string{"X-API-Key"},
+						Query:   []string{"api-key"},
+						MapName: "apikey_auth_client_name_default_test_api_key_policy",
+					},
+					Enabled:   true,
+					ClientMap: nil,
+					Clients: []apiKeyClient{
+						{
+							ClientID:  "client1",
+							HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+						},
 					},
 				},
 			},
@@ -7113,17 +7128,19 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				APIKey: &version2.APIKey{
-					Header:  []string{"X-API-Key"},
-					Query:   []string{"api-key"},
-					MapName: "apikey_auth_client_name_default_test_api_key_policy",
-				},
-				APIKeyEnabled:   true,
-				APIKeyClientMap: nil,
-				APIKeyClients: []apiKeyClient{
-					{
-						ClientID:  "client1",
-						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+				APIKey: apiKeyAuth{
+					Key: &version2.APIKey{
+						Header:  []string{"X-API-Key"},
+						Query:   []string{"api-key"},
+						MapName: "apikey_auth_client_name_default_test_api_key_policy",
+					},
+					Enabled:   true,
+					ClientMap: nil,
+					Clients: []apiKeyClient{
+						{
+							ClientID:  "client1",
+							HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+						},
 					},
 				},
 			},
@@ -7397,30 +7414,32 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			policyOpts: policyOptions{},
 			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+				RateLimit: rateLimit{
+					Zones: []version2.LimitReqZone{
+						{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							Key:      "test2",
+							ZoneSize: "20M",
+							Rate:     "20r/s",
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
-					{
-						Key:      "test2",
-						ZoneSize: "20M",
-						Rate:     "20r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Options: version2.LimitReqOptions{
+						LogLevel:   "error",
+						RejectCode: 503,
 					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "error",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					Reqs: []version2.LimitReq{
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+						},
+						{
+							ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+						},
 					},
 				},
 			},
@@ -7575,9 +7594,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Secret: "/etc/nginx/secrets/default-jwt-secret",
-					Realm:  "test",
+				JWTAuth: jwtAuth{
+					Auth: &version2.JWTAuth{
+						Secret: "/etc/nginx/secrets/default-jwt-secret",
+						Realm:  "test",
+					},
 				},
 			},
 			expectedWarnings: Warnings{

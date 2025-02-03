@@ -294,14 +294,14 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      # - name: Certify UBI OSS images in quay
-      #   uses: ./.github/actions/certify-openshift-image
-      #   continue-on-error: true
-      #   with:
-      #     image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
-      #     project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
-      #     pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
-      #     preflight_version: 1.11.1
+      - name: Certify UBI OSS images in quay
+        uses: ./.github/actions/certify-openshift-image
+        continue-on-error: true
+        with:
+          image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
+          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
+          preflight_version: 1.11.1
 
   operator:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
@@ -398,7 +398,7 @@ jobs:
           ref: ${{ inputs.release_branch }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9 # v4.0.3
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
@@ -441,7 +441,7 @@ jobs:
 
       - name: Download Syft
         id: syft
-        uses: anchore/sbom-action/download-syft@df80a981bc6edbc4e220a492d3cbe9f5547a6e75 # v0.17.9
+        uses: anchore/sbom-action/download-syft@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # v0.18.0
         if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
       - name: Install Cosign
@@ -621,7 +621,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

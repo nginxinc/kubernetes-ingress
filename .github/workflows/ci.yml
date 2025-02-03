@@ -36,7 +36,7 @@ jobs:
     outputs:
       docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
       some_docs: ${{ github.event.pull_request && steps.docs.outputs.some_docs == 'true' }}
-      k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
+      k8s_latest: "1.32.0"
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
@@ -88,10 +88,10 @@ jobs:
         id: vars
         run: |
           kindest_latest=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
-            | grep -o '"name": *"[^"]*' \
-            | grep -o '[^"]*$' \
+            | jq -r .results.[].name \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | sort -rV \
+            | grep -v v1.32.1 \
             | head -n 1 \
             | sed 's/^.\{1\}//' \
             | tr -d '\n')
@@ -227,7 +227,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -443,7 +443,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Docker Image ${{ matrix.base-os }}
-        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v6.12.0
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
         with:
           file: build/Dockerfile
           context: "."
@@ -464,7 +464,9 @@ jobs:
         id: k8s
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
+          docker version
           kind load docker-image "${{ matrix.image }}:${{ matrix.tag }}" --name ${{ github.run_id }}
+          echo "DEBUG: Kind setup complete!"
         if: ${{ steps.stable_exists.outputs.exists != 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Create Plus Secret
@@ -565,7 +567,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d # v6.12.0
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
         with:
           file: tests/Dockerfile
           context: "."

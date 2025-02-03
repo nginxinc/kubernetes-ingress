@@ -5,7 +5,7 @@ FROM kindest/node:v1.32.0@sha256:c48c62eac5da28cdadcf560d1d8616cfa6783b58f0d94cf
 # this is here so we can grab the latest version of skopeo and have dependabot keep it up to date
 FROM quay.io/skopeo/stable:v1.17.0
 
-FROM python:3.13@sha256:d57ec66c94b9497b9f3c66f6cdddc1e4e0bad4c584397e0b57a721baef0e6fdc
+FROM python:3.13@sha256:137ae4b9f85671bd912a82a19b6966e2655f73e13579b5d6ad4edbddaaf62a9c
 
 RUN apt-get update \
 	&& apt-get install -y curl git \
@@ -15,6 +15,7 @@ WORKDIR /workspace/tests
 
 COPY --link tests/requirements.txt /workspace/tests/
 RUN pip install --require-hashes -r requirements.txt --no-deps
+RUN playwright install --with-deps chromium
 
 COPY --link deployments /workspace/deployments
 COPY --link config /workspace/config
