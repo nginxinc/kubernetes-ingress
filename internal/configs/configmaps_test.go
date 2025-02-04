@@ -806,7 +806,7 @@ func TestParseZoneSync(t *testing.T) {
 				},
 			},
 			want: &ZoneSync{
-				EnableZoneSync: true,
+				Enable: true,
 			},
 			msg: "zone-sync set to true",
 		},
@@ -817,7 +817,7 @@ func TestParseZoneSync(t *testing.T) {
 				},
 			},
 			want: &ZoneSync{
-				EnableZoneSync: false,
+				Enable: false,
 			},
 			msg: "zone-sync set to false",
 		},
@@ -826,8 +826,8 @@ func TestParseZoneSync(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			result, _ := ParseConfigMap(context.Background(), test.configMap, true, false, false, false, makeEventLogger())
-			if result.ZoneSync.EnableZoneSync != test.want.EnableZoneSync {
-				t.Errorf("EnableZoneSync: want %v, got %v", test.want.EnableZoneSync, result.ZoneSync)
+			if result.ZoneSync.Enable != test.want.Enable {
+				t.Errorf("Enable: want %v, got %v", test.want.Enable, result.ZoneSync)
 			}
 		})
 	}
@@ -848,8 +848,8 @@ func TestParseZoneSyncPort(t *testing.T) {
 				},
 			},
 			want: &ZoneSync{
-				EnableZoneSync: true,
-				Port:           1234,
+				Enable: true,
+				Port:   1234,
 			},
 			msg: "zone-sync-port set to 1234",
 		},
@@ -939,7 +939,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 	}
 }
 
-func TestMultipleNamespaces(t *testing.T) {
+func TestZoneSyncDomainMultipleNamespaces(t *testing.T) {
 	testCases := []struct {
 		name      string
 		namespace string
@@ -962,7 +962,7 @@ func TestMultipleNamespaces(t *testing.T) {
 			_ = os.Setenv("POD_NAMESPACE", tc.namespace)
 
 			zoneSyncConfig := version1.ZoneSyncConfig{
-				EnableZoneSync: true,
+				Enable: true,
 				Domain: fmt.Sprintf("%s-headless.%s.svc.cluster.local",
 					os.Getenv("POD_NAMESPACE"),
 					os.Getenv("POD_NAMESPACE")),

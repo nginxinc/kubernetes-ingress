@@ -407,7 +407,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			configOk = false
 		} else {
 			if nginxPlus {
-				cfgParams.ZoneSync.EnableZoneSync = zoneSync
+				cfgParams.ZoneSync.Enable = zoneSync
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "zone-sync")
 				nl.Warn(l, errorText)
@@ -423,7 +423,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
-			if cfgParams.ZoneSync.EnableZoneSync {
+			if cfgParams.ZoneSync.Enable {
 				portValidationError := validation.ValidatePort(zoneSyncPort)
 				if portValidationError != nil {
 					nl.Error(l, portValidationError)
@@ -821,9 +821,9 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 
 	podNamespace := os.Getenv("POD_NAMESPACE")
 	zoneSyncConfig := version1.ZoneSyncConfig{
-		EnableZoneSync: config.ZoneSync.EnableZoneSync,
-		Port:           config.ZoneSync.Port,
-		Domain:         fmt.Sprintf("%s-headless.%s.svc.cluster.local", podNamespace, podNamespace),
+		Enable: config.ZoneSync.Enable,
+		Port:   config.ZoneSync.Port,
+		Domain: fmt.Sprintf("%s-headless.%s.svc.cluster.local", podNamespace, podNamespace),
 	}
 
 	nginxCfg := &version1.MainConfig{
