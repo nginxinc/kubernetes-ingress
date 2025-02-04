@@ -1700,12 +1700,10 @@ func generateAuthJwtClaimSet(jwtCondition conf_v1.JWTCondition, vsNamespace stri
 	}
 }
 
-// TODO: process claim with spaces
 func generateAuthJwtClaimSetVariable(claim string, vsNamespace string, vsName string) string {
 	return fmt.Sprintf("$jwt_%v_%v_%v", vsNamespace, vsName, strings.Join(strings.Split(claim, "."), "_"))
 }
 
-// TODO: process claim with spaces
 func generateAuthJwtClaimSetClaim(claim string) string {
 	return strings.Join(strings.Split(claim, "."), " ")
 }
