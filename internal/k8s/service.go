@@ -61,6 +61,11 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	}
 }
 
+// isHeadless returns true if the Service is headless (clusterIP == "None").
+func isHeadless(svc *v1.Service) bool {
+	return svc.Spec.ClusterIP == v1.ClusterIPNone
+}
+
 // hasServicedChanged checks if the service has changed based on custom rules we define (eg. port).
 func hasServiceChanges(oldSvc, curSvc *v1.Service) bool {
 	if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
@@ -69,6 +74,11 @@ func hasServiceChanges(oldSvc, curSvc *v1.Service) bool {
 	if hasServiceExternalNameChanges(oldSvc, curSvc) {
 		return true
 	}
+
+	if isHeadless(oldSvc) || isHeadless(curSvc) {
+		return true
+	}
+
 	return false
 }
 
@@ -136,8 +146,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	}
 
 	// First case: the service is the external service for the Ingress Controller
-	// In that case we need to update the statuses of all resources
-
+	//
 	if lbc.IsExternalServiceKeyForStatus(key) {
 		nl.Infof(lbc.Logger, "Syncing service %v", key)
 
@@ -175,8 +184,6 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	}
 
 	// Second case: the service is referenced by some resources in the cluster
-
-	// it is safe to ignore the error
 	namespace, name, _ := ParseNamespaceName(key)
 
 	resources := lbc.configuration.FindResourcesForService(namespace, name)
@@ -188,6 +195,13 @@ func (lbc *LoadBalancerController) syncService(task task) {
 
 	nl.Infof(lbc.Logger, "Updating %v resources", len(resources))
 
+	svc := obj.(*v1.Service)
+	if isHeadless(svc) {
+		nl.Infof(lbc.Logger, "Service %v is headless (clusterIP=None). Handling accordingly.", svc.Name)
+		// TODO: handle headless services
+	}
+
+	// Proceed with your normal resource update logic
 	resourceExes := lbc.createExtendedResources(resources)
 
 	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
