@@ -184,6 +184,8 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	}
 
 	// Second case: the service is referenced by some resources in the cluster
+
+	// it is safe to ignore the error
 	namespace, name, _ := ParseNamespaceName(key)
 
 	resources := lbc.configuration.FindResourcesForService(namespace, name)
