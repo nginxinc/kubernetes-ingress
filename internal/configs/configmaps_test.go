@@ -870,6 +870,42 @@ func TestParseZoneSyncPort(t *testing.T) {
 	}
 }
 
+func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *ZoneSync
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync": "true",
+				},
+			},
+			want: &ZoneSync{
+				Enable: true,
+				Port:   1234,
+			},
+			msg: "zone-sync-port set to default value 12345",
+		},
+	}
+
+	nginxPlus := true
+	hasAppProtect := false
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, _ := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+			if result.ZoneSync.Port != test.want.Port {
+				t.Errorf("Port: want %v, got %v", test.want.Port, result.ZoneSync.Port)
+			}
+		})
+	}
+}
+
 func TestParseZoneSyncPortErrors(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
