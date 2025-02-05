@@ -11,7 +11,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -24,7 +24,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -40,7 +40,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
@@ -55,7 +55,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -67,7 +67,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -180,7 +180,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -200,7 +200,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-dos
 rules:
@@ -260,7 +260,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-dos
 roleRef:
@@ -282,7 +282,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -312,7 +312,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -340,7 +340,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -440,7 +440,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -455,7 +455,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-dos
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -471,7 +471,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -484,7 +484,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -500,7 +500,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
@@ -515,7 +515,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -527,7 +527,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -640,7 +640,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -660,7 +660,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-waf
 rules:
@@ -720,7 +720,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-waf
 roleRef:
@@ -742,7 +742,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -772,7 +772,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -800,7 +800,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -895,7 +895,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -910,7 +910,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-waf
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -926,7 +926,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -939,7 +939,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -955,7 +955,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
@@ -970,7 +970,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -982,7 +982,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -1095,7 +1095,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -1115,7 +1115,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-wafv5
 rules:
@@ -1175,7 +1175,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: appprotect-wafv5
 roleRef:
@@ -1197,7 +1197,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -1227,7 +1227,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -1262,7 +1262,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -1397,7 +1397,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -1412,7 +1412,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: appprotect-wafv5
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -1428,7 +1428,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -1441,7 +1441,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -1456,7 +1456,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -1468,7 +1468,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -1550,7 +1550,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -1570,7 +1570,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: custom-resources
 rules:
@@ -1630,7 +1630,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: custom-resources
 roleRef:
@@ -1652,7 +1652,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -1682,7 +1682,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -1710,7 +1710,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -1798,7 +1798,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -1816,7 +1816,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: custom-resources
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -1832,7 +1832,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -1845,7 +1845,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -1860,7 +1860,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -1872,7 +1872,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -1975,7 +1975,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -1995,7 +1995,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 rules:
@@ -2055,7 +2055,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 roleRef:
@@ -2077,7 +2077,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -2107,7 +2107,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   selector:
@@ -2135,7 +2135,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: nginx-ingress
-        image: nginx/nginx-ingress:4.0.0
+        image: nginx/nginx-ingress:4.0.1
         imagePullPolicy: "IfNotPresent"
         ports:
         - name: http
@@ -2229,7 +2229,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -2247,7 +2247,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: daemonset
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -2263,7 +2263,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -2276,7 +2276,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -2291,7 +2291,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -2303,7 +2303,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -2406,7 +2406,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -2426,7 +2426,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 rules:
@@ -2486,7 +2486,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 roleRef:
@@ -2508,7 +2508,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -2538,7 +2538,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -2566,7 +2566,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -2660,7 +2660,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -2678,7 +2678,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: default
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -2694,7 +2694,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -2707,7 +2707,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -2722,7 +2722,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -2734,7 +2734,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -2837,7 +2837,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -2857,7 +2857,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: gc
 rules:
@@ -2917,7 +2917,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: gc
 roleRef:
@@ -2939,7 +2939,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -2969,7 +2969,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -2997,7 +2997,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -3092,7 +3092,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -3110,7 +3110,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   listeners:
@@ -3131,7 +3131,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: global-configuration
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -3147,7 +3147,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -3160,7 +3160,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -3175,7 +3175,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -3187,7 +3187,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -3290,7 +3290,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -3310,7 +3310,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 rules:
@@ -3370,7 +3370,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 roleRef:
@@ -3392,7 +3392,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -3422,7 +3422,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -3450,7 +3450,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -3544,7 +3544,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   annotations:
     ingressclass.kubernetes.io/is-default-class: "true"
@@ -3564,7 +3564,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: ingress-class
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -3580,7 +3580,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -3593,7 +3593,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -3608,7 +3608,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -3620,7 +3620,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -3723,7 +3723,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -3743,7 +3743,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: nginx-ingress
 rules:
@@ -3803,7 +3803,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: nginx-ingress
 roleRef:
@@ -3825,7 +3825,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -3855,7 +3855,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -3883,7 +3883,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -3977,7 +3977,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -3995,7 +3995,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: namespace
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
 
@@ -4011,7 +4011,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -4024,7 +4024,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   {}
@@ -4040,7 +4040,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 data:
   license-token-secret-name: license-token
@@ -4055,7 +4055,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 /-/-/-/
 # Source: nginx-ingress/templates/clusterrole.yaml
@@ -4067,7 +4067,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 rules:
 - apiGroups:
@@ -4170,7 +4170,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 subjects:
 - kind: ServiceAccount
@@ -4190,7 +4190,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 rules:
@@ -4250,7 +4250,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
   namespace: default
 roleRef:
@@ -4272,7 +4272,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   externalTrafficPolicy: Local
@@ -4302,7 +4302,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
@@ -4330,7 +4330,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: nginx/nginx-ingress:4.0.0
+      - image: nginx/nginx-ingress:4.0.1
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -4425,7 +4425,7 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   controller: nginx.org/ingress-controller
@@ -4440,6 +4440,6 @@ metadata:
     helm.sh/chart: nginx-ingress-1.5.0
     app.kubernetes.io/name: nginx-ingress
     app.kubernetes.io/instance: plus
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: "4.0.1"
     app.kubernetes.io/managed-by: Helm
 ---
