@@ -6,6 +6,35 @@ type: reference
 product: NIC
 docs: DOCS-616
 ---
+## 4.0.1
+
+06 Feb 2024
+
+### <i class="fa-solid fa-bomb"></i> Breaking Changes
+
+### <i class="fa-solid fa-rocket"></i> Features
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 4.0.1 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=4.0.1),
+[GitHub Container](https://github.com/nginx/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 4.0.1 images from the F5 Container registry or build your own image using the 4.0.1 source code
+- For Helm, use version 2.0.1 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.25-1.32.
+
 ## 4.0.0
 
 16 Dec 2024
