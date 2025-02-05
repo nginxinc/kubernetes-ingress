@@ -2,7 +2,7 @@
 
 In this example, we configure the `zone-sync` feature. The feature is available in NGINX Plus.
 
-## Configure NGINX Plus Zone Synchronization and Resolver
+## Configure NGINX Plus Zone Synchronization and Resolver without TLS
 
 In this step we configure:
 
@@ -15,3 +15,5 @@ Steps:
     ```console
     kubectl apply -f nginx-config.yaml
     ```
+
+If we don't specify `zone-sync-port` in the `nginx-config.yaml` the Ingress Controller will use default port number `12345`.
