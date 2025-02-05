@@ -217,7 +217,7 @@ func main() {
 	}
 
 	if *nginxPlus {
-		if cfgParams.ZoneSync.EnableZoneSync {
+		if cfgParams.ZoneSync.Enable {
 			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-headless", controllerNamespace))
 			if err != nil {
 				nl.Errorf(l, "Failed to create headless Service: %v", err)
