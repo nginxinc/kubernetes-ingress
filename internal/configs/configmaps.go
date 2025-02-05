@@ -439,6 +439,10 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 				configOk = false
 			}
 		}
+	} else {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.Port = 12345 // default port
+		}
 	}
 
 	if upstreamZoneSize, exists := cfgm.Data["upstream-zone-size"]; exists {

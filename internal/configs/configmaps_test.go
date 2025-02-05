@@ -885,7 +885,7 @@ func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.
 			},
 			want: &ZoneSync{
 				Enable: true,
-				Port:   1234,
+				Port:   12345,
 			},
 			msg: "zone-sync-port set to default value 12345",
 		},
