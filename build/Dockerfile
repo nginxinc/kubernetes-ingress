@@ -300,7 +300,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus=33+5.210*; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus=33+5.210* nginx-plus-module-appprotect=33+5.210*; \
 	rm -f /etc/apt/sources.list.d/app-protect.sources; \
 	nap-waf.sh; \
 	fi \
