@@ -138,3 +138,5 @@ jobs:
           build-args: |
             NGINX=${{ needs.checks.outputs.nginx_version }}
             NJS=${{ needs.checks.outputs.njs_version }}
+          secrets: |
+            ${{ format('"rhel_license={0}"', secrets.RHEL_LICENSE) }}
