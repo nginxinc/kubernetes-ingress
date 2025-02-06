@@ -10,15 +10,17 @@ docs: DOCS-616
 
 06 Feb 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
-
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [7295](https://github.com/nginx/kubernetes-ingress/pull/7295) Clean up and fix for NIC Pod failing to bind when NGINX exits unexpectedly
 
 ### <i class="fa-solid fa-box"></i> Helm Chart
+- [7188](https://github.com/nginx/kubernetes-ingress/pull/7188) Correct typo in helm lease annotations template
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [7301](https://github.com/nginx/kubernetes-ingress/pull/7301) Update to nginx 1.27.4
+- [7163](https://github.com/nginx/kubernetes-ingress/pull/7163) Bump Go version to 1.23.5
+- [7024](https://github.com/nginx/kubernetes-ingress/pull/7024), [7061](https://github.com/nginx/kubernetes-ingress/pull/7061), [7113](https://github.com/nginx/kubernetes-ingress/pull/7113), [7145](https://github.com/nginx/kubernetes-ingress/pull/7145), [7148](https://github.com/nginx/kubernetes-ingress/pull/7148), [7154](https://github.com/nginx/kubernetes-ingress/pull/7154), [7164](https://github.com/nginx/kubernetes-ingress/pull/7164), [7229](https://github.com/nginx/kubernetes-ingress/pull/7229), [7265](https://github.com/nginx/kubernetes-ingress/pull/7265), [7250](https://github.com/nginx/kubernetes-ingress/pull/7250) & [7296](https://github.com/nginx/kubernetes-ingress/pull/7296) Bump Go dependencies
+- [7012](https://github.com/nginx/kubernetes-ingress/pull/7012), [7022](https://github.com/nginx/kubernetes-ingress/pull/7022), [7028](https://github.com/nginx/kubernetes-ingress/pull/7028), [7144](https://github.com/nginx/kubernetes-ingress/pull/7144), [7152](https://github.com/nginx/kubernetes-ingress/pull/7152), [7155](https://github.com/nginx/kubernetes-ingress/pull/7155), [7181](https://github.com/nginx/kubernetes-ingress/pull/7181), [7267](https://github.com/nginx/kubernetes-ingress/pull/7267), [7302](https://github.com/nginx/kubernetes-ingress/pull/7302), [7304](https://github.com/nginx/kubernetes-ingress/pull/7304) & [](https://github.com/nginx/kubernetes-ingress/pull/) Bump Docker dependencies
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
