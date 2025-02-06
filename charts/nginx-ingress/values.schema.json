@@ -1346,6 +1346,14 @@
                   "examples": [
                     80
                   ]
+                },
+                "name": {
+                  "type": "string",
+                  "default": "http",
+                  "title": "The httpPort name",
+                  "examples": [
+                    "http"
+                  ]
                 }
               },
               "examples": [
@@ -1353,7 +1361,8 @@
                   "enable": true,
                   "port": 80,
                   "nodePort": "",
-                  "targetPort": 80
+                  "targetPort": 80,
+                  "name": "http"
                 }
               ]
             },
@@ -1396,12 +1405,21 @@
                   ]
                 }
               },
+              "name": {
+                "type": "string",
+                "default": "https",
+                "title": "The httpsPort name",
+                "examples": [
+                  "https"
+                ]
+              },
               "examples": [
                 {
                   "enable": true,
                   "port": 443,
                   "nodePort": "",
-                  "targetPort": 443
+                  "targetPort": 443,
+                  "name": "https"
                 }
               ]
             },
@@ -1432,12 +1450,14 @@
               "httpPort": {
                 "enable": true,
                 "port": 80,
-                "targetPort": 80
+                "targetPort": 80,
+                "name": "http"
               },
               "httpsPort": {
                 "enable": true,
                 "port": 443,
-                "targetPort": 443
+                "targetPort": 443,
+                "name": "https"
               },
               "customPorts": []
             }
