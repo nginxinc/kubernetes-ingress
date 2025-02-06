@@ -1099,9 +1099,6 @@ func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      svcName,
 			Namespace: podNamespace,
-			Labels: map[string]string{
-				"app": podNamespace,
-			},
 		},
 		Spec: api_v1.ServiceSpec{
 			ClusterIP: api_v1.ClusterIPNone,
