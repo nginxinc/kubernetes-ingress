@@ -15,11 +15,6 @@
       "image": "debian-plus",
       "platforms": "linux/arm64, linux/amd64",
       "target": "aws"
-    },
-    {
-      "image": "ubi-9-plus",
-      "platforms": "linux/arm64, linux/amd64",
-      "target": "goreleaser"
     }
   ]
 }
