@@ -265,7 +265,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -1678,7 +1678,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -1823,7 +1823,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -1968,7 +1968,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -2113,7 +2113,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -2276,7 +2276,7 @@ stream {
         proxy_pass $dest_internal_passthrough;
     }
     
-    
+
     
     }
 
@@ -2436,7 +2436,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -2595,7 +2595,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -2755,7 +2755,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     }
 
@@ -2918,7 +2918,7 @@ stream {
         proxy_pass $dest_internal_passthrough;
     }
     
-    
+
     
     }
 
@@ -3945,7 +3945,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     server {
         listen 1337;
@@ -4110,7 +4110,7 @@ stream {
 
     map_hash_max_size ;
     
-    
+
     
     server {
         listen 12345;
