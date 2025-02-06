@@ -29,7 +29,7 @@ permissions:
 jobs:
   checks:
     name: Checks and variables
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       id-token: write
@@ -88,7 +88,7 @@ jobs:
         id: vars
         run: |
           kindest_latest=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
-            | jq -r .results.[].name \
+            | jq -r '.results[].name' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | sort -rV \
             | grep -v v1.32.1 \
@@ -127,7 +127,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        uses: google-github-actions/auth@71f986410dfbc7added4569d411d040a91dc6935 # v2.1.8
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -171,7 +171,7 @@ jobs:
 
   verify-codegen:
     name: Verify generated code
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     needs: checks
@@ -210,7 +210,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: checks
     steps:
       - name: Checkout Repository
@@ -242,7 +242,7 @@ jobs:
 
   binaries:
     name: Build Binaries
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [checks, unit-tests, verify-codegen]
     permissions:
       contents: write # for goreleaser/goreleaser-action to manage releases
@@ -380,7 +380,7 @@ jobs:
   helm-tests:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Helm Tests ${{ matrix.base-os }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [checks, binaries, build-docker, build-docker-plus]
     strategy:
       fail-fast: false
@@ -403,7 +403,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        uses: google-github-actions/auth@71f986410dfbc7added4569d411d040a91dc6935 # v2.1.8
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -519,7 +519,7 @@ jobs:
   setup-matrix:
     if: ${{ inputs.force || needs.checks.outputs.docs_only != 'true' }}
     name: Setup Matrix for Smoke Tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [binaries, checks]
     permissions:
       contents: read
@@ -543,7 +543,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        uses: google-github-actions/auth@71f986410dfbc7added4569d411d040a91dc6935 # v2.1.8
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -675,7 +675,7 @@ jobs:
 
   final-results:
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     name: Final CI Results
     needs: [tag-stable, build-docker, build-docker-plus, build-docker-nap, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     steps:
