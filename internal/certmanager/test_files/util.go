@@ -17,7 +17,7 @@ limitations under the License.
 // nolint
 package test
 
-import "golang.org/x/exp/rand"
+import "math/rand"
 
 type StringGenerator func(n int) string
 
