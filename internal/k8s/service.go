@@ -1,8 +1,15 @@
 package k8s
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 	"sort"
+
+	api_v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
@@ -131,6 +138,50 @@ func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHan
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
+func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(kubeInterface kubernetes.Interface, podNamespace, svcName string) error {
+	if lbc.configurator.CfgParams.ZoneSync.Enable {
+		_, err := kubeInterface.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+		if err == nil {
+			return nil
+		}
+
+		newSvc := &api_v1.Service{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      svcName,
+				Namespace: podNamespace,
+			},
+			Spec: api_v1.ServiceSpec{
+				ClusterIP: api_v1.ClusterIPNone,
+				Selector: map[string]string{
+					"app": podNamespace,
+				},
+			},
+		}
+
+		createdSvc, err := kubeInterface.CoreV1().Services(podNamespace).Create(context.TODO(), newSvc, meta_v1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("error creating headless service: %w", err)
+		}
+		nl.Infof(lbc.Logger, "Successfully created headless service %q in namespace %q", createdSvc.Name, podNamespace)
+		return nil
+	}
+
+	_, err := kubeInterface.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("error retrieving headless service: %w", err)
+	}
+
+	err = kubeInterface.CoreV1().Services(podNamespace).Delete(context.TODO(), svcName, meta_v1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("error deleting headless service: %w", err)
+	}
+	nl.Infof(lbc.Logger, "Successfully deleted headless service %q in namespace %q", svcName, podNamespace)
+	return nil
+}
+
 func (lbc *LoadBalancerController) syncService(task task) {
 	key := task.Key
 
@@ -196,14 +247,6 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	nl.Infof(lbc.Logger, "Syncing service %v", key)
 
 	nl.Infof(lbc.Logger, "Updating %v resources", len(resources))
-
-	svc := obj.(*v1.Service)
-	if isHeadless(svc) {
-		nl.Infof(lbc.Logger, "Service %v is headless (clusterIP=None). Handling accordingly.", svc.Name)
-		// TODO: handle headless services
-	}
-
-	// Proceed with your normal resource update logic
 	resourceExes := lbc.createExtendedResources(resources)
 
 	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
