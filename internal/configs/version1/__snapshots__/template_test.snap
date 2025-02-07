@@ -267,7 +267,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -1680,7 +1679,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -1825,7 +1823,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -1970,7 +1967,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2115,7 +2111,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2278,7 +2273,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2438,7 +2432,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2597,7 +2590,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2757,7 +2749,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2920,7 +2911,6 @@ stream {
     
 
     
-    }
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
