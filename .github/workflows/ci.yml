@@ -183,26 +183,32 @@ jobs:
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
           go-version-file: go.mod
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if go.mod and go.sum are up to date
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if CRDs changed
         run: make update-crds && git diff --name-only --exit-code config/crd/bases
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if Codegen changed
         run: |
           cd ../.. && mkdir -p github.com/nginx && mv kubernetes-ingress/kubernetes-ingress github.com/nginx/ && cd github.com/nginx/kubernetes-ingress
           make update-codegen && git diff --name-only --exit-code pkg/**
           cd ../../.. && mv github.com/nginx/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Install gofumpt
         run: go install mvdan.cc/gofumpt@latest
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if telemetry schema changed
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make telemetry-schema && git diff --name-only --exit-code internal/telemetry
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if make docs builds
         if: ${{ needs.checks.outputs.some_docs == 'true' }}
@@ -684,6 +690,9 @@ jobs:
           smokeOSSResult="${{ needs.smoke-tests-oss.result }}"
           smokePlusResult="${{ needs.smoke-tests-plus.result }}"
           smokeNAPResult="${{ needs.smoke-tests-nap.result }}"
+          buildOSSResult="${{ needs.build-docker.result }}"
+          buildPlusResult="${{ needs.build-docker-plus.result }}"
+          buildNAPResult="${{ needs.build-docker-nap.result }}"
           if [[ $tagResult != "success" && $tagResult != "skipped" ]]; then
             exit 1
           fi
@@ -694,6 +703,15 @@ jobs:
             exit 1
           fi
           if [[ $smokeNAPResult != "success" && $smokeNAPResult != "skipped" ]]; then
+            exit 1
+          fi
+          if [[ $buildOSSResult != "success" && $buildOSSResult != "skipped" ]]; then
+            exit 1
+          fi
+          if [[ $buildPlusResult != "success" && $buildPlusResult != "skipped" ]]; then
+            exit 1
+          fi
+          if [[ $buildNAPResult != "success" && $buildNAPResult != "skipped" ]]; then
             exit 1
           fi
 
