@@ -5048,20 +5048,10 @@ metadata:
     app.kubernetes.io/version: "4.1.0"
     app.kubernetes.io/managed-by: Helm
 data:
-
   zone-sync: "true"
-
-
   zone-sync-port: "12333"
-
-
-  
   zone-sync-resolver-addresses: "example.com"
-  
-  
   zone-sync-resolver-ipv6: "false"
-  
-  
   zone-sync-resolver-valid: "7s"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
@@ -5519,7 +5509,6 @@ metadata:
     app.kubernetes.io/version: "4.1.0"
     app.kubernetes.io/managed-by: Helm
 data:
-
   zone-sync: "true"
 /-/-/-/
 # Source: nginx-ingress/templates/controller-configmap.yaml
