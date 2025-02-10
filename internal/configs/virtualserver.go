@@ -1485,7 +1485,7 @@ func generateLRZGroupMap(lrz version2.LimitReqZone) *version2.Map {
 	})
 	return &version2.Map{
 		Source:     lrz.GroupVariable,
-		Variable:   fmt.Sprintf("$%s", lrz.ZoneName),
+		Variable:   fmt.Sprintf("$%s", strings.Replace(lrz.ZoneName, "-", "_", -1)),
 		Parameters: params,
 	}
 }
@@ -1688,7 +1688,7 @@ func generateLimitReqZone(zoneName string,
 	if rateLimitPol.Condition != nil && rateLimitPol.Condition.JWT != nil {
 		lrz.GroupName = fmt.Sprintf("rl_%s_%s_match_%s", vsNamspace, vsName, strings.ToLower(rateLimitPol.Condition.JWT.Match))
 		lrz.GroupVariable = fmt.Sprintf("$rl_%s_%s_group_%s_%s", vsNamspace, vsName, strings.ToLower(strings.Join(strings.Split(rateLimitPol.Condition.JWT.Claim, "."), "_")), context)
-		lrz.Key = fmt.Sprintf("$%s", zoneName)
+		lrz.Key = fmt.Sprintf("$%s", strings.Replace(zoneName, "-", "_", -1))
 		lrz.GroupKey = rateLimitPol.Key
 		lrz.GroupDefault = rateLimitPol.Condition.Default
 	}
