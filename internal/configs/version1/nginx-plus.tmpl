@@ -351,7 +351,7 @@ stream {
     }
     {{end}}
 
-    {{ if .ZoneSyncConfig.Enable }}
+    {{- if .ZoneSyncConfig.Enable }}
     server {
         listen {{ .ZoneSyncConfig.Port }};
         {{ if not .DisableIPV6}}listen [::]:{{ .ZoneSyncConfig.Port }}{{end}};
@@ -360,7 +360,6 @@ stream {
         zone_sync_server {{ .ZoneSyncConfig.Domain }}:{{ .ZoneSyncConfig.Port }} resolve;
     }
     {{- end }}
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 

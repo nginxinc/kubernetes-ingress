@@ -265,9 +265,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -1677,9 +1674,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -1821,9 +1815,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -1965,9 +1956,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2109,9 +2097,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2271,9 +2256,6 @@ stream {
         proxy_pass $dest_internal_passthrough;
     }
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2430,9 +2412,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2588,9 +2567,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2747,9 +2723,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -2909,9 +2882,6 @@ stream {
         proxy_pass $dest_internal_passthrough;
     }
     
-
-    
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -3935,8 +3905,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
     server {
         listen 1337;
         listen [::]:1337;
@@ -3944,7 +3912,6 @@ stream {
         zone_sync;
         zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:1337 resolve;
     }
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -4101,8 +4068,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
     server {
         listen 12345;
         listen [::]:12345;
@@ -4110,7 +4075,6 @@ stream {
         zone_sync;
         zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:12345 resolve;
     }
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -4267,8 +4231,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
     server {
         listen 1223;
         listen [::]:1223;
@@ -4276,7 +4238,6 @@ stream {
         zone_sync;
         zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:1223 resolve;
     }
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
@@ -4433,8 +4394,6 @@ stream {
 
     map_hash_max_size ;
     
-
-    
     server {
         listen 12345;
         listen [::]:12345;
@@ -4442,7 +4401,6 @@ stream {
         zone_sync;
         zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:12345 resolve;
     }
-
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
