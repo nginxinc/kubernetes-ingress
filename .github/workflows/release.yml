@@ -315,7 +315,7 @@ jobs:
           github-token: ${{ secrets.NGINX_PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
+              owner: 'nginxinc',
               repo: 'nginx-ingress-helm-operator',
               workflow_id: 'sync-chart.yml',
               ref: 'main',
