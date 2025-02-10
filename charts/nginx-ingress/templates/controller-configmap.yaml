@@ -11,7 +11,26 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-{{ toYaml (default dict .Values.controller.config.entries) | indent 2 }}
+{{ if hasKey .Values.controller.zoneSync "enable" }}
+  zone-sync: {{ quote .Values.controller.zoneSync.enable }}
+{{ end }}
+{{ if hasKey .Values.controller.zoneSync "port" }}
+  zone-sync-port: {{ quote .Values.controller.zoneSync.port }}
+{{ end }}
+{{ if hasKey .Values.controller.zoneSync "resolver" }}
+  {{ if hasKey .Values.controller.zoneSync.resolver "addresses" }}
+  zone-sync-resolver-addresses: {{ join "," .Values.controller.zoneSync.resolver.addresses | quote }}
+  {{ end }}
+  {{ if hasKey .Values.controller.zoneSync.resolver "ipv6" }}
+  zone-sync-resolver-ipv6: {{ quote .Values.controller.zoneSync.resolver.ipv6 }}
+  {{ end }}
+  {{ if hasKey .Values.controller.zoneSync.resolver "valid" }}
+  zone-sync-resolver-valid: {{ quote .Values.controller.zoneSync.resolver.valid }}
+  {{ end }}
+{{ end }}
+{{ if gt (len (default dict .Values.controller.config.entries)) 0 }}
+{{ toYaml .Values.controller.config.entries | indent 2 }}
+{{ end }}
 {{- end }}
 ---
 {{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}

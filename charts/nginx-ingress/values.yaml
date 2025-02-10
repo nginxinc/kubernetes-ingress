@@ -165,6 +165,21 @@ controller:
   ## A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
   customPorts: []
 
+  ## Configures the zone-sync directive and configuration for the Ingress Controller to allow state sharing.
+  zoneSync:  {} # Remove curly brackets before enabling zone-sync
+    ## Enables the zone-sync directive for state sharing.
+    # enable: true
+
+    ## Configures the optional zone-sync port for state sharing. Default is 12345.
+    # port: 12345
+
+    ## Configures the resolver directive for zone-sync.
+    # resolver:
+    #  ipv6: true
+    #  valid: 5s
+    #  addresses:
+    #     - kube-dns.kube-system.svc.cluster.local
+
   image:
     ## The image repository of the Ingress Controller.
     repository: nginx/nginx-ingress

@@ -309,6 +309,56 @@
                     50000
                   ]
                 },
+                "zoneSync": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The zone-sync Schema",
+                  "properties": {
+                    "enable": {
+                      "type": "boolean",
+                      "default": false,
+                      "title": "Enable Zone-Sync",
+                      "examples": [
+                        true,
+                        false
+                      ]
+                    },
+                    "port": {
+                      "type": "integer",
+                      "default": 12345,
+                      "title": "Port for zone-sync",
+                      "examples": [
+                        12345
+                      ]
+                    },
+                    "resolver": {
+                      "type": "object",
+                      "default": {},
+                      "title": "The resolver Schema",
+                      "properties": {
+                        "addresses": {
+                          "type": "array",
+                          "default": [],
+                          "title": "List of resolver addresses/fqdns"
+                        },
+                        "valid": {
+                          "type": "string",
+                          "pattern": "^[0-9]+[smhdwMy]$",
+                          "title": "A valid nginx time",
+                          "examples": [
+                            "1m",
+                            "5d"
+                          ]
+                        },
+                        "ipv6": {
+                          "type": "boolean",
+                          "title": "turn on or off ipv6 support",
+                          "default": false
+                        }
+                      }
+                    }
+                  }
+                },
                 "image": {
                   "type": "object",
                   "default": {},
