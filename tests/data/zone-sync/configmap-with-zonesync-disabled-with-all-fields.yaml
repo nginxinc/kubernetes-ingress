@@ -8,5 +8,5 @@ data:
   zone-sync-port: "223344"
   zone-sync-resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
   zone-sync-resolver-valid: "5s"
-  zone-sync-resolver-ipv6: "false"
-
+  zone-sync-resolver-ipv6: "true"
+  
