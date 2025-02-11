@@ -2,12 +2,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-gold
-  namespace: cafe
 spec:
   rateLimit:
     rate: 20r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier
@@ -17,12 +17,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-silver
-  namespace: cafe
 spec:
   rateLimit:
     rate: 10r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier
@@ -32,12 +32,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-bronze
-  namespace: cafe
 spec:
   rateLimit:
     rate: 1r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier
@@ -48,12 +48,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-gold2
-  namespace: cafe
 spec:
   rateLimit:
     rate: 25r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier
@@ -63,12 +63,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-silver2
-  namespace: cafe
 spec:
   rateLimit:
     rate: 15r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier
@@ -78,12 +78,12 @@ apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
   name: rate-limit-jwt-bronze2
-  namespace: cafe
 spec:
   rateLimit:
     rate: 2r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
+    logLevel: info
     condition:
       jwt:
         claim: consumer_group.tier

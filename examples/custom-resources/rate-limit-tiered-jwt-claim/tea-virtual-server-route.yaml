@@ -2,7 +2,6 @@ apiVersion: k8s.nginx.org/v1
 kind: VirtualServerRoute
 metadata:
   name: tea
-  namespace: cafe
 spec:
   host: cafe.example.com
   upstreams:
@@ -13,3 +12,7 @@ spec:
   - path: /tea
     action:
       pass: tea
+    policies:
+    - name: rate-limit-jwt-gold
+    - name: rate-limit-jwt-silver
+    - name: rate-limit-jwt-bronze
