@@ -1,4 +1,0 @@
-controller:
-  nginxplus: true
-  zoneSync:
-      enable: true

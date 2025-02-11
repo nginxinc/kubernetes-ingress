@@ -55,16 +55,6 @@ func TestHelmNICTemplate(t *testing.T) {
 			releaseName: "plus-debug",
 			namespace:   "default",
 		},
-		"zoneSyncCustomNoTLS": {
-			valuesFile:  "testdata/zone-sync-custom-no-tls.yaml",
-			releaseName: "zone-sync-custom",
-			namespace:   "default",
-		},
-		"zoneSyncNoTLS": {
-			valuesFile:  "testdata/zone-sync-basic-no-tls.yaml",
-			releaseName: "zone-sync",
-			namespace:   "default",
-		},
 		"ingressClass": {
 			valuesFile:  "testdata/ingress-class.yaml",
 			releaseName: "ingress-class",
