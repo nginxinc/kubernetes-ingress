@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"sort"
 
-	api_v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -145,13 +144,13 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(kubeInterface kub
 			return nil
 		}
 
-		newSvc := &api_v1.Service{
+		newSvc := &v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      svcName,
 				Namespace: podNamespace,
 			},
-			Spec: api_v1.ServiceSpec{
-				ClusterIP: api_v1.ClusterIPNone,
+			Spec: v1.ServiceSpec{
+				ClusterIP: v1.ClusterIPNone,
 				Selector: map[string]string{
 					"app": podNamespace,
 				},
