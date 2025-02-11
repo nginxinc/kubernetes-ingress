@@ -1520,7 +1520,7 @@ func generateLRZPolicyGroupMap(lrz version2.LimitReqZone) *version2.Map {
 	})
 	return &version2.Map{
 		Source:     lrz.GroupVariable,
-		Variable:   fmt.Sprintf("$%s", strings.Replace(lrz.ZoneName, "-", "_", -1)),
+		Variable:   fmt.Sprintf("$%s", rfc1123ToSnake(lrz.ZoneName)),
 		Parameters: params,
 	}
 }
