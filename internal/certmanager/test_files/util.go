@@ -17,7 +17,9 @@ limitations under the License.
 // nolint
 package test
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 type StringGenerator func(n int) string
 
