@@ -823,8 +823,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		maps = append(maps, *generateAPIKeyClientMap(mapName, apiKeyClients))
 	}
 
+	for _, gm := range generateLRZGroupMaps(limitReqZones) {
+		maps = append(maps, *gm)
+	}
+
 	for _, lrz := range removeDuplicateLimitReqZones(limitReqZones) {
-		maps = append(maps, *generateLRZGroupMap(lrz))
+		maps = append(maps, *generateLRZPolicyGroupMap(lrz))
 	}
 
 	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{})
@@ -1472,7 +1476,38 @@ func generateAPIKeyClientMap(mapName string, apiKeyClients []apiKeyClient) *vers
 	}
 }
 
-func generateLRZGroupMap(lrz version2.LimitReqZone) *version2.Map {
+func generateLRZGroupMaps(rlzs []version2.LimitReqZone) map[string]*version2.Map {
+	m := make(map[string]*version2.Map)
+
+	for _, lrz := range rlzs {
+		if lrz.GroupVariable != "" {
+			s := &version2.Map{
+				Source:   lrz.ClaimVariable,
+				Variable: lrz.GroupVariable,
+				Parameters: []version2.Parameter{
+					{
+						Value:  lrz.GroupKey,
+						Result: lrz.GroupMatchKey,
+					},
+				},
+			}
+			if lrz.GroupDefault {
+				s.Parameters = append(s.Parameters, version2.Parameter{
+					Value:  "default",
+					Result: lrz.GroupMatchKey,
+				})
+			}
+			if _, ok := m[lrz.GroupVariable]; ok {
+				s.Parameters = append(s.Parameters, m[lrz.GroupVariable].Parameters...)
+			}
+			m[lrz.GroupVariable] = s
+		}
+	}
+
+	return m
+}
+
+func generateLRZPolicyGroupMap(lrz version2.LimitReqZone) *version2.Map {
 	defaultParam := version2.Parameter{
 		Value:  "default",
 		Result: "''",
@@ -1480,8 +1515,8 @@ func generateLRZGroupMap(lrz version2.LimitReqZone) *version2.Map {
 
 	params := []version2.Parameter{defaultParam}
 	params = append(params, version2.Parameter{
-		Value:  lrz.GroupName,
-		Result: lrz.GroupKey,
+		Value:  lrz.GroupMatchKey,
+		Result: lrz.GroupMatchValue,
 	})
 	return &version2.Map{
 		Source:     lrz.GroupVariable,
@@ -1686,11 +1721,13 @@ func generateLimitReqZone(zoneName string,
 		Rate:     rate,
 	}
 	if rateLimitPol.Condition != nil && rateLimitPol.Condition.JWT != nil {
-		lrz.GroupName = fmt.Sprintf("rl_%s_%s_match_%s", vsNamspace, vsName, strings.ToLower(rateLimitPol.Condition.JWT.Match))
+		lrz.GroupKey = rateLimitPol.Condition.JWT.Match
+		lrz.GroupMatchKey = fmt.Sprintf("rl_%s_%s_match_%s", vsNamspace, vsName, strings.ToLower(rateLimitPol.Condition.JWT.Match))
 		lrz.GroupVariable = fmt.Sprintf("$rl_%s_%s_group_%s_%s", vsNamspace, vsName, strings.ToLower(strings.Join(strings.Split(rateLimitPol.Condition.JWT.Claim, "."), "_")), context)
 		lrz.Key = fmt.Sprintf("$%s", strings.Replace(zoneName, "-", "_", -1))
-		lrz.GroupKey = rateLimitPol.Key
+		lrz.GroupMatchValue = rateLimitPol.Key
 		lrz.GroupDefault = rateLimitPol.Condition.Default
+		lrz.ClaimVariable = generateAuthJwtClaimSetVariable(rateLimitPol.Condition.JWT.Claim, vsNamspace, vsName)
 	}
 
 	return lrz
