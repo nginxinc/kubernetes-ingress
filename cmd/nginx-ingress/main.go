@@ -216,6 +216,15 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
+	if *nginxPlus {
+		if cfgParams.ZoneSync.Enable {
+			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-headless", controllerNamespace))
+			if err != nil {
+				nl.Errorf(l, "Failed to create headless Service: %v", err)
+			}
+		}
+	}
+
 	mustWriteNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
@@ -1076,6 +1085,36 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	if !podUpdated {
 		nl.Errorf(l, "Failed to update pod labels after %d attempts", maxRetries)
 	}
+}
+
+func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, podNamespace string, svcName string) error {
+	l := nl.LoggerFromContext(ctx)
+	existing, err := kubeClient.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+	if err == nil && existing != nil {
+		nl.Infof(l, "Headless Service %q already exists in namespace %q, skipping creation.", svcName, podNamespace)
+		return nil
+	}
+
+	svc := &api_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      svcName,
+			Namespace: podNamespace,
+		},
+		Spec: api_v1.ServiceSpec{
+			ClusterIP: api_v1.ClusterIPNone,
+			Selector: map[string]string{
+				"app": podNamespace,
+			},
+		},
+	}
+
+	createdSvc, createErr := kubeClient.CoreV1().Services(podNamespace).Create(context.TODO(), svc, meta_v1.CreateOptions{})
+	if createErr != nil {
+		return createErr
+	}
+
+	nl.Infof(l, "Successfully created headless service %q in namespace %q", createdSvc.Name, podNamespace)
+	return nil
 }
 
 func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg_runtime.Object, reason string, err error) {

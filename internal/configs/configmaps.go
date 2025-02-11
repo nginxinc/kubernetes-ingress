@@ -439,6 +439,56 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 				configOk = false
 			}
 		}
+	} else {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.Port = 12345 // default port
+		}
+	}
+
+	if zoneSyncResolverAddresses, exists := GetMapKeyAsStringSlice(cfgm.Data, "zone-sync-resolver-addresses", cfgm, ","); exists {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.ResolverAddresses = zoneSyncResolverAddresses
+		}
+	} else {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.ResolverAddresses = []string{"kube-dns.kube-system.svc.cluster.local"}
+		}
+	}
+
+	if zoneSyncResolverValid, exists := cfgm.Data["zone-sync-resolver-valid"]; exists {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.ResolverValid = zoneSyncResolverValid
+		} else {
+			errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync' to be enabled", cfgm.Namespace, cfgm.Name, "zone-sync-resolver-valid")
+			nl.Warn(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
+			configOk = false
+		}
+	} else {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.ResolverValid = "5s"
+		}
+	}
+
+	if zoneSyncResolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "zone-sync-resolver-ipv6", cfgm); exists {
+		if err != nil {
+			nl.Error(l, err)
+			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
+			configOk = true
+		} else {
+			if cfgParams.ZoneSync.Enable {
+				cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(zoneSyncResolverIpv6)
+			} else {
+				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync' to be enabled", cfgm.Namespace, cfgm.Name, "zone-sync-resolver-valid")
+				nl.Warn(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
+				configOk = false
+			}
+		}
+	} else {
+		if cfgParams.ZoneSync.Enable {
+			cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(true)
+		}
 	}
 
 	if upstreamZoneSize, exists := cfgm.Data["upstream-zone-size"]; exists {
@@ -821,9 +871,12 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 
 	podNamespace := os.Getenv("POD_NAMESPACE")
 	zoneSyncConfig := version1.ZoneSyncConfig{
-		Enable: config.ZoneSync.Enable,
-		Port:   config.ZoneSync.Port,
-		Domain: fmt.Sprintf("%s-headless.%s.svc.cluster.local", podNamespace, podNamespace),
+		Enable:            config.ZoneSync.Enable,
+		Port:              config.ZoneSync.Port,
+		Domain:            fmt.Sprintf("%s-headless.%s.svc.cluster.local", podNamespace, podNamespace),
+		ResolverAddresses: config.ZoneSync.ResolverAddresses,
+		ResolverIPV6:      config.ZoneSync.ResolverIPV6,
+		ResolverValid:     config.ZoneSync.ResolverValid,
 	}
 
 	nginxCfg := &version1.MainConfig{

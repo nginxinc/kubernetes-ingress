@@ -137,6 +137,7 @@ type LoadBalancerController struct {
 	Logger                        *slog.Logger
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
+	controllerNamespace           string
 	watchNginxConfigMaps          bool
 	watchMGMTConfigMap            bool
 	watchGlobalConfiguration      bool
@@ -262,6 +263,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		recorder:                     input.Recorder,
 		Logger:                       nl.LoggerFromContext(input.LoggerContext),
 		configurator:                 input.NginxConfigurator,
+		controllerNamespace:          input.ControllerNamespace,
 		specialSecrets:               specialSecrets,
 		appProtectEnabled:            input.AppProtectEnabled,
 		appProtectDosEnabled:         input.AppProtectDosEnabled,
@@ -1069,6 +1071,11 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncDosProtectedResource(task)
 	case ingressLink:
 		lbc.syncIngressLink(task)
+	}
+
+	err := lbc.syncZoneSyncHeadlessService(lbc.client, lbc.controllerNamespace, fmt.Sprintf("%s-headless", lbc.controllerNamespace))
+	if err != nil {
+		nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
 	}
 
 	if !lbc.isNginxReady && lbc.syncQueue.Len() == 0 {
