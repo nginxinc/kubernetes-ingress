@@ -1504,7 +1504,27 @@ func generateLRZGroupMaps(rlzs []version2.LimitReqZone) map[string]*version2.Map
 		}
 	}
 
+	// Dedup the map parameters.  This is necessary as multiple routes could apply the same policy.
+	for k, v := range m {
+		m[k].Parameters = uniqueParameters(v.Parameters)
+	}
+
 	return m
+}
+
+func uniqueParameters(parameters []version2.Parameter) []version2.Parameter {
+	var unique []version2.Parameter
+parameterLoop:
+	for _, v := range parameters {
+		for i, u := range unique {
+			if v.Value == u.Value && v.Result == u.Result {
+				unique[i] = v
+				continue parameterLoop
+			}
+		}
+		unique = append(unique, v)
+	}
+	return unique
 }
 
 func generateLRZPolicyGroupMap(lrz version2.LimitReqZone) *version2.Map {
