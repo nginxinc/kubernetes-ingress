@@ -828,7 +828,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 
 	for _, lrz := range removeDuplicateLimitReqZones(limitReqZones) {
-		maps = append(maps, *generateLRZPolicyGroupMap(lrz))
+		if lrz.GroupVariable != "" {
+			maps = append(maps, *generateLRZPolicyGroupMap(lrz))
+		}
 	}
 
 	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{})
