@@ -17,7 +17,9 @@ import (
 )
 
 const (
-	minimumInterval = 60
+	minimumInterval     = 60
+	zoneSyncDefaultPort = 12345
+	kubeDNSDefault      = "kube-dns.kube-system.svc.cluster.local"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -441,7 +443,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		}
 	} else {
 		if cfgParams.ZoneSync.Enable {
-			cfgParams.ZoneSync.Port = 12345 // default port
+			cfgParams.ZoneSync.Port = zoneSyncDefaultPort
 		}
 	}
 
@@ -451,7 +453,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		}
 	} else {
 		if cfgParams.ZoneSync.Enable {
-			cfgParams.ZoneSync.ResolverAddresses = []string{"kube-dns.kube-system.svc.cluster.local"}
+			cfgParams.ZoneSync.ResolverAddresses = []string{kubeDNSDefault}
 		}
 	}
 
@@ -479,7 +481,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			if cfgParams.ZoneSync.Enable {
 				cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(zoneSyncResolverIpv6)
 			} else {
-				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync' to be enabled", cfgm.Namespace, cfgm.Name, "zone-sync-resolver-valid")
+				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync' to be enabled", cfgm.Namespace, cfgm.Name, "zone-sync-resolver-ipv6")
 				nl.Warn(l, errorText)
 				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
