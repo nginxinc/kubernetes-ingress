@@ -1516,7 +1516,7 @@ func generateLRZPolicyGroupMap(lrz version2.LimitReqZone) *version2.Map {
 	params := []version2.Parameter{defaultParam}
 	params = append(params, version2.Parameter{
 		Value:  lrz.GroupMatchKey,
-		Result: lrz.GroupMatchValue,
+		Result: fmt.Sprintf("Val%s", lrz.GroupMatchValue),
 	})
 	return &version2.Map{
 		Source:     lrz.GroupVariable,
