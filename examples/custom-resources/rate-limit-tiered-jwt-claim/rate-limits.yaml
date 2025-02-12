@@ -4,7 +4,7 @@ metadata:
   name: rate-limit-jwt-gold
 spec:
   rateLimit:
-    rate: 20r/s
+    rate: 30r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
     logLevel: info
@@ -19,7 +19,7 @@ metadata:
   name: rate-limit-jwt-silver
 spec:
   rateLimit:
-    rate: 10r/s
+    rate: 15r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
     logLevel: info
@@ -50,7 +50,7 @@ metadata:
   name: rate-limit-jwt-gold2
 spec:
   rateLimit:
-    rate: 25r/s
+    rate: 35r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
     logLevel: info
@@ -65,7 +65,7 @@ metadata:
   name: rate-limit-jwt-silver2
 spec:
   rateLimit:
-    rate: 15r/s
+    rate: 20r/s
     key: ${jwt_claim_sub}
     zoneSize: 10M
     logLevel: info
