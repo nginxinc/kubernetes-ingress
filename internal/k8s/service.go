@@ -196,7 +196,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	}
 
 	// First case: the service is the external service for the Ingress Controller
-	//
+	// In that case we need to update the statuses of all resources
 	if lbc.IsExternalServiceKeyForStatus(key) {
 		nl.Infof(lbc.Logger, "Syncing service %v", key)
 
@@ -246,6 +246,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	nl.Infof(lbc.Logger, "Syncing service %v", key)
 
 	nl.Infof(lbc.Logger, "Updating %v resources", len(resources))
+
 	resourceExes := lbc.createExtendedResources(resources)
 
 	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
