@@ -885,9 +885,9 @@ func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.
 			},
 			want: &ZoneSync{
 				Enable: true,
-				Port:   12345,
+				Port:   0,
 			},
-			msg: "zone-sync-port set to default value 12345",
+			msg: "zone-sync-port set to default value 0",
 		},
 	}
 
@@ -916,6 +916,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync":      "true",
 					"zone-sync-port": "0",
 				},
 			},
@@ -925,6 +926,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync":      "true",
 					"zone-sync-port": "-1",
 				},
 			},
@@ -934,6 +936,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync":      "true",
 					"zone-sync-port": "65536",
 				},
 			},
@@ -943,6 +946,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync":      "true",
 					"zone-sync-port": "not-a-number",
 				},
 			},
@@ -1021,12 +1025,14 @@ func TestParseZoneSyncResolverIPV6MapResolverIPV6(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync-port":          "12345",
 					"zone-sync":               "true",
 					"zone-sync-resolver-ipv6": "false",
 				},
 			},
 			want: &ZoneSync{
 				Enable:       true,
+				Port:         12345,
 				ResolverIPV6: BoolToPointerBool(false),
 			},
 			msg: "zone-sync-resolver-ipv6 set to false",
@@ -1034,12 +1040,14 @@ func TestParseZoneSyncResolverIPV6MapResolverIPV6(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
+					"zone-sync-port":          "12345",
 					"zone-sync":               "true",
 					"zone-sync-resolver-ipv6": "true",
 				},
 			},
 			want: &ZoneSync{
 				Enable:       true,
+				Port:         12345,
 				ResolverIPV6: BoolToPointerBool(true),
 			},
 			msg: "zone-sync-resolver-ipv6 set to true",

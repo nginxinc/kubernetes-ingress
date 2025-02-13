@@ -898,6 +898,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 
 	lbc.configurator.CfgParams = cfgParams
 	lbc.configurator.MgmtCfgParams = mgmtCfgParams
+	cfgParams.ZoneSync.Domain = lbc.ingressClass
 
 	// update special license secret in mgmtConfigParams
 	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
@@ -1073,7 +1074,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncIngressLink(task)
 	}
 
-	err := lbc.syncZoneSyncHeadlessService(lbc.client, lbc.controllerNamespace, fmt.Sprintf("%s-headless", lbc.controllerNamespace))
+	err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
 	if err != nil {
 		nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
 	}

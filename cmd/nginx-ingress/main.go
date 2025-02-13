@@ -217,8 +217,9 @@ func main() {
 	}
 
 	if *nginxPlus {
-		if cfgParams.ZoneSync.Enable {
-			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-headless", controllerNamespace))
+		if cfgParams.ZoneSync.Enable && cfgParams.ZoneSync.Port != 0 {
+			cfgParams.ZoneSync.Domain = *ingressClass
+			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-headless", *ingressClass), *ingressClass)
 			if err != nil {
 				nl.Errorf(l, "Failed to create headless Service: %v", err)
 			}
@@ -1087,18 +1088,34 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	}
 }
 
-func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, podNamespace string, svcName string) error {
+func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, podNamespace string, svcName string, ingressClassName string) error {
 	l := nl.LoggerFromContext(ctx)
-	existing, err := kubeClient.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+	existing, err := kubeClient.CoreV1().Services(podNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 	if err == nil && existing != nil {
 		nl.Infof(l, "Headless Service %q already exists in namespace %q, skipping creation.", svcName, podNamespace)
 		return nil
+	}
+
+	ingressClassObj, err := kubeClient.NetworkingV1().IngressClasses().Get(context.Background(), ingressClassName, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Infof(l, "error getting IngressClass %q: %v", *ingressClass, err)
+		return err
 	}
 
 	svc := &api_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      svcName,
 			Namespace: podNamespace,
+			OwnerReferences: []meta_v1.OwnerReference{
+				{
+					APIVersion:         "v1",
+					Kind:               "IngressClass",
+					Name:               ingressClassName,
+					UID:                ingressClassObj.UID,
+					Controller:         boolToPointerBool(true),
+					BlockOwnerDeletion: boolToPointerBool(true),
+				},
+			},
 		},
 		Spec: api_v1.ServiceSpec{
 			ClusterIP: api_v1.ClusterIPNone,
@@ -1108,7 +1125,7 @@ func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset
 		},
 	}
 
-	createdSvc, createErr := kubeClient.CoreV1().Services(podNamespace).Create(context.TODO(), svc, meta_v1.CreateOptions{})
+	createdSvc, createErr := kubeClient.CoreV1().Services(podNamespace).Create(context.Background(), svc, meta_v1.CreateOptions{})
 	if createErr != nil {
 		return createErr
 	}
@@ -1122,6 +1139,10 @@ func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg
 	eventLog.Eventf(obj, api_v1.EventTypeWarning, reason, err.Error())
 	time.Sleep(fatalEventFlushTime) // wait for the event to be flushed
 	nl.Fatal(l, err.Error())
+}
+
+func boolToPointerBool(b bool) *bool {
+	return &b
 }
 
 func initLogger(logFormat string, level slog.Level, out io.Writer) context.Context {

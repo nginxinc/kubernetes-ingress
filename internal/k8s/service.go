@@ -8,7 +8,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/types"
 
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
@@ -137,9 +137,9 @@ func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHan
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(kubeInterface kubernetes.Interface, podNamespace, svcName string) error {
-	if lbc.configurator.CfgParams.ZoneSync.Enable {
-		_, err := kubeInterface.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) error {
+	if lbc.configurator.CfgParams.ZoneSync.Enable && lbc.configurator.CfgParams.ZoneSync.Port != 0 {
+		_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 		if err == nil {
 			return nil
 		}
@@ -147,25 +147,35 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(kubeInterface kub
 		newSvc := &v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      svcName,
-				Namespace: podNamespace,
+				Namespace: lbc.controllerNamespace,
+				OwnerReferences: []meta_v1.OwnerReference{
+					{
+						APIVersion:         "v1",
+						Kind:               "IngressClass",
+						Name:               lbc.ingressClass,
+						UID:                lbc.getIngressClassUUID(),
+						Controller:         boolToPointerBool(true),
+						BlockOwnerDeletion: boolToPointerBool(true),
+					},
+				},
 			},
 			Spec: v1.ServiceSpec{
 				ClusterIP: v1.ClusterIPNone,
 				Selector: map[string]string{
-					"app": podNamespace,
+					"app": lbc.controllerNamespace,
 				},
 			},
 		}
 
-		createdSvc, err := kubeInterface.CoreV1().Services(podNamespace).Create(context.TODO(), newSvc, meta_v1.CreateOptions{})
+		createdSvc, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Create(context.Background(), newSvc, meta_v1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("error creating headless service: %w", err)
 		}
-		nl.Infof(lbc.Logger, "Successfully created headless service %q in namespace %q", createdSvc.Name, podNamespace)
+		nl.Infof(lbc.Logger, "Successfully created headless service %q in namespace %q", createdSvc.Name, lbc.controllerNamespace)
 		return nil
 	}
 
-	_, err := kubeInterface.CoreV1().Services(podNamespace).Get(context.TODO(), svcName, meta_v1.GetOptions{})
+	_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -173,12 +183,25 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(kubeInterface kub
 		return fmt.Errorf("error retrieving headless service: %w", err)
 	}
 
-	err = kubeInterface.CoreV1().Services(podNamespace).Delete(context.TODO(), svcName, meta_v1.DeleteOptions{})
+	err = lbc.client.CoreV1().Services(lbc.controllerNamespace).Delete(context.Background(), svcName, meta_v1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("error deleting headless service: %w", err)
 	}
-	nl.Infof(lbc.Logger, "Successfully deleted headless service %q in namespace %q", svcName, podNamespace)
+	nl.Infof(lbc.Logger, "Successfully deleted headless service %q in namespace %q", svcName, lbc.controllerNamespace)
 	return nil
+}
+
+func (lbc *LoadBalancerController) getIngressClassUUID() types.UID {
+	ingressClass, err := lbc.client.NetworkingV1().IngressClasses().Get(context.Background(), lbc.ingressClass, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Errorf(lbc.Logger, "Error getting IngressClass: %v", err)
+		return types.UID("")
+	}
+	return ingressClass.UID
+}
+
+func boolToPointerBool(b bool) *bool {
+	return &b
 }
 
 func (lbc *LoadBalancerController) syncService(task task) {

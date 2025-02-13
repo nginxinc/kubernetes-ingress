@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -408,6 +407,12 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
+			if cfgParams.ZoneSync.Port == 0 {
+				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync-port' to be configured", cfgm.Namespace, cfgm.Name, "zone-sync")
+				nl.Warn(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
+				configOk = false
+			}
 			if nginxPlus {
 				cfgParams.ZoneSync.Enable = zoneSync
 			} else {
@@ -440,10 +445,6 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
-		}
-	} else {
-		if cfgParams.ZoneSync.Enable {
-			cfgParams.ZoneSync.Port = zoneSyncDefaultPort
 		}
 	}
 
@@ -871,11 +872,10 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		}
 	}
 
-	podNamespace := os.Getenv("POD_NAMESPACE")
 	zoneSyncConfig := version1.ZoneSyncConfig{
 		Enable:            config.ZoneSync.Enable,
 		Port:              config.ZoneSync.Port,
-		Domain:            fmt.Sprintf("%s-headless.%s.svc.cluster.local", podNamespace, podNamespace),
+		Domain:            fmt.Sprintf("%s-headless.%s.svc.cluster.local", config.ZoneSync.Domain, config.ZoneSync.Domain),
 		ResolverAddresses: config.ZoneSync.ResolverAddresses,
 		ResolverIPV6:      config.ZoneSync.ResolverIPV6,
 		ResolverValid:     config.ZoneSync.ResolverValid,
