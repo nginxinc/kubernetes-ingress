@@ -33,11 +33,11 @@ def assert_event(event_list, event_type, reason, message_substring):
     ), f"Expected event with type '{event_type}', reason '{reason}', and message containing '{message_substring}' not found."
 
 
-
+@pytest.mark.zonesync
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.ingresses
 @pytest.mark.smoke
-class TestZoneSyncConfiguredOnNICStartup:
+class TestZoneSyncLifecycle:
     @pytest.mark.parametrize(
         "ingress_controller",
         [
@@ -47,17 +47,18 @@ class TestZoneSyncConfiguredOnNICStartup:
         ],
         indirect=["ingress_controller"],
     )
-    def test_zonesync_configured_on_nic_startup(
+    def test_nic_starts_without_zonesync(
         self,
         cli_arguments,
         kube_apis,
         ingress_controller_prerequisites,
-        #ingress_controller,
-        #ingress_controller_endpoint,
+        ingress_controller,
+        ingress_controller_endpoint,
     ):
         """
-        Test that setting up zone-sync true in the nginx-config ConfigMap
-        will configure the stream zone-sync headless service.
+        Test:
+        1. NIC starts without zone-sync configured in the `nginx-config`
+        2. Apply config map with zone-sync disabled - no zone sync created, no headless service created.
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -75,13 +76,12 @@ class TestZoneSyncConfiguredOnNICStartup:
         wait_before_test(1)
         print(f"Step 1a: initial reload count is {reload_count}")
 
-
         configmap_name = "nginx-config"
 
         print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
         replace_configmap_from_yaml(
             kube_apis.v1,
-            mgmt_configmap_name,
+            configmap_name,
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
         )
@@ -90,17 +90,18 @@ class TestZoneSyncConfiguredOnNICStartup:
 
         print("Step 4: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
+
         print(f"Step 4a: new reload count is {new_reload_count}")
         assert new_reload_count > reload_count
 
-        print("Step 5: check pod for SecretUpdated event")
+        print("Step 5: check pod for ConfigMap updated event")
         pod_events = get_events_for_object(
             kube_apis.v1,
             ingress_controller_prerequisites.namespace,
             ic_pod_name,
         )
 
-        # Assert that the 'SecretUpdated' event is present
+        # Assert that the 'ConfigMapUpdated' event is present
         assert_event(
             pod_events,
             "Normal",
@@ -119,88 +120,454 @@ class TestZoneSyncConfiguredOnNICStartup:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
         )
 
-    # @pytest.mark.parametrize(
-    #     "ingress_controller",
-    #     [
-    #         pytest.param(
-    #             {"extra_args": ["-enable-prometheus-metrics"]},
-    #         )
-    #     ],
-    #     indirect=["ingress_controller"],
-    # )
-    # def test_zonesync_enabled_after_nic_starts(
-    #     self,
-    #     cli_arguments,
-    #     kube_apis,
-    #     ingress_controller_prerequisites,
-    #     ingress_controller,
-    #     ingress_controller_endpoint,
-    # ):
-    #     """
-    #     Test that zone-sync enabled in the nginx-config map creates:
-    #     - headless service in K8s
-    #     - nginx config updates
-    #     """
-    #     ensure_connection_to_public_endpoint(
-    #         ingress_controller_endpoint.public_ip,
-    #         ingress_controller_endpoint.port,
-    #         ingress_controller_endpoint.port_ssl,
-    #     )
-    #     get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
-    #     metrics_url = (
-    #         f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-    #     )
+        # TODO:
+        # 1. assert headless service is NOT creates
+        # 2. assert zone-sync config NOT present in nginx.conf
 
-    #     print("Step 1: get reload count")
-    #     reload_count = get_reload_count(metrics_url)
+    def test_apply_minimal_default_zonesync(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test: 
+        1. NIC starts with zone-sync not configured in the `nginx-config`.
+        2. Minimal `zone-sync` config is applied. Zone sync and headless service is created.
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
 
-    #     wait_before_test(1)
-    #     print(f"Step 1a: initial reload count is {reload_count}")
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
 
-    #     print("Step 2: get the current nginx config")
-    #     nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
-    #     zonesync_config_search = re.search("zone_sync {(.|\n)*}", nginx_config)
-    #     assert zonesync_config_search is None  # make sure zone sync is not present now
-    #     # mgmt_config = mgmt_config_search[0]
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync minimal configuration")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
+
+        # TODO:
+        # 1. assert headless service is created
+        # 2. assert zone-sync config present in nginx.conf
+
+    def test_enable_customized_zonesync(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test:
+        1. NIC starts with zone-sync not configured in the `nginx-config`
+        2. apply zone-sync config enabled, custom port, custom resolver time 
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
+
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
+
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - enable zone-sync with custom resolver time")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-resolver.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
+
+        # TODO:
+        # 1. assert headless service is created
+        # 2. assert zone-sync config present in nginx.conf with custom resolver time
 
 
-    #     configmap_name = "nginx-config"
+    def test_update_zonesync_from_default_to_customized(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test that NIC starts with zone-sync not configured in the `nginx-config`
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
+
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
+
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            mgmt_configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
+
+    def test_update_zonesync_from_customized_to_default(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test that NIC starts with zone-sync not configured in the `nginx-config`
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
+
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
+
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            mgmt_configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
+
+    def test_deactivate_zonesync(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test that NIC starts with zone-sync not configured in the `nginx-config`
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
+
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
+
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            mgmt_configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
+
+    def test_remove_zonesync(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller,
+        ingress_controller_endpoint,
+    ):
+        """
+        Test that NIC starts with zone-sync not configured in the `nginx-config`
+        """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
+
+        print("Step 1: get reload count")
+        reload_count = get_reload_count(metrics_url)
+
+        wait_before_test(1)
+        print(f"Step 1a: initial reload count is {reload_count}")
+
+        configmap_name = "nginx-config"
+
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            mgmt_configmap_name,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
+        )
+
+        wait_before_test()
+
+        print("Step 4: check reload count has incremented")
+        new_reload_count = get_reload_count(metrics_url)
+
+        print(f"Step 4a: new reload count is {new_reload_count}")
+        assert new_reload_count > reload_count
+
+        print("Step 5: check pod for ConfigMap updated event")
+        pod_events = get_events_for_object(
+            kube_apis.v1,
+            ingress_controller_prerequisites.namespace,
+            ic_pod_name,
+        )
+
+        # Assert that the 'ConfigMapUpdated' event is present
+        assert_event(
+            pod_events,
+            "Normal",
+            "Updated", # TODO: update event name
+            f"", # TODO: update message received
+        )
+
+        config_events = get_events_for_object(
+            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
+        )
+
+        assert_event(
+            config_events,
+            "Normal",
+            "Updated",
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+        )
 
 
-    #     print("Step 6: update the nginx-config map, set zone-sync 'true'")
-    #     replace_configmap_from_yaml(
-    #         kube_apis.v1,
-    #         configmap_name,
-    #         ingress_controller_prerequisites.namespace,
-    #         f"{TEST_DATA}/common/configmap-with-zonesync-minimal.yaml",
-    #     )
 
-    #     wait_before_test()
 
-    #     print("Step 7: get the updated nginx config")
-    #     nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
-    #     zonesync_config_search = re.search("zone_sync {(.|\n)*}", nginx_config)
-    #     assert zonesync_config_search is not None
 
-    #     print("Step 8: check reload count has incremented")
-    #     wait_before_test()
-    #     new_reload_count = get_reload_count(metrics_url)
-    #     print("new_reload_count", new_reload_count)
-    #     assert new_reload_count > reload_count
 
-    #     print("Step 9: check that the nginx-config map has been updated without error")
-    #     config_events = get_events_for_object(
-    #         kube_apis.v1, ingress_controller_prerequisites.namespace, nginx_config
-    #     )
-
-    #     assert_event(
-    #         config_events,
-    #         "Normal",
-    #         "Updated",
-    #         f"ConfigMap {ingress_controller_prerequisites.namespace}/{nginx_configmap_name} updated without error",
-    #     )
-
-    #     # TODO: Add steps to verify created headless service in 
 
 
 # @pytest.mark.skip_for_nginx_oss
