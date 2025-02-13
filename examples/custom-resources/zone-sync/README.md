@@ -16,4 +16,4 @@ Steps:
     kubectl apply -f nginx-config.yaml
     ```
 
-If we don't specify `zone-sync-port` in the `nginx-config.yaml` the Ingress Controller will use default port number `12345`.
+Note that we must specify `zone-sync-port` in the `nginx-config.yaml`.
