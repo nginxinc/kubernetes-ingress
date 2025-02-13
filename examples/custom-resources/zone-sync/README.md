@@ -17,3 +17,5 @@ Steps:
     ```
 
 Note that we must specify `zone-sync-port` in the `nginx-config.yaml`.
+
+If we deploy multiple NGINX Ingress Controllers in the same Kubernetes namespace we must specify different `zone-sync` ports.
