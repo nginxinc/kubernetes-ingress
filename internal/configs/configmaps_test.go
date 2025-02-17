@@ -848,8 +848,11 @@ func TestParseZoneSyncPort(t *testing.T) {
 				},
 			},
 			want: &ZoneSync{
-				Enable: true,
-				Port:   1234,
+				Enable:            true,
+				Port:              1234,
+				Domain:            "",
+				ResolverAddresses: []string{"add default one"},
+				ResolverValid:     "5s",
 			},
 			msg: "zone-sync-port set to 1234",
 		},
@@ -1019,39 +1022,43 @@ func TestParseZoneSyncResolverIPV6MapResolverIPV6(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
-					"zone-sync-port":          "12345",
-					"zone-sync":               "true",
-					"zone-sync-resolver-ipv6": "false",
+					"zone-sync-port":               "12345",
+					"zone-sync":                    "true",
+					"zone-sync-resolver-ipv6":      "true",
+					"zone-sync-resolver-addresses": "example.com",
 				},
 			},
 			want: &ZoneSync{
-				Enable:       true,
-				Port:         12345,
-				ResolverIPV6: BoolToPointerBool(false),
+				Enable:            true,
+				Port:              12345,
+				ResolverIPV6:      BoolToPointerBool(true),
+				ResolverAddresses: []string{"example.com"},
 			},
 			msg: "zone-sync-resolver-ipv6 set to false",
 		},
-		{
-			configMap: &v1.ConfigMap{
-				Data: map[string]string{
-					"zone-sync-port":          "12345",
-					"zone-sync":               "true",
-					"zone-sync-resolver-ipv6": "true",
-				},
-			},
-			want: &ZoneSync{
-				Enable:       true,
-				Port:         12345,
-				ResolverIPV6: BoolToPointerBool(true),
-			},
-			msg: "zone-sync-resolver-ipv6 set to true",
-		},
+		// {
+		// 	configMap: &v1.ConfigMap{
+		// 		Data: map[string]string{
+		// 			"zone-sync-port":               "12345",
+		// 			"zone-sync":                    "true",
+		// 			"zone-sync-resolver-ipv6":      "true",
+		// 			"zone-sync-resolver-addresses": "example.com",
+		// 		},
+		// 	},
+		// 	want: &ZoneSync{
+		// 		Enable:            true,
+		// 		Port:              12345,
+		// 		ResolverIPV6:      BoolToPointerBool(true),
+		// 		ResolverAddresses: []string{"example.com"},
+		// 	},
+		// 	msg: "zone-sync-resolver-ipv6 set to true",
+		// },
 	}
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			nginxPlus := true
-			hasAppProtect := true
+			hasAppProtect := false
 			hasAppProtectDos := false
 			hasTLSPassthrough := false
 

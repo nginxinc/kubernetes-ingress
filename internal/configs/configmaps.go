@@ -407,14 +407,16 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configOk = false
 		} else {
-			if cfgParams.ZoneSync.Port == 0 {
-				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync-port' to be configured", cfgm.Namespace, cfgm.Name, "zone-sync")
-				nl.Warn(l, errorText)
-				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
-				configOk = false
-			}
 			if nginxPlus {
-				cfgParams.ZoneSync.Enable = zoneSync
+				fmt.Printf("==> %+v\n", cfgParams.ZoneSync.Port)
+				if cfgParams.ZoneSync.Port > 0 {
+					cfgParams.ZoneSync.Enable = zoneSync
+				} else {
+					errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires 'zone-sync-port' to be configured", cfgm.Namespace, cfgm.Name, "zone-sync")
+					nl.Warn(l, errorText)
+					eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
+					configOk = false
+				}
 			} else {
 				errorText := fmt.Sprintf("ConfigMap %s/%s key %s requires NGINX Plus", cfgm.Namespace, cfgm.Name, "zone-sync")
 				nl.Warn(l, errorText)
@@ -477,7 +479,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if err != nil {
 			nl.Error(l, err)
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
-			configOk = true
+			configOk = false
 		} else {
 			if cfgParams.ZoneSync.Enable {
 				cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(zoneSyncResolverIpv6)
@@ -487,10 +489,6 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 				eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 				configOk = false
 			}
-		}
-	} else {
-		if cfgParams.ZoneSync.Enable {
-			cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(true)
 		}
 	}
 
