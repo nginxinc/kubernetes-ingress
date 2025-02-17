@@ -6,5 +6,3 @@ metadata:
 data:
   zone-sync: "true"
   zone-sync-port: "12345"
-  zone-sync-resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
-  zone-sync-resolver-valid: "5s"
