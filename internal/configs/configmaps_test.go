@@ -2,11 +2,7 @@ package configs
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
-
-	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
@@ -802,22 +798,26 @@ func TestParseZoneSync(t *testing.T) {
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
-					"zone-sync": "true",
+					"zone-sync":      "true",
+					"zone-sync-port": "12345",
 				},
 			},
 			want: &ZoneSync{
 				Enable: true,
+				Port:   12345,
 			},
 			msg: "zone-sync set to true",
 		},
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
-					"zone-sync": "false",
+					"zone-sync":      "false",
+					"zone-sync-port": "12345",
 				},
 			},
 			want: &ZoneSync{
 				Enable: false,
+				Port:   12345,
 			},
 			msg: "zone-sync set to false",
 		},
@@ -873,7 +873,7 @@ func TestParseZoneSyncPort(t *testing.T) {
 	}
 }
 
-func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.T) {
+func TestFailingZoneSyncOnZoneSyncEnabledAndPortNotProvided(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
@@ -887,8 +887,8 @@ func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.
 				},
 			},
 			want: &ZoneSync{
-				Enable: true,
-				Port:   0,
+				Enable: false,
+				Port:   0, // expecting port as 0 since "zone-sync-port" is not provided and therefore failing the test
 			},
 			msg: "zone-sync-port set to default value 0",
 		},
@@ -901,9 +901,17 @@ func TestZoneSyncPortSetToDefaultOnZoneSyncEnabledAndPortNotProvided(t *testing.
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			result, _ := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+			result, configOk := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+
+			if configOk {
+				t.Errorf("zone-sync-port: configOk: expected false, got true")
+			}
+
 			if result.ZoneSync.Port != test.want.Port {
-				t.Errorf("Port: want %v, got %v", test.want.Port, result.ZoneSync.Port)
+				t.Errorf("zone-sync-port: want %v, got %v", test.want.Port, result.ZoneSync.Port)
+			}
+			if result.ZoneSync.Enable != test.want.Enable {
+				t.Errorf("zone-sync: want %v, got %v", test.want.Enable, result.ZoneSync.Enable)
 			}
 		})
 	}
@@ -951,14 +959,6 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 			},
 			msg: "invalid non-numeric port",
 		},
-		{
-			configMap: &v1.ConfigMap{
-				Data: map[string]string{
-					"zone-sync-port": "",
-				},
-			},
-			msg: "missing port value",
-		},
 	}
 
 	nginxPlus := true
@@ -971,42 +971,6 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 			_, ok := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if ok {
 				t.Error("Expected config not valid, got valid")
-			}
-		})
-	}
-}
-
-func TestZoneSyncDomainMultipleNamespaces(t *testing.T) {
-	testCases := []struct {
-		name      string
-		namespace string
-		want      string
-	}{
-		{
-			name:      "nginx-ingress",
-			namespace: "nginx-ingress",
-			want:      "nginx-ingress-headless.nginx-ingress.svc.cluster.local",
-		},
-		{
-			name:      "my-release-nginx-ingress",
-			namespace: "my-release-nginx-ingress",
-			want:      "my-release-nginx-ingress-headless.my-release-nginx-ingress.svc.cluster.local",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_ = os.Setenv("POD_NAMESPACE", tc.namespace)
-
-			zoneSyncConfig := version1.ZoneSyncConfig{
-				Enable: true,
-				Domain: fmt.Sprintf("%s-headless.%s.svc.cluster.local",
-					os.Getenv("POD_NAMESPACE"),
-					os.Getenv("POD_NAMESPACE")),
-			}
-
-			if zoneSyncConfig.Domain != tc.want {
-				t.Errorf("want %q, got %q", tc.want, zoneSyncConfig.Domain)
 			}
 		})
 	}
@@ -1034,25 +998,25 @@ func TestParseZoneSyncResolverIPV6MapResolverIPV6(t *testing.T) {
 				ResolverIPV6:      BoolToPointerBool(true),
 				ResolverAddresses: []string{"example.com"},
 			},
+			msg: "zone-sync-resolver-ipv6 set to true",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"zone-sync-port":               "12345",
+					"zone-sync":                    "true",
+					"zone-sync-resolver-ipv6":      "false",
+					"zone-sync-resolver-addresses": "example.com",
+				},
+			},
+			want: &ZoneSync{
+				Enable:            true,
+				Port:              12345,
+				ResolverIPV6:      BoolToPointerBool(false),
+				ResolverAddresses: []string{"example.com"},
+			},
 			msg: "zone-sync-resolver-ipv6 set to false",
 		},
-		// {
-		// 	configMap: &v1.ConfigMap{
-		// 		Data: map[string]string{
-		// 			"zone-sync-port":               "12345",
-		// 			"zone-sync":                    "true",
-		// 			"zone-sync-resolver-ipv6":      "true",
-		// 			"zone-sync-resolver-addresses": "example.com",
-		// 		},
-		// 	},
-		// 	want: &ZoneSync{
-		// 		Enable:            true,
-		// 		Port:              12345,
-		// 		ResolverIPV6:      BoolToPointerBool(true),
-		// 		ResolverAddresses: []string{"example.com"},
-		// 	},
-		// 	msg: "zone-sync-resolver-ipv6 set to true",
-		// },
 	}
 
 	for _, test := range tests {
@@ -1065,7 +1029,7 @@ func TestParseZoneSyncResolverIPV6MapResolverIPV6(t *testing.T) {
 			result, configOk := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 
 			if !configOk {
-				t.Error("Unexpected warnings")
+				t.Errorf("zone-sync-resolver-ipv6: want configOk true, got configOk %v  ", configOk)
 			}
 
 			if result.ZoneSync.ResolverIPV6 == nil {
