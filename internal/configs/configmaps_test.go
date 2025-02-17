@@ -910,7 +910,6 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
-		configOk  bool
 		msg       string
 	}{
 		{
@@ -920,8 +919,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 					"zone-sync-port": "0",
 				},
 			},
-			configOk: false,
-			msg:      "port out of range (0)",
+			msg: "port out of range (0)",
 		},
 		{
 			configMap: &v1.ConfigMap{
@@ -930,8 +928,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 					"zone-sync-port": "-1",
 				},
 			},
-			configOk: false,
-			msg:      "port out of range (negative)",
+			msg: "port out of range (negative)",
 		},
 		{
 			configMap: &v1.ConfigMap{
@@ -940,8 +937,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 					"zone-sync-port": "65536",
 				},
 			},
-			configOk: false,
-			msg:      "port out of range (greater than 65535)",
+			msg: "port out of range (greater than 65535)",
 		},
 		{
 			configMap: &v1.ConfigMap{
@@ -950,8 +946,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 					"zone-sync-port": "not-a-number",
 				},
 			},
-			configOk: false,
-			msg:      "invalid non-numeric port",
+			msg: "invalid non-numeric port",
 		},
 		{
 			configMap: &v1.ConfigMap{
@@ -959,8 +954,7 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 					"zone-sync-port": "",
 				},
 			},
-			configOk: false,
-			msg:      "missing port value",
+			msg: "missing port value",
 		},
 	}
 
@@ -971,9 +965,9 @@ func TestParseZoneSyncPortErrors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			_, err := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
-			if err == !test.configOk {
-				t.Error("Expected error, got nil")
+			_, ok := ParseConfigMap(context.Background(), test.configMap, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
+			if ok {
+				t.Error("Expected config not valid, got valid")
 			}
 		})
 	}
