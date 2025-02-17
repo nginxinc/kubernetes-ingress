@@ -195,8 +195,9 @@ type ZoneSyncConfig struct {
 	Port              int
 	Domain            string
 	ResolverAddresses []string
-	ResolverValid     string
-	ResolverIPV6      *bool
+	// Time the resolver is valid. Go time string format: "5s", "10s".
+	ResolverValid string
+	ResolverIPV6  *bool
 }
 
 // MGMTConfig is tbe configuration for the MGMT block.
