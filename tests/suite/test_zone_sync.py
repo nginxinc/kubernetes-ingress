@@ -1,16 +1,11 @@
-import re
 
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
-    create_license,
-    create_secret_from_yaml,
     ensure_connection_to_public_endpoint,
     get_events_for_object,
     get_first_pod_name,
-    get_nginx_template_conf,
     get_reload_count,
-    is_secret_present,
     replace_configmap_from_yaml,
     wait_before_test,
 )
@@ -65,7 +60,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
@@ -95,9 +90,7 @@ class TestZoneSyncLifecycle:
         assert new_reload_count > reload_count
 
         print("Step 5: check pod for ConfigMap updated event")
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
@@ -175,9 +168,7 @@ class TestZoneSyncLifecycle:
         )
 
         # Assert that the 'ConfigMapUpdated' event is present
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
@@ -218,7 +209,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
@@ -249,9 +240,7 @@ class TestZoneSyncLifecycle:
 
         print("Step 5: check pod for ConfigMap updated event")
         # Assert that the 'ConfigMapUpdated' event is present
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
@@ -294,7 +283,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
@@ -324,15 +313,13 @@ class TestZoneSyncLifecycle:
         assert new_reload_count > reload_count
 
         print("Step 5: check pod for ConfigMap updated event")
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
             "Normal",
             "Updated",
-            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",  # TODO: Verify if the message is correct
         )
 
         print("Step 6: Update the ConfigMap nginx-config - re-configure zone-sync port back to default port")
@@ -352,9 +339,7 @@ class TestZoneSyncLifecycle:
         assert new_reload_count > reload_count
 
         print("Step 8: check pod for ConfigMap updated event")
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
@@ -393,7 +378,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
@@ -423,9 +408,7 @@ class TestZoneSyncLifecycle:
         assert new_reload_count > reload_count
 
         print("Step 5: check pod for ConfigMap updated event")
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
@@ -453,9 +436,7 @@ class TestZoneSyncLifecycle:
 
         print("Step 8: check pod for ConfigMap updated event")
         # Assert that the 'ConfigMapUpdated' event is present
-        config_events = get_events_for_object(
-            kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name
-        )
+        config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
 
         assert_event(
             config_events,
