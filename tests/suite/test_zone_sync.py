@@ -86,7 +86,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
         )
 
-        wait_before_test(5)
+        wait_before_test(3)
 
         print("Step 4: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
@@ -145,7 +145,7 @@ class TestZoneSyncLifecycle:
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(5)
+        wait_before_test(3)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -158,7 +158,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
 
-        wait_before_test(5)
+        wait_before_test(3)
 
         print("Step 4: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
@@ -224,7 +224,7 @@ class TestZoneSyncLifecycle:
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(5)
+        wait_before_test(3)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -237,7 +237,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-resolver-valid.yaml",
         )
 
-        wait_before_test(5)
+        wait_before_test(3)
 
         print("Step 4: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
@@ -280,7 +280,9 @@ class TestZoneSyncLifecycle:
         ingress_controller_endpoint,
     ):
         """
-        Test that NIC starts with zone-sync not configured in the `nginx-config`
+        Test:
+        1. that NIC starts with zone-sync not configured in the `nginx-config`
+        2. 
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -300,12 +302,12 @@ class TestZoneSyncLifecycle:
 
         configmap_name = "nginx-config"
 
-        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync-port to custom value")
         replace_configmap_from_yaml(
             kube_apis.v1,
             configmap_name,
             ingress_controller_prerequisites.namespace,
-            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-disabled.yaml",
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal-changed-port.yaml",
         )
 
         wait_before_test(3)
@@ -328,12 +330,12 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error", # TODO: Verify if the message is correct
         )
 
-        print("Step 6: Update the ConfigMap nginx-config - re-configure zone-sync port")
+        print("Step 6: Update the ConfigMap nginx-config - re-configure zone-sync port back to default port")
         replace_configmap_from_yaml(
             kube_apis.v1,
             configmap_name,
             ingress_controller_prerequisites.namespace,
-            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal-changed-port.yaml",
+            f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
 
         wait_before_test(3)
@@ -375,7 +377,8 @@ class TestZoneSyncLifecycle:
     ):
         """
         Test:
-        NIC starts with zone-sync not configured in the `nginx-config`
+        1. NIC starts with zone-sync not configured in the `nginx-config`
+        2. 
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -395,7 +398,7 @@ class TestZoneSyncLifecycle:
 
         configmap_name = "nginx-config"
 
-        print("Step 2: update the ConfigMap nginx-config - set zone-sync: false")
+        print("Step 2: update the ConfigMap nginx-config - set zone-sync-port default")
         replace_configmap_from_yaml(
             kube_apis.v1,
             configmap_name,
@@ -452,3 +455,5 @@ class TestZoneSyncLifecycle:
             "Updated",
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
+
+        # assert no headless service in place

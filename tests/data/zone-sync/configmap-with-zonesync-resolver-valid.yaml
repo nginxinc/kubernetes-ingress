@@ -5,6 +5,4 @@ metadata:
   namespace: nginx-ingress
 data:
   zone-sync: "true"
-  zone-sync-port: "12345"
   zone-sync-resolver-valid: "10s"
-
