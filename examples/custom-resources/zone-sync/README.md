@@ -16,6 +16,4 @@ Steps:
     kubectl apply -f nginx-config.yaml
     ```
 
-Note that we must specify `zone-sync-port` in the `nginx-config.yaml`.
-
-If we deploy multiple NGINX Ingress Controllers in the same Kubernetes namespace we must specify different `zone-sync` ports.
+If we don't specify `zone-sync-port` the port number is set to its default value `12345`.
