@@ -130,7 +130,8 @@ class TestZoneSyncLifecycle:
         """
         Test:
         1. NIC starts with zone-sync not configured in the `nginx-config`.
-        2. Minimal `zone-sync` config is applied. Zone sync and headless service is created.
+        2. Apply the minimal `zone-sync` config.
+        3. Verify zone-sync, headless service, and nginx.config zone_sync entry created.
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -209,7 +210,8 @@ class TestZoneSyncLifecycle:
         """
         Test:
         1. NIC starts with zone-sync not configured in the `nginx-config`
-        2. Apply zone-sync config enabled, custom port, resolver valid time 
+        2. Apply zone-sync config enabled, custom port, and resolver time
+        3. Verify zone-sync, headless service, and nginx.config zone_sync entry created.
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -281,8 +283,11 @@ class TestZoneSyncLifecycle:
     ):
         """
         Test:
-        1. that NIC starts with zone-sync not configured in the `nginx-config`
-        2. 
+        1. NIC starts with zone-sync not configured in the `nginx-config`
+        2. Apply zone-sync config enabled and custom port
+        3. Verify zone-sync, headless service, and nginx.config zone_sync entry created.
+        4. Apply default minimal zone-sync config
+        5. Verify zone-sync, headless service, and nginx.config zone_sync entry is updated.
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -297,7 +302,7 @@ class TestZoneSyncLifecycle:
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(1)
+        wait_before_test(3)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -378,7 +383,10 @@ class TestZoneSyncLifecycle:
         """
         Test:
         1. NIC starts with zone-sync not configured in the `nginx-config`
-        2. 
+        2. Apply zone-sync config enabled and custom port
+        3. Verify zone-sync, headless service, and nginx.config zone_sync entry created.
+        4. Remove zone-sync entries from the nginx-config and apply the config.
+        5. Verify zone-sync, headless service, and nginx.config zone_sync entry is removed.
         """
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -393,7 +401,7 @@ class TestZoneSyncLifecycle:
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(1)
+        wait_before_test(3)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -406,7 +414,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
 
-        wait_before_test(1)
+        wait_before_test(3)
 
         print("Step 4: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
@@ -435,7 +443,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-without-zonesync.yaml",
         )
 
-        wait_before_test(1)
+        wait_before_test(3)
 
         print("Step 7: check reload count has incremented")
         new_reload_count = get_reload_count(metrics_url)
