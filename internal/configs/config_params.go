@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+
 	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginx/kubernetes-ingress/internal/nginx"
 )
