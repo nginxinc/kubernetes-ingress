@@ -5,3 +5,4 @@ metadata:
   namespace: nginx-ingress
 data:
   zone-sync: "true"
+

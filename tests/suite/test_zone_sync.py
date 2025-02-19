@@ -386,7 +386,7 @@ class TestZoneSyncLifecycle:
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(3)
+        wait_before_test(5)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -399,13 +399,13 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
 
-        wait_before_test(3)
+        wait_before_test(5)
 
         print("Step 4: check reload count has incremented")
-        new_reload_count = get_reload_count(metrics_url)
+        reload_count_step4 = get_reload_count(metrics_url)
 
-        print(f"Step 4a: new reload count is {new_reload_count}")
-        assert new_reload_count > reload_count
+        print(f"Step 4a: new reload count is {reload_count_step4}")
+        assert reload_count_step4 > reload_count
 
         print("Step 5: check pod for ConfigMap updated event")
         config_events = get_events_for_object(kube_apis.v1, ingress_controller_prerequisites.namespace, configmap_name)
@@ -423,16 +423,16 @@ class TestZoneSyncLifecycle:
             kube_apis.v1,
             configmap_name,
             ingress_controller_prerequisites.namespace,
-            f"{TEST_DATA}/zone-sync/configmap-without-zonesync.yaml",
+            f"{TEST_DATA}/zone-sync/configmap-zonesync-disabled.yaml",
         )
 
         wait_before_test(3)
 
         print("Step 7: check reload count has incremented")
-        new_reload_count = get_reload_count(metrics_url)
+        new_reload_count_step5 = get_reload_count(metrics_url)
 
-        print(f"Step 7a: new reload count is {new_reload_count}")
-        assert new_reload_count > reload_count
+        print(f"Step 7a: new reload count is {new_reload_count_step5}")
+        assert new_reload_count_step5 > reload_count_step4
 
         print("Step 8: check pod for ConfigMap updated event")
         # Assert that the 'ConfigMapUpdated' event is present
