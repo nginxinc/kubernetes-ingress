@@ -6,12 +6,10 @@ import (
 	"reflect"
 	"sort"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -151,9 +149,9 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 				OwnerReferences: []meta_v1.OwnerReference{
 					{
 						APIVersion:         "v1",
-						Kind:               "IngressClass",
-						Name:               lbc.ingressClass,
-						UID:                lbc.getIngressClassUUID(),
+						Kind:               "ConfigMap",
+						Name:               lbc.configMap.Name,
+						UID:                lbc.configMap.UID,
 						Controller:         boolToPointerBool(true),
 						BlockOwnerDeletion: boolToPointerBool(true),
 					},
@@ -191,15 +189,6 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 	return nil
 }
 
-func (lbc *LoadBalancerController) getIngressClassUUID() types.UID {
-	ingressClass, err := lbc.client.NetworkingV1().IngressClasses().Get(context.Background(), lbc.ingressClass, meta_v1.GetOptions{})
-	if err != nil {
-		nl.Errorf(lbc.Logger, "Error getting IngressClass: %v", err)
-		return types.UID("")
-	}
-	return ingressClass.UID
-}
-
 func boolToPointerBool(b bool) *bool {
 	return &b
 }
@@ -216,6 +205,13 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
+	}
+
+	if isHeadless(obj.(*v1.Service)) {
+		err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
+		if err != nil {
+			nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
+		}
 	}
 
 	// First case: the service is the external service for the Ingress Controller
