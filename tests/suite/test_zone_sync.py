@@ -1,4 +1,3 @@
-
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
