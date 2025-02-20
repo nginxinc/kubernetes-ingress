@@ -130,7 +130,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
@@ -436,5 +436,3 @@ class TestZoneSyncLifecycle:
         # TODO:
         # 1. assert headless service is NOT creates
         # 2. assert zone-sync config NOT present in nginx.conf
-
-    
