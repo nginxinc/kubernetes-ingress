@@ -1092,15 +1092,18 @@ func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset
 	l := nl.LoggerFromContext(ctx)
 	existing, err := kubeClient.CoreV1().Services(controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 	if err == nil && existing != nil {
-		nl.Infof(l, "Headless Service %q already exists in namespace %q, skipping creation.", svcName, controllerNamespace)
+		nl.Infof(l, "headless service %s/%s already exists, skipping creating.", controllerNamespace, svcName)
 		return nil
 	}
 
 	configMapName := strings.SplitN(configMapNamespacedName, "/", 2)
+	if len(configMapName) != 2 {
+		return fmt.Errorf("wrong syntax for ConfigMap: %q", configMapNamespacedName)
+	}
 
-	configMapObj, err := kubeClient.CoreV1().ConfigMaps(controllerNamespace).Get(context.Background(), configMapName[1], meta_v1.GetOptions{})
+	configMapObj, err := kubeClient.CoreV1().ConfigMaps(configMapName[0]).Get(context.Background(), configMapName[1], meta_v1.GetOptions{})
 	if err != nil {
-		nl.Infof(l, "error getting IngressClass %q: %v", *ingressClass, err)
+		nl.Infof(l, "error getting ConfigMap %s/%s: %v", configMapName[0], configMapName[1], err)
 		return err
 	}
 
@@ -1132,7 +1135,7 @@ func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset
 		return createErr
 	}
 
-	nl.Infof(l, "Successfully created headless service %q in namespace %q", createdSvc.Name, controllerNamespace)
+	nl.Infof(l, "successfully created headless service: %s/%s", controllerNamespace, createdSvc.Name)
 	return nil
 }
 
