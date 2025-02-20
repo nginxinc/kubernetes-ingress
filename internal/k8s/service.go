@@ -169,23 +169,26 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 		if err != nil {
 			return fmt.Errorf("error creating headless service: %w", err)
 		}
-		nl.Infof(lbc.Logger, "Successfully created headless service %q in namespace %q", createdSvc.Name, lbc.controllerNamespace)
+		nl.Infof(lbc.Logger, "successfully created headless service: %s/%s", lbc.controllerNamespace, createdSvc.Name)
 		return nil
 	}
 
-	_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
+	if lbc.isNginxReady {
+		_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) || apierrors.IsForbidden(err) {
+				return nil
+			}
+			return fmt.Errorf("error retrieving headless service: %w", err)
 		}
-		return fmt.Errorf("error retrieving headless service: %w", err)
-	}
 
-	err = lbc.client.CoreV1().Services(lbc.controllerNamespace).Delete(context.Background(), svcName, meta_v1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return fmt.Errorf("error deleting headless service: %w", err)
+		err = lbc.client.CoreV1().Services(lbc.controllerNamespace).Delete(context.Background(), svcName, meta_v1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsForbidden(err) {
+			return fmt.Errorf("error deleting headless service: %w", err)
+		}
+
+		nl.Infof(lbc.Logger, "successfully deleted headless service: %s/%s", lbc.controllerNamespace, svcName)
 	}
-	nl.Infof(lbc.Logger, "Successfully deleted headless service %q in namespace %q", svcName, lbc.controllerNamespace)
 	return nil
 }
 
