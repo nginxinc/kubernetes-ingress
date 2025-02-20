@@ -1074,6 +1074,13 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncIngressLink(task)
 	}
 
+	if task.Kind == configMap || task.Kind == service {
+		err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
+		if err != nil {
+			nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
+		}
+	}
+
 	if !lbc.isNginxReady && lbc.syncQueue.Len() == 0 {
 		lbc.configurator.EnableReloads()
 		lbc.updateAllConfigs()

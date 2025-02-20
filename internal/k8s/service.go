@@ -207,13 +207,6 @@ func (lbc *LoadBalancerController) syncService(task task) {
 		return
 	}
 
-	if isHeadless(obj.(*v1.Service)) {
-		err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
-		if err != nil {
-			nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
-		}
-	}
-
 	// First case: the service is the external service for the Ingress Controller
 	// In that case we need to update the statuses of all resources
 	if lbc.IsExternalServiceKeyForStatus(key) {

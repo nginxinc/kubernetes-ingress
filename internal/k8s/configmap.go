@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"fmt"
 	"reflect"
 
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
@@ -98,10 +97,6 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 			}
 		} else {
 			lbc.configMap = nil
-		}
-		err = lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
-		if err != nil {
-			nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
 		}
 	case lbc.mgmtConfigMapName:
 		obj, configExists, err := lbc.mgmtConfigMapLister.GetByKey(key)
