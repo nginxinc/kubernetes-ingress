@@ -46,6 +46,7 @@ controller:
     # the name should not include a namespace
     # configMapName: ""
 
+
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 
@@ -192,8 +193,7 @@ controller:
     annotations: {}
 
     ## The entries of the ConfigMap for customizing NGINX configuration.
-    entries:
-      zone-sync: "true"
+    entries: {}
 
   ## It is recommended to use your own TLS certificates and keys
   defaultTLS:
