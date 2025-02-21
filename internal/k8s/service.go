@@ -139,7 +139,7 @@ func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHan
 
 func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) error {
 	if lbc.configurator.CfgParams.ZoneSync.Enable && lbc.configurator.CfgParams.ZoneSync.Port != 0 {
-		_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
+		_, err := lbc.client.CoreV1().Services(lbc.metadata.namespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 		if err == nil {
 			return nil
 		}
@@ -147,7 +147,7 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 		newSvc := &v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      svcName,
-				Namespace: lbc.controllerNamespace,
+				Namespace: lbc.metadata.namespace,
 				OwnerReferences: []meta_v1.OwnerReference{
 					{
 						APIVersion:         "v1",
@@ -162,21 +162,21 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 			Spec: v1.ServiceSpec{
 				ClusterIP: v1.ClusterIPNone,
 				Selector: map[string]string{
-					"app": lbc.controllerNamespace,
+					"app": lbc.metadata.namespace,
 				},
 			},
 		}
 
-		createdSvc, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Create(context.Background(), newSvc, meta_v1.CreateOptions{})
+		createdSvc, err := lbc.client.CoreV1().Services(lbc.metadata.namespace).Create(context.Background(), newSvc, meta_v1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("error creating headless service: %w", err)
 		}
-		nl.Infof(lbc.Logger, "successfully created headless service: %s/%s", lbc.controllerNamespace, createdSvc.Name)
+		nl.Infof(lbc.Logger, "successfully created headless service: %s/%s", lbc.metadata.namespace, createdSvc.Name)
 		return nil
 	}
 
 	if lbc.isNginxReady {
-		_, err := lbc.client.CoreV1().Services(lbc.controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
+		_, err := lbc.client.CoreV1().Services(lbc.metadata.namespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) || apierrors.IsForbidden(err) {
 				return nil
@@ -184,12 +184,12 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 			return fmt.Errorf("error retrieving headless service: %w", err)
 		}
 
-		err = lbc.client.CoreV1().Services(lbc.controllerNamespace).Delete(context.Background(), svcName, meta_v1.DeleteOptions{})
+		err = lbc.client.CoreV1().Services(lbc.metadata.namespace).Delete(context.Background(), svcName, meta_v1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsForbidden(err) {
 			return fmt.Errorf("error deleting headless service: %w", err)
 		}
 
-		nl.Infof(lbc.Logger, "successfully deleted headless service: %s/%s", lbc.controllerNamespace, svcName)
+		nl.Infof(lbc.Logger, "successfully deleted headless service: %s/%s", lbc.metadata.namespace, svcName)
 	}
 	return nil
 }

@@ -220,8 +220,16 @@ func main() {
 
 	if *nginxPlus {
 		if cfgParams.ZoneSync.Enable && cfgParams.ZoneSync.Port != 0 {
-			cfgParams.ZoneSync.Domain = *ingressClass
-			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-headless", *ingressClass), *nginxConfigMaps)
+			owner := pod.ObjectMeta.OwnerReferences[0]
+			var name string
+			if strings.ToLower(owner.Kind) == "replicaset" {
+				name = owner.Name[:len(owner.Name)-11] // Remove hash
+			} else {
+				name = owner.Name
+			}
+			combinedDeployment := fmt.Sprintf("%s-%s", name, strings.ToLower(owner.Kind))
+			cfgParams.ZoneSync.Domain = combinedDeployment
+			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-hl", combinedDeployment), *nginxConfigMaps)
 			if err != nil {
 				nl.Errorf(l, "Failed to create headless Service: %v", err)
 			}

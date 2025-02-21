@@ -137,7 +137,6 @@ type LoadBalancerController struct {
 	Logger                        *slog.Logger
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
-	controllerNamespace           string
 	watchNginxConfigMaps          bool
 	watchMGMTConfigMap            bool
 	watchGlobalConfiguration      bool
@@ -263,7 +262,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		recorder:                     input.Recorder,
 		Logger:                       nl.LoggerFromContext(input.LoggerContext),
 		configurator:                 input.NginxConfigurator,
-		controllerNamespace:          input.ControllerNamespace,
 		specialSecrets:               specialSecrets,
 		appProtectEnabled:            input.AppProtectEnabled,
 		appProtectDosEnabled:         input.AppProtectDosEnabled,
@@ -1076,7 +1074,14 @@ func (lbc *LoadBalancerController) sync(task task) {
 
 	if lbc.isNginxPlus && lbc.isNginxReady {
 		if task.Kind == configMap || task.Kind == service {
-			err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-headless", lbc.ingressClass))
+			owner := lbc.metadata.pod.ObjectMeta.OwnerReferences[0]
+			var name string
+			if strings.ToLower(owner.Kind) == "replicaset" {
+				name = owner.Name[:len(owner.Name)-11] // Remove hash
+			} else {
+				name = owner.Name
+			}
+			err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-%s-hl", name, strings.ToLower(owner.Kind)))
 			if err != nil {
 				nl.Errorf(lbc.Logger, "error syncing zone sync headless service: %v", err)
 			}
