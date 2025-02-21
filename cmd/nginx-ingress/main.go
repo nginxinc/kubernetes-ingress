@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nginx/kubernetes-ingress/internal/configs/commonhelpers"
+
 	"github.com/nginx/kubernetes-ingress/internal/configs"
 	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
@@ -214,6 +216,24 @@ func main() {
 		StaticSSLPath:                  staticSSLPath,
 		NginxVersion:                   nginxVersion,
 		AppProtectBundlePath:           appProtectBundlePath,
+	}
+
+	if *nginxPlus {
+		if cfgParams.ZoneSync.Enable && cfgParams.ZoneSync.Port != 0 {
+			owner := pod.ObjectMeta.OwnerReferences[0]
+			var name string
+			if strings.ToLower(owner.Kind) == "replicaset" {
+				name = owner.Name[:len(owner.Name)-11] // Remove hash
+			} else {
+				name = owner.Name
+			}
+			combinedDeployment := fmt.Sprintf("%s-%s", name, strings.ToLower(owner.Kind))
+			cfgParams.ZoneSync.Domain = combinedDeployment
+			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-hl", combinedDeployment), *nginxConfigMaps)
+			if err != nil {
+				nl.Errorf(l, "Failed to create headless Service: %v", err)
+			}
+		}
 	}
 
 	mustWriteNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
@@ -1076,6 +1096,57 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	if !podUpdated {
 		nl.Errorf(l, "Failed to update pod labels after %d attempts", maxRetries)
 	}
+}
+
+func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, controllerNamespace string, svcName string, configMapNamespacedName string) error {
+	l := nl.LoggerFromContext(ctx)
+	existing, err := kubeClient.CoreV1().Services(controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
+	if err == nil && existing != nil {
+		nl.Infof(l, "headless service %s/%s already exists, skipping creating.", controllerNamespace, svcName)
+		return nil
+	}
+
+	configMapName := strings.SplitN(configMapNamespacedName, "/", 2)
+	if len(configMapName) != 2 {
+		return fmt.Errorf("wrong syntax for ConfigMap: %q", configMapNamespacedName)
+	}
+
+	configMapObj, err := kubeClient.CoreV1().ConfigMaps(configMapName[0]).Get(context.Background(), configMapName[1], meta_v1.GetOptions{})
+	if err != nil {
+		nl.Infof(l, "error getting ConfigMap %s/%s: %v", configMapName[0], configMapName[1], err)
+		return err
+	}
+
+	svc := &api_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      svcName,
+			Namespace: controllerNamespace,
+			OwnerReferences: []meta_v1.OwnerReference{
+				{
+					APIVersion:         "v1",
+					Kind:               "ConfigMap",
+					Name:               configMapObj.Name,
+					UID:                configMapObj.UID,
+					Controller:         commonhelpers.BoolToPointerBool(true),
+					BlockOwnerDeletion: commonhelpers.BoolToPointerBool(true),
+				},
+			},
+		},
+		Spec: api_v1.ServiceSpec{
+			ClusterIP: api_v1.ClusterIPNone,
+			Selector: map[string]string{
+				"app": controllerNamespace,
+			},
+		},
+	}
+
+	createdSvc, createErr := kubeClient.CoreV1().Services(controllerNamespace).Create(context.Background(), svc, meta_v1.CreateOptions{})
+	if createErr != nil {
+		return createErr
+	}
+
+	nl.Infof(l, "successfully created headless service: %s/%s", controllerNamespace, createdSvc.Name)
+	return nil
 }
 
 func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg_runtime.Object, reason string, err error) {
