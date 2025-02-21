@@ -1,9 +1,9 @@
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
-    read_service,
     get_events_for_object,
     get_nginx_template_conf,
+    read_service,
     replace_configmap_from_yaml,
     wait_before_test,
 )
@@ -61,7 +61,7 @@ def service_exists(v1, service_name, namespace) -> bool:
     :param namespace: Namespace
     :return: Bool
     """
-    resp = read_service(v1, service_name, namespace)
+    read_service(v1, service_name, namespace)
     # TODO: add business logic lookup for V1Service and determine if the service exists or not
     return false
 
@@ -186,7 +186,6 @@ class TestZoneSyncLifecycle:
         print("Step 3: check zone_sync present in nginx.conf")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config)
-
 
         resp = read_service(
             kube_apis.v1,
