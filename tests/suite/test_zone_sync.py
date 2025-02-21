@@ -9,6 +9,7 @@ from suite.utils.resources_utils import (
 
 WAIT_TIME = 1
 
+
 def assert_event(event_list, event_type, reason, message_substring):
     """
     Assert that an event with specific type, reason, and message substring exists.
@@ -50,7 +51,6 @@ def assert_zonesync_disabled(nginx_config):
     assert "zone_sync_server" not in nginx_config
 
 
-
 @pytest.mark.zonesync
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.ingresses
@@ -70,7 +70,7 @@ class TestZoneSyncLifecycle:
         2. Apply config map with zone-sync disabled - no zone sync created, no headless service created.
         """
         configmap_name = "nginx-config"
-        
+
         print("Step 0: apply default nginx-config map")
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -84,7 +84,6 @@ class TestZoneSyncLifecycle:
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
 
-        
         print("Step 1: update the ConfigMap nginx-config - set zone-sync: false")
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -106,9 +105,9 @@ class TestZoneSyncLifecycle:
         )
 
         wait_before_test(WAIT_TIME)
-    
+
         print("Step 3: verify zone_sync not present in nginx.conf")
-        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)    
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
 
         print("Step 4: cleanup: apply default nginx-config map")
@@ -118,7 +117,6 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/default-configmap.yaml",
         )
-
 
     def test_apply_minimal_default_zonesync_config(
         self,
@@ -143,7 +141,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/default-configmap.yaml",
         )
-        
+
         # Verify zone_sync not present in nginx.conf
         wait_before_test(WAIT_TIME)
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
@@ -211,7 +209,6 @@ class TestZoneSyncLifecycle:
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
 
-        
         print("Step 1: update the ConfigMap nginx-config - set zone-sync with custom resolver valid")
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -233,7 +230,7 @@ class TestZoneSyncLifecycle:
         )
 
         wait_before_test(WAIT_TIME)
-    
+
         print("Step 3: check zone_sync present in nginx.conf")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config, resolver_valid="10s")
@@ -245,7 +242,6 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/default-configmap.yaml",
         )
-
 
     def test_update_zonesync_port(
         self,
@@ -271,7 +267,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
-        
+
         wait_before_test(WAIT_TIME)
 
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
@@ -304,7 +300,7 @@ class TestZoneSyncLifecycle:
         print("Step 4: check if zone_syn port is updated")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config, port="34100")
-               
+
         print("Step 5: cleanup:  apply default nginx-config map")
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -335,7 +331,7 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
             f"{TEST_DATA}/zone-sync/configmap-with-zonesync-minimal.yaml",
         )
-        
+
         wait_before_test(WAIT_TIME)
 
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
