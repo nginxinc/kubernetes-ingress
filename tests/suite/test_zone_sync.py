@@ -4,10 +4,10 @@ from suite.utils.resources_utils import (
     ensure_connection_to_public_endpoint,
     get_events_for_object,
     get_first_pod_name,
+    get_nginx_template_conf,
     get_reload_count,
     replace_configmap_from_yaml,
     wait_before_test,
-    get_nginx_template_conf,
 )
 
 
@@ -34,7 +34,7 @@ def assert_zonesync_enabled(nginx_config, port="12345"):
 
     :param nginx_config: NGINX config file `nginx.config`
     """
-    #assert "zone_sync;" in nginx_config
+    # assert "zone_sync;" in nginx_config
     assert f"zone_sync_server nginx-headless.nginx.svc.cluster.local:'{port}'" in nginx_config
 
 
@@ -44,7 +44,7 @@ def assert_zonesync_disabled(nginx_config):
 
     :param nginx_config: NGINX config file `nginx.config`
     """
-    #assert "zone_sync;" not in nginx_config
+    # assert "zone_sync;" not in nginx_config
     assert "zone_sync_server nginx-headless.nginx.svc.cluster.local" not in nginx_config
 
 
@@ -129,7 +129,6 @@ class TestZoneSyncLifecycle:
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
 
-
     @pytest.mark.parametrize(
         "ingress_controller",
         [
@@ -205,7 +204,6 @@ class TestZoneSyncLifecycle:
         # Verify zone_sync present in nginx.conf
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config)
-
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -283,7 +281,6 @@ class TestZoneSyncLifecycle:
         wait_before_test(3)
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config)
-
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -394,7 +391,6 @@ class TestZoneSyncLifecycle:
         wait_before_test(3)
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config)
-
 
     @pytest.mark.parametrize(
         "ingress_controller",
