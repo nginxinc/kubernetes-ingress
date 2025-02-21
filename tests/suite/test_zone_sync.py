@@ -7,6 +7,7 @@ from suite.utils.resources_utils import (
     get_reload_count,
     replace_configmap_from_yaml,
     wait_before_test,
+    get_nginx_template_conf,
 )
 
 
@@ -25,6 +26,26 @@ def assert_event(event_list, event_type, reason, message_substring):
     assert (
         False
     ), f"Expected event with type '{event_type}', reason '{reason}', and message containing '{message_substring}' not found."
+
+
+def assert_zonesync_enabled(nginx_config, port="12345"):
+    """
+    Assert that zone_sync exists in nginx.conf
+
+    :param nginx_config: NGINX config file `nginx.config`
+    """
+    #assert "zone_sync;" in nginx_config
+    assert f"zone_sync_server nginx-headless.nginx.svc.cluster.local:'{port}'" in nginx_config
+
+
+def assert_zonesync_disabled(nginx_config):
+    """
+    Assert that zone_sync doesn't exist in nginx.conf
+
+    :param nginx_config: NGINX config file `nginx.config`
+    """
+    #assert "zone_sync;" not in nginx_config
+    assert "zone_sync_server nginx-headless.nginx.svc.cluster.local" not in nginx_config
 
 
 @pytest.mark.zonesync
@@ -64,6 +85,11 @@ class TestZoneSyncLifecycle:
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
 
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
+
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
@@ -98,9 +124,11 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
 
-        # TODO:
-        # 1. assert headless service is NOT creates
-        # 2. assert zone-sync config NOT present in nginx.conf
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
+
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -135,10 +163,14 @@ class TestZoneSyncLifecycle:
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
 
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
+
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
-        wait_before_test(3)
         print(f"Step 1a: initial reload count is {reload_count}")
 
         configmap_name = "nginx-config"
@@ -170,9 +202,10 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
 
-    #     # TODO:
-    #     # 1. assert headless service is created
-    #     # 2. assert zone-sync config present in nginx.conf
+        # Verify zone_sync present in nginx.conf
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_enabled(nginx_config)
+
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -206,6 +239,11 @@ class TestZoneSyncLifecycle:
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
+
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
 
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
@@ -242,9 +280,10 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
 
-        # TODO:
-        # 1. assert headless service is created
-        # 2. assert zone-sync config present in nginx.conf with custom resolver time
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_enabled(nginx_config)
+
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -281,6 +320,11 @@ class TestZoneSyncLifecycle:
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
 
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
+
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
 
@@ -312,8 +356,13 @@ class TestZoneSyncLifecycle:
             config_events,
             "Normal",
             "Updated",
-            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",  # TODO: Verify if the message is correct
+            f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
+
+        # Verify zone_sync present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_enabled(nginx_config, port="34100")
 
         print("Step 6: Update the ConfigMap nginx-config - re-configure zone-sync port back to default port")
         replace_configmap_from_yaml(
@@ -340,6 +389,12 @@ class TestZoneSyncLifecycle:
             "Updated",
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
+
+        # Verify zone_sync present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_enabled(nginx_config)
+
 
     @pytest.mark.parametrize(
         "ingress_controller",
@@ -372,6 +427,11 @@ class TestZoneSyncLifecycle:
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
+
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
 
         print("Step 1: get reload count")
         reload_count = get_reload_count(metrics_url)
@@ -407,6 +467,11 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
 
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_enabled(nginx_config)
+
         print("Step 6: update the ConfigMap nginx-config - set zone-sync disabled")
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -433,6 +498,7 @@ class TestZoneSyncLifecycle:
             f"ConfigMap {ingress_controller_prerequisites.namespace}/{configmap_name} updated without error",
         )
 
-        # TODO:
-        # 1. assert headless service is NOT creates
-        # 2. assert zone-sync config NOT present in nginx.conf
+        # Verify zone_sync not present in nginx.conf
+        wait_before_test(3)
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert_zonesync_disabled(nginx_config)
