@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nginx/kubernetes-ingress/internal/configs/commonhelpers"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 
@@ -756,7 +758,7 @@ func parseConfigMapZoneSync(l *slog.Logger, cfgm *v1.ConfigMap, cfgParams *Confi
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			return nil, errors.New(errorText)
 		}
-		cfgParams.ZoneSync.ResolverIPV6 = BoolToPointerBool(zoneSyncResolverIpv6)
+		cfgParams.ZoneSync.ResolverIPV6 = commonhelpers.BoolToPointerBool(zoneSyncResolverIpv6)
 	}
 
 	return &cfgParams.ZoneSync, nil
@@ -786,7 +788,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		} else {
-			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
+			mgmtCfgParams.SSLVerify = commonhelpers.BoolToPointerBool(sslVerify)
 		}
 	}
 
@@ -800,7 +802,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, err.Error())
 			configWarnings = true
 		} else {
-			mgmtCfgParams.ResolverIPV6 = BoolToPointerBool(resolverIpv6)
+			mgmtCfgParams.ResolverIPV6 = commonhelpers.BoolToPointerBool(resolverIpv6)
 		}
 	}
 
@@ -815,7 +817,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			eventLog.Event(cfgm, v1.EventTypeWarning, nl.EventReasonInvalidValue, errorText)
 			configWarnings = true
 		} else {
-			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
+			mgmtCfgParams.EnforceInitialReport = commonhelpers.BoolToPointerBool(enforceInitialReport)
 		}
 	}
 

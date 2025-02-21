@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/nginx/kubernetes-ingress/internal/configs/commonhelpers"
+
 	nl "github.com/nginx/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -152,8 +154,8 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 						Kind:               "ConfigMap",
 						Name:               lbc.configMap.Name,
 						UID:                lbc.configMap.UID,
-						Controller:         boolToPointerBool(true),
-						BlockOwnerDeletion: boolToPointerBool(true),
+						Controller:         commonhelpers.BoolToPointerBool(true),
+						BlockOwnerDeletion: commonhelpers.BoolToPointerBool(true),
 					},
 				},
 			},
@@ -190,10 +192,6 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 		nl.Infof(lbc.Logger, "successfully deleted headless service: %s/%s", lbc.controllerNamespace, svcName)
 	}
 	return nil
-}
-
-func boolToPointerBool(b bool) *bool {
-	return &b
 }
 
 func (lbc *LoadBalancerController) syncService(task task) {

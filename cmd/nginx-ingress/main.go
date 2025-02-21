@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nginx/kubernetes-ingress/internal/configs/commonhelpers"
+
 	"github.com/nginx/kubernetes-ingress/internal/configs"
 	"github.com/nginx/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginx/kubernetes-ingress/internal/configs/version2"
@@ -1117,8 +1119,8 @@ func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset
 					Kind:               "ConfigMap",
 					Name:               configMapObj.Name,
 					UID:                configMapObj.UID,
-					Controller:         boolToPointerBool(true),
-					BlockOwnerDeletion: boolToPointerBool(true),
+					Controller:         commonhelpers.BoolToPointerBool(true),
+					BlockOwnerDeletion: commonhelpers.BoolToPointerBool(true),
 				},
 			},
 		},
@@ -1144,10 +1146,6 @@ func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg
 	eventLog.Eventf(obj, api_v1.EventTypeWarning, reason, err.Error())
 	time.Sleep(fatalEventFlushTime) // wait for the event to be flushed
 	nl.Fatal(l, err.Error())
-}
-
-func boolToPointerBool(b bool) *bool {
-	return &b
 }
 
 func initLogger(logFormat string, level slog.Level, out io.Writer) context.Context {
