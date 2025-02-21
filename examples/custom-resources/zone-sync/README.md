@@ -16,4 +16,4 @@ Steps:
     kubectl apply -f nginx-config.yaml
     ```
 
-If we don't specify `zone-sync-port` the port number is set to its default value `12345`.
+If we don't specify `zone-sync-port` the port number is set to the default value `12345`.
