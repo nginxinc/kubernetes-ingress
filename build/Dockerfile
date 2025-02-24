@@ -108,6 +108,11 @@ ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
@@ -127,6 +132,11 @@ ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 RUN --mount=type=bind,from=alpine-fips-3.20,target=/tmp/fips/ \
 	mkdir -p /usr/ssl \
 	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
@@ -142,6 +152,11 @@ ARG NGINX_PLUS_VERSION
 ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	--mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -180,6 +195,11 @@ ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	--mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
@@ -212,6 +232,11 @@ ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -242,6 +267,11 @@ ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -286,6 +316,11 @@ ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -356,6 +391,11 @@ ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -372,6 +412,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 FROM ubi-9-plus AS ubi-9-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -415,6 +460,11 @@ FROM ubi-9-plus AS ubi-9-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
+
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
@@ -445,6 +495,11 @@ ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -490,6 +545,11 @@ ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
+
+# Startup is non-deterministic between NGINX Plus reporting usage and licence reporter initialising. This
+# is a workaround to attribute the installation to nic even if licence reporter isn't ready yet.
+# @See https://github.com/nginx/kubernetes-ingress/issues/7360
+COPY dependencies/tracking.info.default /etc/nginx/reporting/tracking.info
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
