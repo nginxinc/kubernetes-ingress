@@ -4,6 +4,7 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
+from suite.test_jwt_policies_jwksuri import keycloak_setup # noqa F401
 from suite.utils.policy_resources_utils import delete_policy
 from suite.utils.resources_utils import replace_configmap_from_yaml, wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml
