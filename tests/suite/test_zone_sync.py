@@ -1,14 +1,13 @@
+import datetime
+
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
-    get_events_for_object,
     get_nginx_template_conf,
     read_service,
     replace_configmap_from_yaml,
     wait_before_test,
 )
-
-import datetime
 
 WAIT_TIME = 1
 
@@ -69,7 +68,7 @@ def service_exists(v1, service_name, namespace) -> bool:
     print(f"{svc}")
     print("========= == == == =========")
     return True
-    
+
 
 @pytest.mark.zonesync
 @pytest.mark.skip_for_nginx_oss
@@ -97,7 +96,6 @@ class TestZoneSyncLifecycle:
             ingress_controller_prerequisites.namespace,
         )
         print(f"TIME 000: {datetime.datetime.now()}")
-        
 
         configmap_name = "nginx-config"
 
@@ -109,9 +107,7 @@ class TestZoneSyncLifecycle:
             f"{TEST_DATA}/zone-sync/default-configmap.yaml",
         )
 
-
         print(f"TIME 1: {datetime.datetime.now()}")
-
 
         # Verify zone_sync not present in nginx.conf
         wait_before_test(WAIT_TIME)
@@ -144,9 +140,7 @@ class TestZoneSyncLifecycle:
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
 
-
         print(f"TIME 2: {datetime.datetime.now()}")
-
 
         print("Step 4: verify headless service doesn't exist")
         service_exists(
