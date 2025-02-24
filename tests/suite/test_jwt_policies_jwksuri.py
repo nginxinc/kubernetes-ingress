@@ -5,7 +5,7 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
-from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.policy_resources_utils import delete_policy
 from suite.utils.resources_utils import (
     create_example_app,
     create_secret_from_yaml,
