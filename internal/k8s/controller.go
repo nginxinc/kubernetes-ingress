@@ -1077,9 +1077,9 @@ func (lbc *LoadBalancerController) sync(task task) {
 			owner := lbc.metadata.pod.ObjectMeta.OwnerReferences[0]
 			var name string
 			if strings.ToLower(owner.Kind) == "replicaset" {
-				name = owner.Name[:len(owner.Name)-11] // Remove hash
-			} else {
-				name = owner.Name
+				if dash := strings.LastIndex(name, "-"); dash != -1 {
+					name = name[:dash] // Remove hash
+				}
 			}
 			err := lbc.syncZoneSyncHeadlessService(fmt.Sprintf("%s-%s-hl", name, strings.ToLower(owner.Kind)))
 			if err != nil {

@@ -220,16 +220,9 @@ func main() {
 
 	if *nginxPlus {
 		if cfgParams.ZoneSync.Enable && cfgParams.ZoneSync.Port != 0 {
-			owner := pod.ObjectMeta.OwnerReferences[0]
-			name := owner.Name
-			if strings.ToLower(owner.Kind) == "replicaset" {
-				name = name[:len(name)-11] // Remove hash
-			}
-			combinedDeployment := fmt.Sprintf("%s-%s", name, strings.ToLower(owner.Kind))
-			cfgParams.ZoneSync.Domain = combinedDeployment
-			err = createHeadlessService(ctx, kubeClient, controllerNamespace, fmt.Sprintf("%s-hl", combinedDeployment), *nginxConfigMaps)
+			err := createAndValidateHeadlessService(ctx, kubeClient, cfgParams, controllerNamespace, pod)
 			if err != nil {
-				nl.Errorf(l, "Failed to create headless Service: %v", err)
+				logEventAndExit(ctx, eventRecorder, pod, nl.EventReasonServiceFailedToCreate, err)
 			}
 		}
 	}
@@ -1096,8 +1089,25 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	}
 }
 
-func createHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, controllerNamespace string, svcName string, configMapNamespacedName string) error {
+func createAndValidateHeadlessService(ctx context.Context, kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, controllerNamespace string, pod *api_v1.Pod) error {
 	l := nl.LoggerFromContext(ctx)
+	owner := pod.ObjectMeta.OwnerReferences[0]
+	name := owner.Name
+	if strings.ToLower(owner.Kind) == "replicaset" {
+		if dash := strings.LastIndex(name, "-"); dash != -1 {
+			name = name[:dash] // Remove hash
+		}
+	}
+	combinedDeployment := fmt.Sprintf("%s-%s", name, strings.ToLower(owner.Kind))
+	cfgParams.ZoneSync.Domain = combinedDeployment
+	err := createHeadlessService(l, kubeClient, controllerNamespace, fmt.Sprintf("%s-hl", combinedDeployment), *nginxConfigMaps)
+	if err != nil {
+		return fmt.Errorf("failed to create headless Service: %w", err)
+	}
+	return nil
+}
+
+func createHeadlessService(l *slog.Logger, kubeClient *kubernetes.Clientset, controllerNamespace string, svcName string, configMapNamespacedName string) error {
 	existing, err := kubeClient.CoreV1().Services(controllerNamespace).Get(context.Background(), svcName, meta_v1.GetOptions{})
 	if err == nil && existing != nil {
 		nl.Infof(l, "headless service %s/%s already exists, skipping creating.", controllerNamespace, svcName)

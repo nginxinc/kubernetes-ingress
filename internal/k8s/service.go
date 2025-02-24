@@ -169,6 +169,7 @@ func (lbc *LoadBalancerController) syncZoneSyncHeadlessService(svcName string) e
 
 		createdSvc, err := lbc.client.CoreV1().Services(lbc.metadata.namespace).Create(context.Background(), newSvc, meta_v1.CreateOptions{})
 		if err != nil {
+			lbc.recorder.Eventf(lbc.metadata.pod, v1.EventTypeWarning, nl.EventReasonServiceFailedToCreate, "error creating headless service: %+v", newSvc)
 			return fmt.Errorf("error creating headless service: %w", err)
 		}
 		nl.Infof(lbc.Logger, "successfully created headless service: %s/%s", lbc.metadata.namespace, createdSvc.Name)
