@@ -61,10 +61,13 @@ def service_exists(v1, service_name, namespace) -> bool:
     :param namespace: Namespace
     :return: Bool
     """
-    read_service(v1, service_name, namespace)
+    svc = read_service(v1, service_name, namespace)
     # TODO: add business logic lookup for V1Service and determine if the service exists or not
-    return false
-
+    print("========= service: =========")
+    print(f"{svc}")
+    print("========= == == == =========")
+    return true
+    
 
 @pytest.mark.zonesync
 @pytest.mark.skip_for_nginx_oss
@@ -124,6 +127,13 @@ class TestZoneSyncLifecycle:
         print("Step 3: verify zone_sync not present in nginx.conf")
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_disabled(nginx_config)
+
+
+        service_exists(
+            kube_apis.v1,
+            "nginx-ingress-replicaset-hl",
+            ingress_controller_prerequisites.namespace,
+        )
 
         print("Step 4: cleanup: apply default nginx-config map")
         replace_configmap_from_yaml(
@@ -187,13 +197,11 @@ class TestZoneSyncLifecycle:
         nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert_zonesync_enabled(nginx_config)
 
-        resp = read_service(
+        service_exists(
             kube_apis.v1,
             "nginx-ingress-replicaset-hl",
             ingress_controller_prerequisites.namespace,
         )
-
-        print(f"XYZ ===> BODY: {resp}")
 
         # todo: parse this response
         # Read a service named 'nginx-ingress-replicaset-hl'
