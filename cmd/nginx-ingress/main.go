@@ -221,11 +221,9 @@ func main() {
 	if *nginxPlus {
 		if cfgParams.ZoneSync.Enable && cfgParams.ZoneSync.Port != 0 {
 			owner := pod.ObjectMeta.OwnerReferences[0]
-			var name string
+			name := owner.Name
 			if strings.ToLower(owner.Kind) == "replicaset" {
-				name = owner.Name[:len(owner.Name)-11] // Remove hash
-			} else {
-				name = owner.Name
+				name = name[:len(name)-11] // Remove hash
 			}
 			combinedDeployment := fmt.Sprintf("%s-%s", name, strings.ToLower(owner.Kind))
 			cfgParams.ZoneSync.Domain = combinedDeployment
