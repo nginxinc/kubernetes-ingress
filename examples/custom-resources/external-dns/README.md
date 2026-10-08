@@ -40,25 +40,30 @@ Start NIC with:
 ### Migrating an existing deployment
 
 If you already run NIC with ExternalDNS enabled on `externaldns.nginx.org/v1`, you can move to the upstream group
-without dropping a DNS record. NIC never deletes `DNSEndpoint` resources, and it does not convert existing ones, so the
+without dropping a DNS record. NIC never deletes `DNSEndpoint` resources and does not convert existing ones, so the
 cut-over is a sequence you drive yourself.
 
-Migrate **before** upgrading external-dns to v0.21.0+, while it still accepts either group:
+Migrate **before** upgrading external-dns to v0.21.0+, while it still accepts either group. Complete each step's check
+before starting the next one:
 
-| Step | Action | Effect on DNS |
-| ---- | ------ | ------------- |
-| 1 | Install the upstream CRD (see [Step 1](#step-1-deploy-external-dns) below). | None. |
-| 2 | Set `-external-dns-group-version=externaldns.k8s.io/v1alpha1` on NIC and restart it. | NIC creates a new `externaldns.k8s.io/v1alpha1` `DNSEndpoint`. The old `externaldns.nginx.org/v1` object stays in place and is still the one external-dns reads. Record untouched. |
-| 3 | Verify the new object exists and has been read (see below). | None. |
-| 4 | Set `--crd-source-apiversion=externaldns.k8s.io/v1alpha1` on your existing external-dns and restart it. | external-dns now reads the new object. Same hostname, targets, and TTL, so it logs `All records are already up to date`. |
-| 5 | Delete the old `externaldns.nginx.org/v1` object. | None — nothing reads it any more. |
-| 6 | Upgrade external-dns to v0.21.0 or newer. | None. |
+| Step | Action | Check before continuing |
+| ---- | ------ | ----------------------- |
+| 0 | Install the upstream CRD. NIC does not ship it, so it will not arrive with a NIC upgrade. | `kubectl get crd dnsendpoints.externaldns.k8s.io` succeeds. |
+| 1 | Upgrade NIC, leaving `externalDNSGroupVersion` at its `externaldns.nginx.org/v1` default. | Records unchanged. The `externaldns.nginx.org/v1` object is still present and current. |
+| 2 | Set `controller.externalDNSGroupVersion: externaldns.k8s.io/v1alpha1` (Helm) or `-external-dns-group-version=externaldns.k8s.io/v1alpha1` (flag). | **Blocking.** The `externaldns.k8s.io/v1alpha1` object exists *and* its `.spec.endpoints` matches the old object's targets and TTL. Check NIC's logs for `DNSEndpoint` informer errors. |
+| 3 | Remove `--crd-source-apiversion` from your external-dns v0.20.x configuration. Its default is already `externaldns.k8s.io/v1alpha1`, so removing it selects the upstream group. | `status.observedGeneration` matches `metadata.generation` on the new object, and one full sync interval logs `All records are already up to date`. |
+| 4 | Upgrade external-dns to v0.21.0 or newer. | Same check as step 3. |
+| 5 | Delete the old `externaldns.nginx.org/v1` object. | Records unchanged. |
 
-Steps 4 and 5 cause no record churn because both objects share a name and namespace. external-dns derives its ownership
+Steps 3–5 cause no record churn because both objects share a name and namespace. external-dns derives its ownership
 label from those (`crd/<namespace>/<name>`), so the TXT registry record is identical before and after the switch and the
 reconciliation plan comes out empty.
 
-To confirm external-dns has read the new object before step 4, compare its observed generation to its generation:
+Keep step 2 and step 3 as separate changes. Step 4 switches the group on its own — v0.21.0+ ignores
+`--crd-source-apiversion` entirely — but doing the group switch and the version upgrade in one move means a records
+change gives you no way to tell which caused it.
+
+To confirm external-dns has read the new object, compare its observed generation to its generation:
 
 ```console
 kubectl get dnsendpoints.externaldns.k8s.io <name> -o jsonpath='{.status.observedGeneration}/{.metadata.generation}'
@@ -68,16 +73,46 @@ Matching values mean external-dns has picked the resource up. external-dns stamp
 reads the resource, which happens before it pushes records to your DNS provider — so treat it as confirmation that the
 resource was seen, not that the record is already live.
 
-Two things to be careful about:
+#### Why step 0 and the step 2 check matter
 
-- **Do not reverse steps 2 and 4.** Pointing external-dns at the upstream group before NIC has created the object leaves
-  it with no source for that hostname. Under `--policy=sync` the record is deleted; under `--policy=upsert-only` it
-  survives.
-- **Keep the window between steps 2 and 4 short.** NIC stops updating the old object as soon as you flip the toggle, but
-  external-dns is still reading it. Changes to the VirtualServer in that window are not published.
+Skipping the CRD install does not fail loudly. NIC registers an informer for a resource that does not exist, that
+informer never syncs, and NIC's ExternalDNS control loop stalls before it processes anything — no `DNSEndpoint` is
+created or updated for any VirtualServer. Meanwhile the old object is still in place and external-dns is still reading
+it, so DNS looks healthy. The only signal is list/watch errors in NIC's log and the absence of the new object.
+
+The damage lands later, at step 3 or 4, and depends on your external-dns `--policy`:
+
+- A **missing CRD or missing RBAC** makes external-dns fail to start. No records change.
+- A **present CRD with no objects in it** is a successful, empty result. Under `--policy=sync` external-dns concludes
+  every record it owns has been released and deletes them. Under `--policy=upsert-only` deletions are stripped and the
+  records survive.
+
+So on `--policy=sync` the difference between a safe failure and a destructive one is whether the CRD was applied before
+you flipped NIC. Treat the step 2 check as a gate, not a glance — an object that exists but is empty or stale is as
+dangerous as no object at all.
+
+Two further points:
+
+- **Never let external-dns read the upstream group before NIC has populated it.** That is the same empty-desired-set
+  condition described above.
+- **Keep the window between steps 2 and 3 short.** NIC stops updating the old object as soon as you flip the toggle, but
+  external-dns is still reading it, so VirtualServer changes in that window are not published.
+
+#### Aborting a migration
+
+Up to and including step 4, the old object has not been deleted, so you can return to the starting state by reverting
+**both** settings together:
+
+1. `controller.externalDNSGroupVersion` back to `externaldns.nginx.org/v1`.
+2. `--crd-source-apiversion=externaldns.nginx.org/v1` back onto external-dns (and roll back to v0.20.x if you have
+   already upgraded — v0.21.0+ cannot read that group).
+
+Revert them together. Reverting only one leaves external-dns pointed at a group NIC is not writing to, which is the
+empty-desired-set condition.
 
 If you skip step 5, the old object is not left behind permanently: NIC sets an owner reference to the VirtualServer, so
-Kubernetes garbage-collects it when the VirtualServer is deleted.
+Kubernetes garbage-collects it when the VirtualServer is deleted. Note that after step 2 NIC no longer holds RBAC for
+`externaldns.nginx.org`, so step 5 is a `kubectl delete` — NIC will not remove it for you.
 
 ## Step 1: Deploy external-dns
 

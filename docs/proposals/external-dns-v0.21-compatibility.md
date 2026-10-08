@@ -94,20 +94,24 @@ Benefits: single reconciliation loop, single set of tests, easy to add a third g
 
 external-dns ≤ v0.20.x builds its CRD client from whatever `--crd-source-apiversion` is set to (`NewCRDClientForAPIVersionKind` parses the group-version and registers the types under it), so it reads `externaldns.nginx.org/v1` and `externaldns.k8s.io/v1alpha1` equally well. v0.21.0 is what hard-codes the upstream group. That overlap gives a lossless migration with no dual-run and no window where the desired record set is empty:
 
-1. Install the upstream CRD.
-2. Flip NIC to `externaldns.k8s.io/v1alpha1`. NIC creates the new object; the old one stays in place and is still what external-dns reads.
-3. Confirm the new object has been read (`status.observedGeneration == metadata.generation`).
-4. Flip external-dns's `--crd-source-apiversion` to the upstream group, still on v0.20.x.
+0. **Install the upstream CRD.** NIC does not ship it, so it does not arrive with a NIC upgrade.
+1. Upgrade NIC, leaving the group at its `externaldns.nginx.org/v1` default.
+2. Flip NIC to `externaldns.k8s.io/v1alpha1`. NIC creates the new object; the old one stays in place and is still what external-dns reads. **Gate:** the new object exists and its `.spec.endpoints` matches the old one.
+3. Remove `--crd-source-apiversion` from the v0.20.x config — its default is already `externaldns.k8s.io/v1alpha1` (`pkg/apis/externaldns/types.go`), so removing it selects the upstream group. **Gate:** `status.observedGeneration == metadata.generation`, plus one clean sync interval.
+4. Upgrade external-dns to v0.21.0+.
 5. Delete the old `externaldns.nginx.org/v1` object.
-6. Upgrade external-dns to v0.21.0+.
 
-Steps 4–5 produce no record churn: both objects share a name and namespace, so external-dns derives the same `crd/<namespace>/<name>` ownership label for each and the TXT registry record is unchanged.
+Steps 3–5 produce no record churn: both objects share a name and namespace, so external-dns derives the same `crd/<namespace>/<name>` ownership label for each and the TXT registry record is unchanged.
+
+Steps 2 and 3 are kept separate deliberately. Step 4 switches the group on its own (v0.21.0+ accepts `--crd-source-apiversion` but ignores it — there is no validation, so a stale value is silently dropped), but combining the group switch with the version upgrade leaves no way to attribute a records change to one or the other.
 
 Operator-visible caveats, documented in `examples/custom-resources/external-dns/README.md`:
 
-- Reversing steps 2 and 4 leaves external-dns with no source for the hostname. Harmless under `--policy=upsert-only`; deletes the record under `--policy=sync`.
-- Between steps 2 and 4 NIC has stopped updating the old object while external-dns is still reading it, so VirtualServer changes in that window are not published.
-- Skipping step 5 is not a leak: the old object carries an owner reference to the VirtualServer and is garbage-collected with it.
+- **Step 0 is load-bearing under `--policy=sync`.** Without the CRD, NIC's upstream informer never syncs and its ExternalDNS control loop stalls before creating anything, while the old object keeps DNS healthy — so the mistake is invisible until step 3/4. At that point a missing CRD or missing RBAC makes external-dns fail to start (no records change), but a *present* CRD containing *no objects* is a successful empty result: `plan.calculateChanges` moves every current record with no candidate into `Changes.Delete`, and `SyncPolicy` passes it through unmodified. `--policy=upsert-only` strips the deletions; `--policy=sync` executes them.
+- Letting external-dns read the upstream group before NIC has populated it is the same empty-desired-set condition.
+- Between steps 2 and 3 NIC has stopped updating the old object while external-dns is still reading it, so VirtualServer changes in that window are not published.
+- Aborting is possible up to step 5 because the old object is never deleted — but both settings must be reverted together, since reverting one leaves external-dns pointed at an unpopulated group.
+- Skipping step 5 is not a leak: the old object carries an owner reference to the VirtualServer and is garbage-collected with it. NIC will not delete it itself; after step 2 the Helm-generated ClusterRole no longer grants `externaldns.nginx.org`.
 
 ## Risks and open questions
 
@@ -122,6 +126,7 @@ Operator-visible caveats, documented in `examples/custom-resources/external-dns/
 - ✅ `go test` — scoped to `internal/externaldns/…`, `internal/k8s/…`, `cmd/…`
 - ✅ Helm unit tests — 37 snapshots pass; 1 pre-existing `startupStatusInvalid` failure is unrelated (schema message wording changed upstream)
 - ✅ Full `make test` (`go test -tags=aws,helmunit -shuffle=on ./...`) after rebase onto `main`
+- ✅ Staged cut-over validated end-to-end on a live GCP Cloud DNS zone with `--policy=sync`, external-dns v0.20.0 → v0.23.0: no records added, changed, or deleted at any step. Also confirmed in reverse — v0.20.0 reads `externaldns.k8s.io/v1alpha1` without complaint, which is what makes the staged sequence possible.
 - ⏳ `make lint`
 - ⏳ Manual `helm template` sanity check for both toggle values
 

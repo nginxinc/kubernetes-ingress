@@ -13,6 +13,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// dnsEndpointKind is the Kind of both the legacy and the upstream DNSEndpoint.
+const dnsEndpointKind = "DNSEndpoint"
+
 // dnsEndpointBackend abstracts DNSEndpoint API access for a single
 // namespaced informer. It hides the concrete API group (either
 // externaldns.nginx.org/v1 or externaldns.k8s.io/v1alpha1) behind the
@@ -132,6 +135,12 @@ func toUpstream(in *extdnsapi.DNSEndpoint) *extdnsk8sapi.DNSEndpoint {
 }
 
 // fromUpstream is the inverse of toUpstream.
+//
+// The returned value uses the canonical internal Go type, which the runtime
+// scheme maps to externaldns.nginx.org/v1. TypeMeta is therefore set
+// explicitly so that anything deriving a GroupVersionKind from the object
+// (notably record.EventRecorder, via reference.GetReference) reports the group
+// the object actually lives in rather than falling back to the scheme.
 func fromUpstream(in *extdnsk8sapi.DNSEndpoint) *extdnsapi.DNSEndpoint {
 	if in == nil {
 		return nil
@@ -151,6 +160,10 @@ func fromUpstream(in *extdnsk8sapi.DNSEndpoint) *extdnsapi.DNSEndpoint {
 		})
 	}
 	return &extdnsapi.DNSEndpoint{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: GroupVersionUpstream,
+			Kind:       dnsEndpointKind,
+		},
 		ObjectMeta: *in.ObjectMeta.DeepCopy(),
 		Spec:       extdnsapi.DNSEndpointSpec{Endpoints: endpoints},
 		Status:     extdnsapi.DNSEndpointStatus{ObservedGeneration: in.Status.ObservedGeneration},
