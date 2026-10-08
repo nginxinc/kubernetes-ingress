@@ -25,7 +25,7 @@ We are adding a **runtime toggle** (`-external-dns-group-version` flag, or `cont
 ## Non-goals
 
 - Auto-detecting the installed external-dns version. Explicit is safer than clever here.
-- Migrating existing `externaldns.nginx.org/v1` `DNSEndpoint` resources on the fly.
+- Migrating existing `externaldns.nginx.org/v1` `DNSEndpoint` resources on the fly — NIC neither converts nor deletes them. This is not a gap: external-dns ≤ v0.20.x reads either API group, so operators can cut over losslessly by sequencing the two toggles (see [Upgrade paths](#upgrade-paths)). Automating it would mean NIC issuing deletes against a group it no longer manages, gated on a signal (`status.observedGeneration`) that only proves external-dns has *read* the resource, not that the record is live.
 - Shipping the upstream `externaldns.k8s.io/v1alpha1` CRD from the NIC chart (see decision below).
 
 ## Decisions
@@ -86,8 +86,28 @@ Benefits: single reconciliation loop, single set of tests, easy to add a third g
 | Situation | Action |
 | --------- | ------ |
 | Existing user on external-dns ≤ v0.20.x | None. Upgrade NIC, keep default. |
-| New/existing user moving to external-dns v0.21.0+ | Install the upstream `DNSEndpoint` CRD (from the external-dns repo/chart), then set `-external-dns-group-version=externaldns.k8s.io/v1alpha1` (flag) or `controller.externalDNSGroupVersion: externaldns.k8s.io/v1alpha1` (Helm). |
+| New install on external-dns v0.21.0+ | Install the upstream `DNSEndpoint` CRD (from the external-dns repo/chart), then set `-external-dns-group-version=externaldns.k8s.io/v1alpha1` (flag) or `controller.externalDNSGroupVersion: externaldns.k8s.io/v1alpha1` (Helm). |
+| Existing user with live `externaldns.nginx.org/v1` records | Staged cut-over, below. |
 | Air-gapped / no external-dns | Nothing to do — flag defaults are safe. |
+
+### Staged cut-over for existing records
+
+external-dns ≤ v0.20.x builds its CRD client from whatever `--crd-source-apiversion` is set to (`NewCRDClientForAPIVersionKind` parses the group-version and registers the types under it), so it reads `externaldns.nginx.org/v1` and `externaldns.k8s.io/v1alpha1` equally well. v0.21.0 is what hard-codes the upstream group. That overlap gives a lossless migration with no dual-run and no window where the desired record set is empty:
+
+1. Install the upstream CRD.
+2. Flip NIC to `externaldns.k8s.io/v1alpha1`. NIC creates the new object; the old one stays in place and is still what external-dns reads.
+3. Confirm the new object has been read (`status.observedGeneration == metadata.generation`).
+4. Flip external-dns's `--crd-source-apiversion` to the upstream group, still on v0.20.x.
+5. Delete the old `externaldns.nginx.org/v1` object.
+6. Upgrade external-dns to v0.21.0+.
+
+Steps 4–5 produce no record churn: both objects share a name and namespace, so external-dns derives the same `crd/<namespace>/<name>` ownership label for each and the TXT registry record is unchanged.
+
+Operator-visible caveats, documented in `examples/custom-resources/external-dns/README.md`:
+
+- Reversing steps 2 and 4 leaves external-dns with no source for the hostname. Harmless under `--policy=upsert-only`; deletes the record under `--policy=sync`.
+- Between steps 2 and 4 NIC has stopped updating the old object while external-dns is still reading it, so VirtualServer changes in that window are not published.
+- Skipping step 5 is not a leak: the old object carries an owner reference to the VirtualServer and is garbage-collected with it.
 
 ## Risks and open questions
 
@@ -101,8 +121,8 @@ Benefits: single reconciliation loop, single set of tests, easy to add a third g
 - ✅ `go build ./...`
 - ✅ `go test` — scoped to `internal/externaldns/…`, `internal/k8s/…`, `cmd/…`
 - ✅ Helm unit tests — 37 snapshots pass; 1 pre-existing `startupStatusInvalid` failure is unrelated (schema message wording changed upstream)
+- ✅ Full `make test` (`go test -tags=aws,helmunit -shuffle=on ./...`) after rebase onto `main`
 - ⏳ `make lint`
-- ⏳ Full `make test`
 - ⏳ Manual `helm template` sanity check for both toggle values
 
 ## References
@@ -113,4 +133,5 @@ Benefits: single reconciliation loop, single set of tests, easy to add a third g
 - Upstream `DNSEndpoint` CRD (v0.21.0) — <https://github.com/kubernetes-sigs/external-dns/blob/v0.21.0/config/crd/standard/dnsendpoints.externaldns.k8s.io.yaml>
 - Upstream `DNSEndpoint` Go type (v0.21.0) — <https://github.com/kubernetes-sigs/external-dns/blob/v0.21.0/endpoint/endpoint.go>
 - CRD source docs (v0.21.0) — <https://github.com/kubernetes-sigs/external-dns/blob/v0.21.0/docs/sources/crd.md>
+- CRD source (v0.20.0) — group-agnostic `NewCRDClientForAPIVersionKind`, the basis for the staged cut-over — <https://github.com/kubernetes-sigs/external-dns/blob/v0.20.0/source/crd.go>
 - DNSEndpoint graduation proposal — <https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/003-dnsendpoint-graduation-to-beta.md>

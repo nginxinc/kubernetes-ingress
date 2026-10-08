@@ -4,7 +4,13 @@ metadata:
   name: external-dns
 rules:
 - apiGroups: [""]
-  resources: ["services","endpoints","pods"]
+  resources: ["services","pods"]
+  verbs: ["get","watch","list"]
+# Required by --source=service: external-dns reads EndpointSlices, not the
+# legacy core/v1 Endpoints API. Without this the service source fails to sync
+# its informer cache and external-dns exits at startup.
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
   verbs: ["get","watch","list"]
 - apiGroups: ["extensions","networking.k8s.io"]
   resources: ["ingresses"]
