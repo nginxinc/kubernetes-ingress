@@ -39,7 +39,7 @@ PLUS_ARGS ?=  $(DOCKER_AUTH) --build-arg NGINX_PLUS_VERSION=$(NGINX_PLUS_VERSION
 UBI10_PACKAGES_IMAGE ?= ghcr.io/nginx/dependencies/nginx-ubi:ubi10@sha256:8fb7d622f38e0d0f4dba7bfc6228fee7241adf7e1c981f16c532cfbd47eccfc9
 
 # renovate: datasource=github-releases depName=dominikh/go-tools
-STATICCHECK_VERSION ?= 2026.2.1
+STATICCHECK_VERSION ?= 452d5bb86b45416c35891262f6a11dbd6a970117
 
 # renovate: datasource=github-tags depName=golang/vuln
 GOVULNCHECK_VERSION ?= v1.8.0

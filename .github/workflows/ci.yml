@@ -336,7 +336,7 @@ jobs:
       - name: Run Static Check
         uses: dominikh/staticcheck-action@9716614d4101e79b4340dd97b10e54d68234e431 # v1.4.1
         with:
-          version: 2026.2.1 # renovate: datasource=github-releases depName=dominikh/go-tools
+          version: 452d5bb86b45416c35891262f6a11dbd6a970117 # renovate: datasource=github-releases depName=dominikh/go-tools
           install-go: false
           use-cache: true
 
