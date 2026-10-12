@@ -42,7 +42,7 @@ UBI10_PACKAGES_IMAGE ?= ghcr.io/nginx/dependencies/nginx-ubi:ubi10@sha256:8fb7d6
 STATICCHECK_VERSION ?= 452d5bb86b45416c35891262f6a11dbd6a970117
 
 # renovate: datasource=github-tags depName=golang/vuln
-GOVULNCHECK_VERSION ?= v1.8.0
+GOVULNCHECK_VERSION ?= v1.9.0
 
 GO_DOCKER_IMAGE_NAME    ?= golang
 # renovate: datasource=docker depName=golang versioning=docker
@@ -61,7 +61,7 @@ TELEMETRY_ENDPOINT            ?= oss.edge.df.f5.com:443
 # renovate: datasource=github-releases depName=golangci/golangci-lint
 GOLANGCI_LINT_VERSION         ?= v2.14.0 ## The version of golangci-lint to use
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION             ?= v0.51.0 ## The version of goimports to use
+GOIMPORTS_VERSION             ?= v0.52.0 ## The version of goimports to use
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION               ?= v0.12.0 ## The version of gofumpt to use
 
