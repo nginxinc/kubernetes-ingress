@@ -320,7 +320,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -769,7 +769,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: nginx-ingress
-        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         imagePullPolicy: "IfNotPresent"
         ports:
         - name: http
@@ -1233,7 +1233,7 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
       - name: nginx-ingress
-        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         imagePullPolicy: "IfNotPresent"
         ports:
         - name: http
@@ -1328,7 +1328,7 @@ spec:
           - -weight-changes-dynamic-reload=false
       initContainers:
       - name: init-nginx-ingress
-        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         imagePullPolicy: "IfNotPresent"
         command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
         resources:
@@ -1717,7 +1717,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -2171,7 +2171,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -2658,7 +2658,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -3113,7 +3113,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -3590,7 +3590,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -4064,7 +4064,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -4540,7 +4540,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -5002,7 +5002,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -5457,7 +5457,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -5912,7 +5912,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -6367,7 +6367,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -6842,7 +6842,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -7308,7 +7308,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -7764,7 +7764,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -8220,7 +8220,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -8733,7 +8733,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -9242,7 +9242,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -9703,7 +9703,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -10170,7 +10170,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -10641,7 +10641,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -11113,7 +11113,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -11592,7 +11592,7 @@ spec:
       hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
-      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+      - image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         name: nginx-ingress
         imagePullPolicy: "IfNotPresent"
         ports:
@@ -11688,7 +11688,7 @@ spec:
           - -weight-changes-dynamic-reload=false
       initContainers:
       - name: init-nginx-ingress
-        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r8
+        image: private-registry.nginx.com/nginx-ic/lts/nginx-plus-ingress:2026-lts-r9
         imagePullPolicy: "IfNotPresent"
         command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
         resources:
