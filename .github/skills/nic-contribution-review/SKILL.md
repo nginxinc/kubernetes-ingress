@@ -91,7 +91,7 @@ Link <https://github.com/nginx/kubernetes-ingress/blob/main/CONTRIBUTING.md#one-
 
 ## Gate 3: churn (re-reviews, every pull request)
 
-Runs when the pull request already has a review. The last reviewed commit is the commit SHA of the most recent review; after a force-push, match the earlier commits by content.
+Runs when the pull request already has a review from this bot. The last reviewed commit is the commit SHA of this bot's most recent review; after a force-push, match the earlier commits by content.
 
 Classify every finding:
 
@@ -105,7 +105,7 @@ Classify every finding:
 
 Breakage that arrives with a merge from `main` is a finding, not a strike, unless it is in the author's conflict resolution.
 
-Strikes add up across rounds: count earlier `Churn:` comments plus this round.
+Strikes add up across rounds: count earlier `Churn:` comments made by this bot plus this round.
 
 - **Strike 1: churn warning.** On the regressing line, post a `Churn:` comment naming the commit, the defect, and the review comment the commit was meant to address. Ask the author to revert the commit and address the original comment narrowly instead of patching on top.
 - **Strike 2 or later: abandon the approach.** Post a `Churn:` comment recommending that the author reset the branch to the last commit without new defects (name its SHA) or close the pull request, and move the unresolved problem into a new issue. Include an issue draft and stop reviewing the new commits.
