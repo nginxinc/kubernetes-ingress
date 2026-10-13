@@ -9,6 +9,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path=dnsendpoints
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations="api-approved.kubernetes.io=https://github.com/kubernetes-sigs/external-dns/pull/2007"
 type DNSEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
