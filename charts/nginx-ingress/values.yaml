@@ -497,7 +497,8 @@ controller:
   ## Enable external DNS for Virtual Server resources. Requires controller.enableCustomResources.
   enableExternalDNS: false
 
-  ## Selects the DNSEndpoint API group and version NIC writes to when enableExternalDNS is true.
+  ## Selects the DNSEndpoint API group and version NGINX Ingress Controller writes to when
+  ## enableExternalDNS is true.
   ## Use "externaldns.nginx.org/v1" (default) with external-dns <= v0.20.x started with
   ## --crd-source-apiversion=externaldns.nginx.org/v1. Use "externaldns.k8s.io/v1alpha1" with
   ## external-dns v0.21.0+, which only recognizes the upstream group. The upstream CRD is NOT

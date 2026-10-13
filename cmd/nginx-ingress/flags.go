@@ -240,8 +240,8 @@ NIC prints a startup warning when set. Requires -plm-storage-url.`)
 		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
 
 	externalDNSGroupVersion = flag.String("external-dns-group-version", externaldns.GroupVersionNginx,
-		fmt.Sprintf("The DNSEndpoint API group and version NIC writes to when -enable-external-dns is set. "+
-			"Use %q for NIC's own CRD (external-dns <= v0.20.x, started with --crd-source-apiversion=externaldns.nginx.org/v1), "+
+		fmt.Sprintf("The DNSEndpoint API group and version NGINX Ingress Controller writes to when -enable-external-dns is set. "+
+			"Use %q for the NGINX Ingress Controller CRD (external-dns <= v0.20.x, started with --crd-source-apiversion=externaldns.nginx.org/v1), "+
 			"or %q for the upstream CRD that external-dns v0.21.0+ recognizes.",
 			externaldns.GroupVersionNginx, externaldns.GroupVersionUpstream))
 

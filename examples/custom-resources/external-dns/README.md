@@ -18,8 +18,8 @@ server. In this example, we deploy an ExternalDNS deployment with the AWS provid
 
 NGINX Ingress Controller can write `DNSEndpoint` resources to one of two API groups:
 
-- `externaldns.nginx.org/v1` (default) — NIC's own group, kept as the default for backwards compatibility. The CRD is shipped by the NIC Helm chart / manifests.
-- `externaldns.k8s.io/v1alpha1` — the upstream external-dns group. The CRD is **not** shipped by NIC to avoid ownership conflicts with the external-dns Helm chart; install it separately from the [external-dns repo](https://github.com/kubernetes-sigs/external-dns).
+- `externaldns.nginx.org/v1` (default) — NGINX Ingress Controller's own group, kept as the default for backwards compatibility. The CRD is shipped by the NGINX Ingress Controller Helm chart / manifests.
+- `externaldns.k8s.io/v1alpha1` — the upstream external-dns group. The CRD is **not** shipped by NGINX Ingress Controller to avoid ownership conflicts with the external-dns Helm chart; install it separately from the [external-dns repo](https://github.com/kubernetes-sigs/external-dns).
 
 Which group you need depends on your external-dns version:
 
@@ -31,7 +31,7 @@ Because v0.20.x accepts both, you can move to the upstream group before upgradin
 
 Toggle groups with the `-external-dns-group-version` command-line flag (or `controller.externalDNSGroupVersion` Helm value). This example uses `externaldns.k8s.io/v1alpha1` and pins external-dns to v0.21.0.
 
-Start NIC with:
+Start NGINX Ingress Controller with:
 
 ```shell
 -external-dns-group-version=externaldns.k8s.io/v1alpha1
@@ -39,8 +39,8 @@ Start NIC with:
 
 ### Migrating an existing deployment
 
-If you already run NIC with ExternalDNS enabled on `externaldns.nginx.org/v1`, you can move to the upstream group
-without dropping a DNS record. NIC never deletes `DNSEndpoint` resources and does not convert existing ones, so the
+If you already run NGINX Ingress Controller with ExternalDNS enabled on `externaldns.nginx.org/v1`, you can move to the upstream group
+without dropping a DNS record. NGINX Ingress Controller never deletes `DNSEndpoint` resources and does not convert existing ones, so the
 cut-over is a sequence you drive yourself.
 
 Migrate **before** upgrading external-dns to v0.21.0+, while it still accepts either group. Complete each step's check
@@ -48,9 +48,9 @@ before starting the next one:
 
 | Step | Action | Check before continuing |
 | ---- | ------ | ----------------------- |
-| 0 | Install the upstream CRD. NIC does not ship it, so it will not arrive with a NIC upgrade. | `kubectl get crd dnsendpoints.externaldns.k8s.io` succeeds. |
-| 1 | Upgrade NIC, leaving `externalDNSGroupVersion` at its `externaldns.nginx.org/v1` default. | Records unchanged. The `externaldns.nginx.org/v1` object is still present and current. |
-| 2 | Set `controller.externalDNSGroupVersion: externaldns.k8s.io/v1alpha1` (Helm) or `-external-dns-group-version=externaldns.k8s.io/v1alpha1` (flag). | **Blocking.** The `externaldns.k8s.io/v1alpha1` object exists *and* its `.spec.endpoints` matches the old object's targets and TTL. Check NIC's logs for `DNSEndpoint` informer errors. |
+| 0 | Install the upstream CRD. NGINX Ingress Controller does not ship it, so it will not arrive with an NGINX Ingress Controller upgrade. | `kubectl get crd dnsendpoints.externaldns.k8s.io` succeeds. |
+| 1 | Upgrade NGINX Ingress Controller, leaving `externalDNSGroupVersion` at its `externaldns.nginx.org/v1` default. | Records unchanged. The `externaldns.nginx.org/v1` object is still present and current. |
+| 2 | Set `controller.externalDNSGroupVersion: externaldns.k8s.io/v1alpha1` (Helm) or `-external-dns-group-version=externaldns.k8s.io/v1alpha1` (flag). | **Blocking.** The `externaldns.k8s.io/v1alpha1` object exists *and* its `.spec.endpoints` matches the old object's targets and TTL. Check NGINX Ingress Controller's logs for `DNSEndpoint` informer errors. |
 | 3 | Remove `--crd-source-apiversion` from your external-dns v0.20.x configuration. Its default is already `externaldns.k8s.io/v1alpha1`, so removing it selects the upstream group. | `status.observedGeneration` matches `metadata.generation` on the new object, and one full sync interval logs `All records are already up to date`. |
 | 4 | Upgrade external-dns to v0.21.0 or newer. | Same check as step 3. |
 | 5 | Delete the old `externaldns.nginx.org/v1` object. | Records unchanged. |
@@ -75,10 +75,10 @@ resource was seen, not that the record is already live.
 
 #### Why step 0 and the step 2 check matter
 
-Skipping the CRD install does not fail loudly. NIC registers an informer for a resource that does not exist, that
-informer never syncs, and NIC's ExternalDNS control loop stalls before it processes anything — no `DNSEndpoint` is
+Skipping the CRD install does not fail loudly. NGINX Ingress Controller registers an informer for a resource that does not exist, that
+informer never syncs, and NGINX Ingress Controller's ExternalDNS control loop stalls before it processes anything — no `DNSEndpoint` is
 created or updated for any VirtualServer. Meanwhile the old object is still in place and external-dns is still reading
-it, so DNS looks healthy. The only signal is list/watch errors in NIC's log and the absence of the new object.
+it, so DNS looks healthy. The only signal is list/watch errors in NGINX Ingress Controller's log and the absence of the new object.
 
 The damage lands later, at step 3 or 4, and depends on your external-dns `--policy`:
 
@@ -88,14 +88,14 @@ The damage lands later, at step 3 or 4, and depends on your external-dns `--poli
   records survive.
 
 So on `--policy=sync` the difference between a safe failure and a destructive one is whether the CRD was applied before
-you flipped NIC. Treat the step 2 check as a gate, not a glance — an object that exists but is empty or stale is as
+you flipped NGINX Ingress Controller. Treat the step 2 check as a gate, not a glance — an object that exists but is empty or stale is as
 dangerous as no object at all.
 
 Two further points:
 
-- **Never let external-dns read the upstream group before NIC has populated it.** That is the same empty-desired-set
+- **Never let external-dns read the upstream group before NGINX Ingress Controller has populated it.** That is the same empty-desired-set
   condition described above.
-- **Keep the window between steps 2 and 3 short.** NIC stops updating the old object as soon as you flip the toggle, but
+- **Keep the window between steps 2 and 3 short.** NGINX Ingress Controller stops updating the old object as soon as you flip the toggle, but
   external-dns is still reading it, so VirtualServer changes in that window are not published.
 
 #### Aborting a migration
@@ -107,16 +107,21 @@ Up to and including step 4, the old object has not been deleted, so you can retu
 2. `--crd-source-apiversion=externaldns.nginx.org/v1` back onto external-dns (and roll back to v0.20.x if you have
    already upgraded — v0.21.0+ cannot read that group).
 
-Revert them together. Reverting only one leaves external-dns pointed at a group NIC is not writing to, which is the
+Revert them together. Reverting only one leaves external-dns pointed at a group NGINX Ingress Controller is not writing to, which is the
 empty-desired-set condition.
 
-If you skip step 5, the old object is not left behind permanently: NIC sets an owner reference to the VirtualServer, so
-Kubernetes garbage-collects it when the VirtualServer is deleted. Note that after step 2 NIC no longer holds RBAC for
-`externaldns.nginx.org`, so step 5 is a `kubectl delete` — NIC will not remove it for you.
+If you skip step 5, the old object is not left behind permanently: NGINX Ingress Controller sets an owner reference to the VirtualServer, so
+Kubernetes garbage-collects it when the VirtualServer is deleted. Step 5 is a `kubectl delete` either way — NGINX Ingress Controller only
+manages the group it is configured for and never deletes the object in the other one.
+
+RBAC differs between installation methods, which matters if you want to delete the old object with NGINX Ingress Controller's service
+account rather than your own: the Helm chart grants only the selected group, so after step 2 NGINX Ingress Controller no longer holds any
+permission on `externaldns.nginx.org`, while the manifest-based install (`deployments/rbac/rbac.yaml`) grants both
+groups.
 
 ## Step 1: Deploy external-dns
 
-Install the upstream DNSEndpoint CRD (needed because NIC does not ship it):
+Install the upstream DNSEndpoint CRD (needed because NGINX Ingress Controller does not ship it):
 
 ```console
 kubectl apply --server-side=true -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.21.0/config/crd/standard/dnsendpoints.externaldns.k8s.io.yaml
