@@ -11,7 +11,6 @@ import (
 	vsapi "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdnsapi "github.com/nginx/kubernetes-ingress/pkg/apis/externaldns/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	validators "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -163,13 +162,12 @@ func buildDNSEndpoint(ctx context.Context, backend dnsEndpointBackend, vs *vsapi
 	var err error
 	l := nl.LoggerFromContext(ctx)
 
-	existingDNSEndpoint, err = backend.Get(vs.Namespace, vs.ObjectMeta.Name)
+	existingDNSEndpoint, err = backend.Get(vs.Namespace, vs.Name)
 
 	if !apierrors.IsNotFound(err) && err != nil {
 		return nil, nil, err
 	}
-	var controllerGVK schema.GroupVersionKind = vsGVK
-	ownerRef := *metav1.NewControllerRef(vs, controllerGVK)
+	ownerRef := *metav1.NewControllerRef(vs, vsGVK)
 	ownerRef.BlockOwnerDeletion = new(false)
 
 	recordTTL := buildTTL(vs.Spec.ExternalDNS)
@@ -202,7 +200,7 @@ func buildDNSEndpoint(ctx context.Context, backend dnsEndpointBackend, vs *vsapi
 
 	dnsEndpoint := &extdnsapi.DNSEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            vs.ObjectMeta.Name,
+			Name:            vs.Name,
 			Namespace:       vs.Namespace,
 			Labels:          vs.Labels,
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
@@ -277,7 +275,7 @@ func buildProviderSpecificProperties(extdnsSpec vsapi.ExternalDNS) extdnsapi.Pro
 }
 
 func extdnsendpointNeedsUpdate(dnsA, dnsB *extdnsapi.DNSEndpoint) bool {
-	if !cmp.Equal(dnsA.ObjectMeta.Name, dnsB.ObjectMeta.Name) {
+	if !cmp.Equal(dnsA.Name, dnsB.Name) {
 		return true
 	}
 	if !cmp.Equal(dnsA.Labels, dnsB.Labels) {

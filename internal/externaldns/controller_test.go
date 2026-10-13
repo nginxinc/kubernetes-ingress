@@ -59,7 +59,7 @@ func TestNewController_WithNamespace(t *testing.T) {
 				t.Fatal("expected informerGroup to contain entry for 'default' namespace")
 			}
 			if nsi.backend == nil {
-				t.Error("expected namespacedInformer.backend to be initialised")
+				t.Error("expected namespacedInformer.backend to be initialized")
 			}
 		})
 	}
