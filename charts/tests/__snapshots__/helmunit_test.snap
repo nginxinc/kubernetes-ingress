@@ -9740,6 +9740,7 @@ spec:
           - -ready-status=true
           - -ready-status-port=8081
           - -enable-latency-metrics=false
+          - -enable-topology-aware-routing=false
           - -ssl-dynamic-reload=true
           - -enable-telemetry-reporting=true
           - -weight-changes-dynamic-reload=false
@@ -10199,6 +10200,7 @@ spec:
           - -ready-status=true
           - -ready-status-port=8081
           - -enable-latency-metrics=false
+          - -enable-topology-aware-routing=false
           - -ssl-dynamic-reload=true
           - -enable-telemetry-reporting=true
           - -weight-changes-dynamic-reload=false
