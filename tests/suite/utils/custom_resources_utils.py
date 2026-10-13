@@ -109,18 +109,22 @@ def wait_for_resource_status(custom_objects, namespace, resource_type, name, tim
     return read_custom_resource(custom_objects, namespace, resource_type, name)
 
 
-def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) -> bool:
+def is_dnsendpoint_present(
+    custom_objects: CustomObjectsApi, name, namespace, api_group="externaldns.k8s.io", api_version="v1alpha1"
+) -> bool:
     """
     Check if a namespace has a dnsendpoint.
 
     :param v1: CoreV1Api
     :param name:
     :param namespace:
+    :param api_group: DNSEndpoint API group, "externaldns.nginx.org" for the Ingress Controller group
+    :param api_version: DNSEndpoint API version, "v1" for the Ingress Controller group
     :return: bool
     """
     try:
         read_custom_resource(
-            custom_objects, namespace, "dnsendpoints", name, api_group="externaldns.k8s.io", api_version="v1alpha1"
+            custom_objects, namespace, "dnsendpoints", name, api_group=api_group, api_version=api_version
         )
     except ApiException as ex:
         if ex.status == 404:
