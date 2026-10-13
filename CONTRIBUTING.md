@@ -100,8 +100,7 @@ You are welcome to use AI tools, but you are the author and you are accountable 
 - Write the pull request description and your replies to review comments yourself. Reviewers want to talk with you, not
   with your tool.
 - Don't let agents act for you. Pull requests, issues and comments that an agent posts without your review may be closed
-  without review. The issue templates include a box that AI agents and bots must tick, and issues with that box ticked
-  are closed automatically.
+  without review.
 - Maintainers may close a pull request when reviewing it would cost more than it brings to the project, for example when
   it bundles unrelated changes or its author can't explain it.
 
