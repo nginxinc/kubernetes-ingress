@@ -932,9 +932,9 @@ jinja2==3.1.6 \
     # via
     #   -r requirements.in
     #   pytest-html
-kubernetes==37.0.0 \
-    --hash=sha256:60c6a7cb90627fcfff5610c61a79af55472f418f8c91ea5abdb5c851b466ae22 \
-    --hash=sha256:eb957f804fe462275b1757426427105c99e2110c65b902f0d44763bf3e802109
+kubernetes==37.0.1 \
+    --hash=sha256:a313a482361506340b5972cabaf20a7ee16ec8713e73325bf699b783a40464a9 \
+    --hash=sha256:e41db0a95615c2388680a2d556df33fd0f27a5717c9b5df5857e475c196c2f10
     # via -r requirements.in
 markupsafe==3.0.4 \
     --hash=sha256:007e1ffd9bf65bb6ee96df7b258fc632a4868dd5566037986c64781f35a36e98 \
@@ -1474,9 +1474,9 @@ pyasn1-modules==0.4.2 \
     # via
     #   -r requirements.in
     #   google-auth
-pycparser==3.1 \
-    --hash=sha256:b3fc6dec06a8b2fefa0ed4ff92285306a5e3be9987bc5603c9edbdc4e492418f \
-    --hash=sha256:f09d358c840bd147b79e55f2bc494f18ea869dc897f5852a8f5766b74f787882
+pycparser==3.11 \
+    --hash=sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80 \
+    --hash=sha256:d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc
     # via
     #   -r requirements.in
     #   cffi
