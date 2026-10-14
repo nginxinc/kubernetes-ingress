@@ -11,13 +11,13 @@ WAF_REPO					  ?= "pkgs.nginx.com" ## The package repo to install nginx app prot
 DOS_REPO					  ?= "pkgs.nginx.com" ## The package repo to install nginx app protect dos from
 
 # renovate: datasource=docker depName=nginx/nginx
-NGINX_OSS_VERSION             ?= 1.31.6
-NGINX_PLUS_VERSION            ?= R37.1
+NGINX_OSS_VERSION             ?= 1.31.7
+NGINX_PLUS_VERSION            ?= R37.2
 
-NAP_WAF_VERSION               ?= 37.1+5.715
-NAP_WAF_COMMON_VERSION        ?= 11.792
-NAP_WAF_PLUGIN_VERSION        ?= 6.31
-NAP_WAF_IPI_VERSION           ?= 1.61
+NAP_WAF_VERSION               ?= 37.2+5.777
+NAP_WAF_COMMON_VERSION        ?= 11.869
+NAP_WAF_PLUGIN_VERSION        ?= 6.32
+NAP_WAF_IPI_VERSION           ?= 1.68
 
 AGENT_V2_VERSION              ?= 2
 AGENT_V3_VERSION              ?= 3
