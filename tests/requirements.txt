@@ -932,9 +932,9 @@ jinja2==3.1.6 \
     # via
     #   -r requirements.in
     #   pytest-html
-kubernetes==37.0.0 \
-    --hash=sha256:60c6a7cb90627fcfff5610c61a79af55472f418f8c91ea5abdb5c851b466ae22 \
-    --hash=sha256:eb957f804fe462275b1757426427105c99e2110c65b902f0d44763bf3e802109
+kubernetes==37.0.1 \
+    --hash=sha256:a313a482361506340b5972cabaf20a7ee16ec8713e73325bf699b783a40464a9 \
+    --hash=sha256:e41db0a95615c2388680a2d556df33fd0f27a5717c9b5df5857e475c196c2f10
     # via -r requirements.in
 markupsafe==3.0.4 \
     --hash=sha256:007e1ffd9bf65bb6ee96df7b258fc632a4868dd5566037986c64781f35a36e98 \
@@ -1474,9 +1474,9 @@ pyasn1-modules==0.4.2 \
     # via
     #   -r requirements.in
     #   google-auth
-pycparser==3.1 \
-    --hash=sha256:b3fc6dec06a8b2fefa0ed4ff92285306a5e3be9987bc5603c9edbdc4e492418f \
-    --hash=sha256:f09d358c840bd147b79e55f2bc494f18ea869dc897f5852a8f5766b74f787882
+pycparser==3.11 \
+    --hash=sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80 \
+    --hash=sha256:d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc
     # via
     #   -r requirements.in
     #   cffi
@@ -1623,9 +1623,9 @@ pydantic-core==2.50.1 \
     --hash=sha256:f77ac30b19221cd9bd3fcfa3d4614eff93140d0572ab730cded17b64adca05f3 \
     --hash=sha256:fe90228920fd8ff2be62622b6bb8a2b11acd65046d50c6b130614b5879605a20
     # via pydantic
-pyee==13.0.1 \
-    --hash=sha256:0b931f7c14535667ed4c7e0d531716368715e860b988770fc7eb8578d1f67fc8 \
-    --hash=sha256:af2f8fede4171ef667dfded53f96e2ed0d6e6bd7ee3bb46437f77e3b57689228
+pyee==14.0.0 \
+    --hash=sha256:3ac2d3229a9677f7de2c33d7f52fe25b638a46b19c413fea2edc8c6d0a644e4d \
+    --hash=sha256:76dd0f4314ecd27f02dc73589dea7fd3853f9b6176d8ef9b122860657e3602de
     # via
     #   -r requirements.in
     #   playwright
