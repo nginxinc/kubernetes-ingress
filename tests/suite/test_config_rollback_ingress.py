@@ -259,10 +259,13 @@ class TestConfigRollbackIngress:
             ({"http-snippets": "upstream;"}, 'directive "upstream" has no opening "{"'),
             # http log_format: unknown variable (no $ in error message)
             ({"log-format": "$invalid_nonexistent_var"}, 'unknown "invalid_nonexistent_var" variable'),
-            # http log_format: must set log-format too, otherwise escaping is never rendered
+            # http variables hash: NIC accepts any unsigned integer, but NGINX
+            # cannot build the variables hash with a maximum size of 0. The
+            # directive is rendered only in nginx.conf, so this exercises the
+            # main config rollback path.
             (
-                {"log-format": "$remote_addr", "log-format-escaping": "invalid_escape_value"},
-                'unknown log format escaping "invalid_escape_value"',
+                {"variables-hash-max-size": "0"},
+                "could not build variables_hash, you should increase variables_hash_max_size: 0",
             ),
         ],
     )
@@ -282,9 +285,9 @@ class TestConfigRollbackIngress:
         """Invalid ConfigMap setting causes nginx.conf to fail validation and roll back.
 
         Ingress and TS are unaffected. Parametrized across different ConfigMap keys and nginx
-        error types (invalid value, missing block, unknown variable, unknown escape value).
-        Note: log-format-escaping only takes effect when log-format is also set, so the
-        escaping case passes both keys together.
+        error types (invalid value, missing block, unknown variable, impossible hash size).
+        The variables-hash-max-size case passes NIC-side parsing but is a value that only
+        NGINX rejects during configuration testing.
         """
         ingress_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/backend1"
 

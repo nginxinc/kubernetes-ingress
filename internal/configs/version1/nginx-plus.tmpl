@@ -137,7 +137,7 @@ http {
     ssl_protocols {{.SSLProtocols}};
     {{- end}}
     {{- if .SSLCiphers}}
-    ssl_ciphers "{{.SSLCiphers}}";
+    ssl_ciphers {{ printf "%q" .SSLCiphers }};
     {{- end}}
     {{- if .SSLPreferServerCiphers}}
     ssl_prefer_server_ciphers on;
@@ -155,7 +155,7 @@ http {
     }
 
     {{ if .MainOtelServiceName}}
-    otel_service_name {{ .MainOtelServiceName }};
+    otel_service_name {{ printf "%q" .MainOtelServiceName }};
     {{- end }}
     {{ if .MainOtelGlobalTraceEnabled }}
     otel_trace on;
@@ -373,10 +373,10 @@ mgmt {
     proxy {{ .MGMTConfig.ProxyHost }};
     {{- end }}
     {{- if ne .MGMTConfig.ProxyUser "" }}
-    proxy_username {{ .MGMTConfig.ProxyUser }};
+    proxy_username {{ printf "%q" .MGMTConfig.ProxyUser }};
     {{- end }}
     {{- if ne .MGMTConfig.ProxyPass "" }}
-    proxy_password {{ .MGMTConfig.ProxyPass }};
+    proxy_password {{ printf "%q" .MGMTConfig.ProxyPass }};
     {{- end }}
     license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
     enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
