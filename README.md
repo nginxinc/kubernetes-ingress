@@ -1,24 +1,32 @@
 <!-- markdownlint-disable-next-line first-line-h1 -->
 
-# NGINX Ingress Controller
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Latest Release](https://img.shields.io/github/v/release/nginx/kubernetes-ingress?logo=github&sort=semver)](https://github.com/nginx/kubernetes-ingress/releases/latest)
+[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
+[![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginx/kubernetes-ingress/badge)](https://scorecard.dev/viewer/?uri=github.com/nginx/kubernetes-ingress)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
+[![codecov](https://codecov.io/gh/nginx/kubernetes-ingress/branch/main/graph/badge.svg?token=snCn7Y0zC7)](https://codecov.io/gh/nginx/kubernetes-ingress)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![Commercial Support](https://badgen.net/badge/support/commercial/green?icon=awesome)
 
+# NGINX Ingress Controller
 ![logo](docs/img/logo.png)
 
 **A production-grade Ingress Controller for Kubernetes, powered by NGINX or NGINX Plus.**
 
-[![Latest Release](https://img.shields.io/github/v/release/nginx/kubernetes-ingress?logo=github&sort=semver)](https://github.com/nginx/kubernetes-ingress/releases/latest)
-[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nginx/kubernetes-ingress)](https://goreportcard.com/report/github.com/nginx/kubernetes-ingress)
-[![codecov](https://codecov.io/gh/nginx/kubernetes-ingress/branch/main/graph/badge.svg?token=snCn7Y0zC7)](https://codecov.io/gh/nginx/kubernetes-ingress)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginx/kubernetes-ingress/badge)](https://scorecard.dev/viewer/?uri=github.com/nginx/kubernetes-ingress)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-![Commercial Support](https://badgen.net/badge/support/commercial/green?icon=awesome)
-
 This repo provides an implementation of an Ingress Controller for NGINX and NGINX Plus from the people behind NGINX.
 
 ---
+
+- [Why NGINX Ingress Controller?](#why-nginx-ingress-controller)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Docker Images](#docker-images)
+- [Releases](#releases)
+- [Community](#community)
+- [License](#license)
+- [Support](#support)
 
 ## Join The Next Community Call
 
@@ -43,16 +51,6 @@ We value community input and would love to see you at the next community call. A
 You can also join the [NGINX Community Forum](https://community.nginx.org) to chat about the NGINX Ingress Controller.
 
 ---
-
-- [Why NGINX Ingress Controller?](#why-nginx-ingress-controller)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Docker Images](#docker-images)
-- [Releases](#releases)
-- [Community](#community)
-- [License](#license)
-- [Support](#support)
 
 ## Why NGINX Ingress Controller?
 
