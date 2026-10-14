@@ -300,7 +300,7 @@ class TestOtel:
         assert "otel_exporter" in (exporter_block)
 
         print("Step 4: Ensure that the service-name is correctly configured")
-        assert f"otel_service_name {otel_service_name}" in (nginx_config)
+        assert f'otel_service_name "{otel_service_name}";' in (nginx_config)
 
         print("Step 5: Ensure that otel_trace is not configured")
         assert "otel_trace" not in (nginx_config)
@@ -408,7 +408,7 @@ class TestOtel:
         assert f'header {otel_exporter_header_name} "{otel_exporter_header_value}";' in (exporter_block)
 
         print("Step 6: Ensure that the service-name is correctly configured")
-        assert f"otel_service_name {otel_service_name}" in (nginx_config)
+        assert f'otel_service_name "{otel_service_name}";' in (nginx_config)
 
         print("Step 7: Ensure that otel_trace is configured")
         assert "otel_trace on;" in (nginx_config)
@@ -458,7 +458,7 @@ class TestOtel:
         assert "otel_exporter" not in (nginx_config)
 
         print("Step 4: Ensure that the service-name is not correctly configured")
-        assert f"otel_service_name {otel_service_name}" not in (nginx_config)
+        assert "otel_service_name" not in (nginx_config)
 
         print("Step 5: Ensure that otel_trace is not configured")
         assert "otel_trace on;" not in (nginx_config)
