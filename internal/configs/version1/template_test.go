@@ -78,8 +78,8 @@ func TestExecuteMainTemplateForNGINXPlusMGMTProxyUser(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !strings.Contains(buf.String(), "proxy_username user;") {
-		t.Errorf("want %q in generated config", "proxy_username user;")
+	if !strings.Contains(buf.String(), `proxy_username "user";`) {
+		t.Errorf("want %q in generated config", `proxy_username "user";`)
 	}
 
 	snaps.MatchSnapshot(t, buf.String())
@@ -97,16 +97,120 @@ func TestExecuteMainTemplateForNGINXPlusMGMTProxyUserAndPass(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !strings.Contains(buf.String(), "proxy_username user;") {
-		t.Errorf("want %q in generated config", "proxy_username user;")
+	if !strings.Contains(buf.String(), `proxy_username "user";`) {
+		t.Errorf("want %q in generated config", `proxy_username "user";`)
 	}
 
-	if !strings.Contains(buf.String(), "proxy_password pass;") {
-		t.Errorf("want %q in generated config", "proxy_password pass;")
+	if !strings.Contains(buf.String(), `proxy_password "pass";`) {
+		t.Errorf("want %q in generated config", `proxy_password "pass";`)
 	}
 
 	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
+}
+
+func TestExecuteMainTemplateForNGINXPlusQuotesOpaqueValues(t *testing.T) {
+	t.Parallel()
+
+	cfg := mainCfgWithMGMTProxyWithUserAndPass
+	cfg.MGMTConfig.ProxyUser = `u"ser`
+	cfg.MGMTConfig.ProxyPass = `pa"ss`
+	cfg.MainOtelLoadModule = true
+	cfg.MainOtelExporterEndpoint = "https://otel.example.com:4317"
+	cfg.MainOtelServiceName = `service "blue"`
+
+	buf := &bytes.Buffer{}
+	if err := newNGINXPlusMainTmpl(t).Execute(buf, cfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`proxy_username "u\"ser";`,
+		`proxy_password "pa\"ss";`,
+		`otel_service_name "service \"blue\"";`,
+	} {
+		if !strings.Contains(buf.String(), want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+// TestExecuteMainTemplateRendersPreEscapedOtelHeaderVerbatim covers the other
+// half of the escaping contract. otel-exporter-header-value has always been
+// rendered with plain template quoting, so an accepted value such as
+// tenant \"blue\" is already escaped for NGINX and reaches it as tenant "blue".
+// Rendering it with printf "%q" instead would escape the backslashes a second
+// time and change the header NGINX sends, so this test fails if that is
+// reintroduced. Unlike the opaque values above, this value cannot carry a bare
+// double quote: such a value produced a broken directive before this change and
+// is now rejected by ValidateQuotedDirectiveValue at parse time.
+func TestExecuteMainTemplateRendersPreEscapedOtelHeaderVerbatim(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		newTmpl func(*testing.T) *template.Template
+	}{
+		{name: "nginx", newTmpl: newNGINXMainTmpl},
+		{name: "nginx-plus", newTmpl: newNGINXPlusMainTmpl},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := mainCfg
+			cfg.MainOtelLoadModule = true
+			cfg.MainOtelExporterEndpoint = "https://otel.example.com:4317"
+			cfg.MainOtelExporterHeaderName = "X-Tenant"
+			cfg.MainOtelExporterHeaderValue = `tenant \"blue\"`
+
+			buf := &bytes.Buffer{}
+			if err := test.newTmpl(t).Execute(buf, cfg); err != nil {
+				t.Fatal(err)
+			}
+
+			want := `header X-Tenant "tenant \"blue\"";`
+			if !strings.Contains(buf.String(), want) {
+				t.Errorf("want %q in generated config:\n%s", want, buf.String())
+			}
+		})
+	}
+}
+
+// TestExecuteMainTemplateRendersSSLCiphers renders the http-level ssl_ciphers
+// line, which only runs when the ssl-ciphers ConfigMap key is set. Template
+// fields inside an {{if}} are only resolved when the branch runs, so without
+// this a broken reference would surface only for users who set the key.
+func TestExecuteMainTemplateRendersSSLCiphers(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		newTmpl func(*testing.T) *template.Template
+	}{
+		{name: "nginx", newTmpl: newNGINXMainTmpl},
+		{name: "nginx-plus", newTmpl: newNGINXPlusMainTmpl},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := mainCfg
+			cfg.SSLCiphers = "HIGH:!aNULL:!MD5"
+
+			buf := &bytes.Buffer{}
+			if err := test.newTmpl(t).Execute(buf, cfg); err != nil {
+				t.Fatal(err)
+			}
+
+			want := `ssl_ciphers "HIGH:!aNULL:!MD5";`
+			if !strings.Contains(buf.String(), want) {
+				t.Errorf("want %q in generated config:\n%s", want, buf.String())
+			}
+			snaps.MatchSnapshot(t, buf.String())
+		})
+	}
 }
 
 func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
@@ -440,6 +544,21 @@ func TestExecuteTemplate_ForIngressWithEmptyHostForNGINXPlus(t *testing.T) {
 		}
 	}
 	snaps.MatchSnapshot(t, buf.String())
+}
+
+func TestExecuteTemplate_ForNGINXPlusQuotesCustomServerTokens(t *testing.T) {
+	t.Parallel()
+
+	cfg := ingressCfgEmptyHost
+	cfg.Servers = append([]Server(nil), cfg.Servers...)
+	cfg.Servers[0].ServerTokens = `NGINX \"Plus\"`
+	buf := &bytes.Buffer{}
+	if err := newNGINXPlusIngressTmpl(t).Execute(buf, cfg); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), `server_tokens "NGINX \"Plus\"";`) {
+		t.Errorf("custom server token was not escaped exactly once:\n%s", buf.String())
+	}
 }
 
 func TestExecuteTemplate_ForIngressWithEmptyHostWithRootLocation(t *testing.T) {
@@ -2842,7 +2961,7 @@ func TestExecuteTemplate_ForMainForNGINXWithOtel(t *testing.T) {
 		"otel_exporter {",
 		"endpoint https://otel-collector:4317;",
 		"header X-Custom-Header \"custom-value\";",
-		"otel_service_name nginx-ingress-controller:nginx;",
+		`otel_service_name "nginx-ingress-controller:nginx";`,
 		"otel_trace on;",
 		"otel_trace_context inject;",
 	}
@@ -2873,7 +2992,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithOtel(t *testing.T) {
 		"otel_exporter {",
 		"endpoint https://otel-collector:4317;",
 		"header X-Custom-Header \"custom-value\";",
-		"otel_service_name nginx-ingress-controller:nginx;",
+		`otel_service_name "nginx-ingress-controller:nginx";`,
 		"otel_trace on;",
 		"otel_trace_context inject;",
 	}
@@ -8632,6 +8751,96 @@ func TestExecuteTemplate_ForIngressWithExternalAuthSigninURL(t *testing.T) {
 			}
 			if gotUnauthorized := strings.Contains(got, "error_page 401 = @external_auth_unauthorized;"); gotUnauthorized != tc.wantUnauthorized {
 				t.Errorf("external auth unauthorized handler present = %v, want %v\n---\n%s", gotUnauthorized, tc.wantUnauthorized, got)
+			}
+
+			snaps.MatchSnapshot(t, got)
+		})
+	}
+}
+
+func TestExecuteTemplate_ForIngressWithExternalAuthHeaders(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name    string
+		newTmpl func(*testing.T) *template.Template
+	}{
+		{name: "nginx", newTmpl: newNGINXIngressTmpl},
+		{name: "nginx-plus", newTmpl: newNGINXPlusIngressTmpl},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := IngressNginxConfig{
+				Servers: []Server{
+					{
+						Name:         "cafe.example.com",
+						ServerTokens: "off",
+						StatusZone:   "cafe.example.com",
+						Locations: []Location{
+							{
+								Path:      "/tea",
+								Upstream:  testUpstream,
+								ProxyPass: "http://test",
+								ExternalAuth: &version2.ExternalAuth{
+									URI: &version2.AuthURI{
+										Service:      "oauth2-proxy",
+										Upstream:     "ext_auth_default_oauth2-proxy",
+										Path:         "/oauth2/auth",
+										InternalPath: "/_external_auth/oauth2/auth",
+									},
+								},
+							},
+							{
+								Path:                 "/_external_auth/oauth2/auth",
+								Internal:             true,
+								DisableWAF:           true,
+								ProxyPass:            "http://ext_auth_default_oauth2-proxy/oauth2/auth",
+								ProxyPassRequestBody: "off",
+								ClientMaxBodySize:    "0",
+								ProxySetHeaders: []version2.Header{
+									{Name: "Content-Length", Value: "0"},
+									{Name: "X-Scheme", Value: "$scheme"},
+									{Name: "X-Forwarded-Prefix", Value: ""},
+									{Name: "X-Forwarded-URI", Value: "$request_uri"},
+									{Name: "X-Forwarded-Method", Value: "$request_method"},
+									{Name: "X-Original-URI", Value: "$request_uri"},
+								},
+								ProxyConnectTimeout:      "10s",
+								ProxyReadTimeout:         "15s",
+								ProxySendTimeout:         "15s",
+								ProxyNextUpstream:        "error timeout",
+								ProxyNextUpstreamTimeout: "0s",
+							},
+						},
+					},
+				},
+				Upstreams: []Upstream{
+					testUpstream,
+					{
+						Name: "ext_auth_default_oauth2-proxy",
+						UpstreamServers: []UpstreamServer{
+							{Address: "10.0.0.40:4180"},
+						},
+					},
+				},
+			}
+			buf := &bytes.Buffer{}
+			if err := test.newTmpl(t).Execute(buf, cfg); err != nil {
+				t.Fatal(err)
+			}
+			got := buf.String()
+
+			for _, wantHeader := range []string{
+				`proxy_set_header Content-Length "0";`,
+				`proxy_set_header X-Scheme "$scheme";`,
+				`proxy_set_header X-Forwarded-Prefix "";`,
+				`proxy_set_header X-Forwarded-URI "$request_uri";`,
+				`proxy_set_header X-Forwarded-Method "$request_method";`,
+				`proxy_set_header X-Original-URI "$request_uri";`,
+			} {
+				if !strings.Contains(got, wantHeader) {
+					t.Errorf("want %q in rendered config\n---\n%s", wantHeader, got)
+				}
 			}
 
 			snaps.MatchSnapshot(t, got)

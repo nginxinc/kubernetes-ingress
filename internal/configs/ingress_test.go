@@ -5605,13 +5605,20 @@ func TestGenerateIngressExternalAuthLocation(t *testing.T) {
 	result := generateIngressExternalAuthLocation(externalAuth, upstream, cfg)
 
 	expected := version1.Location{
-		Path:                     "/_ext_auth_default_my-auth",
-		Internal:                 true,
-		DisableWAF:               true,
-		Upstream:                 upstream,
-		AuthRequestOff:           true,
-		ProxyPass:                "http://ext_auth_default_my-auth/auth",
-		ProxySetHeaders:          []version2.Header{{Name: "Content-Length", Value: "0"}, {Name: "X-Scheme", Value: "$scheme"}},
+		Path:           "/_ext_auth_default_my-auth",
+		Internal:       true,
+		DisableWAF:     true,
+		Upstream:       upstream,
+		AuthRequestOff: true,
+		ProxyPass:      "http://ext_auth_default_my-auth/auth",
+		ProxySetHeaders: []version2.Header{
+			{Name: "Content-Length", Value: "0"},
+			{Name: "X-Scheme", Value: "$scheme"},
+			{Name: "X-Forwarded-Prefix", Value: ""},
+			{Name: "X-Forwarded-URI", Value: "$request_uri"},
+			{Name: "X-Forwarded-Method", Value: "$request_method"},
+			{Name: "X-Original-URI", Value: "$request_uri"},
+		},
 		ProxyConnectTimeout:      "10s",
 		ProxyReadTimeout:         "15s",
 		ProxySendTimeout:         "15s",
@@ -6824,6 +6831,10 @@ func TestGenerateNginxCfgForMergeableIngressesWithExternalAuthAndProxySetHeaders
 			expectedHeaders := []version2.Header{
 				{Name: "Content-Length", Value: "0"},
 				{Name: "X-Scheme", Value: "$scheme"},
+				{Name: "X-Forwarded-Prefix", Value: ""},
+				{Name: "X-Forwarded-URI", Value: "$request_uri"},
+				{Name: "X-Forwarded-Method", Value: "$request_method"},
+				{Name: "X-Original-URI", Value: "$request_uri"},
 			}
 			if diff := cmp.Diff(expectedHeaders, loc.ProxySetHeaders); diff != "" {
 				t.Errorf("internal auth location ProxySetHeaders should not be overwritten by annotation (-want +got):\n%s", diff)
