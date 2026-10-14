@@ -62,14 +62,14 @@ If an investigation by the Community Moderators finds that this Code of Conduct 
    3) Repair: Examples of repair may include making an apology, using the cooldown period to reflect on actions and impact, and being thoughtful about re-entering community spaces after the period is over.
 3) **Temporary Suspension**
    1) Event: A pattern of repeated violation which the Community Moderators have tried to address with warnings, or a single serious violation.
-   2) Consequence: A private written warning with conditions for return from suspension. In general, temporary suspensions give the person being suspended time to reflect upon their behavior and possible corrective actions. =Temporary suspensions also give time to affected community members to process and receive support.
+   2) Consequence: A private written warning with conditions for return from suspension. In general, temporary suspensions give the person being suspended time to reflect upon their behavior and possible corrective actions. Temporary suspensions also give time to affected community members to process and receive support.
    3) Repair: Examples of repair include respecting the spirit of the suspension, meeting the specified conditions for return, and being thoughtful about how to reintegrate with the community when the suspension is lifted. Examples of reintegration include mediation between affected parties and temporary limited activities during the reintegration process.
 4) **Permanent Ban**
    1) Event: A pattern of repeated code of conduct violations that other steps on the ladder have failed to resolve, or a violation so serious that the Community Moderators determine there is no way to keep the community safe with this person as a member.
    2) Consequence: Access to all community spaces, tools, and communication channels is removed. In general, permanent bans should be rarely used, should have strong reasoning behind them, and should only be resorted to if working through other remedies has failed to change the behavior.
    3) Repair: There is no possible repair in cases of this severity.
 
-This enforcement ladder is intended as a guideline. It does not limit the ability of Community Managers to use their discretion and judgment, in keeping with the best interests of our community.
+This enforcement ladder is intended as a guideline. It does not limit the ability of Community Moderators to use their discretion and judgment, in keeping with the best interests of our community.
 
 ## Scope
 
