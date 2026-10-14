@@ -236,7 +236,10 @@ jobs:
     # pushes edge images to docker hub
     if: github.repository == 'nginx/kubernetes-ingress' && (!cancelled() && !failure() && github.ref_name == github.event.repository.default_branch)
     name: Release Docker OSS
-    needs: [checks, build-artifacts]
+    needs:
+      - checks
+      - build-artifacts
+      - tag-stable
     uses: ./.github/workflows/oss-release.yml
     with:
       gcr_release_registry: false
@@ -258,7 +261,10 @@ jobs:
     # pushes plus edge images to nginx registry
     if: github.repository == 'nginx/kubernetes-ingress' && (!cancelled() && !failure() && github.ref_name == github.event.repository.default_branch)
     name: Release Docker Plus
-    needs: [checks, build-artifacts]
+    needs:
+      - checks
+      - build-artifacts
+      - tag-stable
     uses: ./.github/workflows/plus-release.yml
     with:
       nginx_registry: true
