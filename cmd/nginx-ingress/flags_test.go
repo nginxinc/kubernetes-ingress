@@ -107,6 +107,19 @@ func TestValidateLocation(t *testing.T) {
 	}
 }
 
+func TestValidateAppProtectEnforcerAddress(t *testing.T) {
+	t.Parallel()
+
+	if err := validateAppProtectEnforcerAddress("127.0.0.1:50000"); err != nil {
+		t.Fatalf("valid enforcer address was rejected: %v", err)
+	}
+	for _, address := range []string{"127.0.0.1:50000; access_log off", "127.0.0.1:50000 # comment", "127.0.0.1:50000\naccess_log off"} {
+		if err := validateAppProtectEnforcerAddress(address); err == nil {
+			t.Errorf("invalid enforcer address %q was accepted", address)
+		}
+	}
+}
+
 func TestValidateLogLevel(t *testing.T) {
 	badLogLevels := []string{
 		"",
@@ -178,6 +191,50 @@ func TestValidateLogFormat(t *testing.T) {
 		err := validateLogFormat(goodLogFormat)
 		if err != nil {
 			t.Errorf("validateLogFormat(%v) returned an error when it should have returned no error: %v", goodLogFormat, err)
+		}
+	}
+}
+
+func TestParseLatencyBuckets(t *testing.T) {
+	t.Parallel()
+
+	badInputs := []string{
+		"",           // empty
+		"abc",        // not a number
+		"5,abc,10",   // contains a non-number
+		"5,,10",      // empty element
+		"-5,10",      // negative value
+		"0,10",       // zero is not positive
+		"10,5",       // not ascending
+		"5,5",        // not strictly ascending (equal)
+		"5,10,10,20", // duplicate value
+		"NaN",        // not a finite number
+		"Inf",        // not finite
+		"+Inf",       // not finite
+		"10,NaN,100", // non-finite value in the middle
+	}
+	for _, in := range badInputs {
+		if _, err := parseLatencyBuckets(in); err == nil {
+			t.Errorf("parseLatencyBuckets(%q) returned no error when it should have returned an error", in)
+		}
+	}
+
+	goodInputs := []struct {
+		input    string
+		expected []float64
+	}{
+		{"5", []float64{5}},
+		{"5,10,25,50,100", []float64{5, 10, 25, 50, 100}},
+		{" 1 , 2 , 3 ", []float64{1, 2, 3}},
+		{"0.5,1.5,2.5", []float64{0.5, 1.5, 2.5}},
+	}
+	for _, tc := range goodInputs {
+		got, err := parseLatencyBuckets(tc.input)
+		if err != nil {
+			t.Errorf("parseLatencyBuckets(%q) returned an unexpected error: %v", tc.input, err)
+		}
+		if !reflect.DeepEqual(got, tc.expected) {
+			t.Errorf("parseLatencyBuckets(%q) = %v, expected %v", tc.input, got, tc.expected)
 		}
 	}
 }

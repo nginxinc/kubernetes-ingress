@@ -80,7 +80,7 @@ permissions:
 jobs:
   release-to-gcr-release-registry:
     name: Push images to the GCR Release Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -238,7 +238,7 @@ jobs:
 
   release-plus-to-gcr-marketplace-registry:
     name: Push Plus images to the GCR Marketplace Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -312,7 +312,7 @@ jobs:
 
   release-plus-to-ecr-marketplace-registry:
     name: Push Plus images to the AWS Marketplace Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -350,7 +350,7 @@ jobs:
         if: contains(inputs.source_registry, 'gcr.io')
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: us-east-1
           role-to-assume: ${{ env.AWS_ROLE_MARKETPLACE }}
@@ -395,7 +395,7 @@ jobs:
 
   release-plus-to-azure-marketplace-registry:
     name: Push Plus images to the Azure Marketplace Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -433,7 +433,7 @@ jobs:
         if: contains(inputs.source_registry, 'gcr.io')
 
       - name: Azure login
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_MKTPL_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_MKTPL_TENANT_ID }}

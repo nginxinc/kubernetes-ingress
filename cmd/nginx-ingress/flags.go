@@ -5,10 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"net"
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/nginx/kubernetes-ingress/internal/helpers"
@@ -225,6 +227,16 @@ NIC prints a startup warning when set. Requires -plm-storage-url.`)
 	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
 		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
 
+	latencyMetricsBuckets = flag.String("latency-metrics-buckets", "",
+		`Comma-separated list of buckets in milliseconds, in strictly ascending order, for the upstream_server_response_latency_ms histogram, e.g. "5,10,25,50,100,250,500,1000". Requires -enable-latency-metrics. When not set, a default set of buckets is used. Reducing the number of buckets lowers the metric's time-series cardinality.`)
+
+	latencyBuckets []float64
+
+	enableTopologyAwareRouting = flag.Bool("enable-topology-aware-routing", false,
+		`Honor EndpointSlice topology hints (set by Service spec.trafficDistribution or the service.kubernetes.io/topology-mode annotation) when selecting upstream endpoints, preferring endpoints on the same node or in the same zone as the Ingress Controller pod.
+		Spread Ingress Controller replicas across zones in proportion to client traffic, as each replica only routes to its own node or zone.
+		The zone is read from the topology.kubernetes.io/zone label of the pod's node at startup; restart the Ingress Controller if that label changes.`)
+
 	enableCertManager = flag.Bool("enable-cert-manager", false,
 		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
 
@@ -297,6 +309,20 @@ func initValidate(ctx context.Context) {
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		nl.Warn(l, "enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
+	}
+
+	if *latencyMetricsBuckets != "" {
+		switch {
+		case !*enableLatencyMetrics:
+			nl.Warn(l, "latency-metrics-buckets flag requires enable-latency-metrics, the configured buckets will be ignored")
+		default:
+			parsedBuckets, err := parseLatencyBuckets(*latencyMetricsBuckets)
+			if err != nil {
+				nl.Warnf(l, "Invalid latency-metrics-buckets value %q: %v. Falling back to the default latency buckets", *latencyMetricsBuckets, err)
+			} else {
+				latencyBuckets = parsedBuckets
+			}
+		}
 	}
 
 	if *enableServiceInsight && !*nginxPlus {
@@ -384,6 +410,10 @@ func mustValidateFlags(ctx context.Context) {
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
 		nl.Fatalf(l, "Invalid value for health-status-uri: %v", healthStatusURIValidationError)
+	}
+
+	if err := validateAppProtectEnforcerAddress(*appProtectEnforcerAddress); err != nil {
+		nl.Fatalf(l, "Invalid value for app-protect-enforcer-address: %v", err)
 	}
 
 	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
@@ -534,6 +564,35 @@ func validateLogLevel(logLevel string) error {
 	return fmt.Errorf("invalid log level: %v", logLevel)
 }
 
+// parseLatencyBuckets parses a comma-separated list of latency histogram buckets
+// in milliseconds. The values must be positive and listed in strictly ascending
+// order, as required by Prometheus histogram bucket bounds.
+func parseLatencyBuckets(s string) ([]float64, error) {
+	parts := strings.Split(s, ",")
+	buckets := make([]float64, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			return nil, fmt.Errorf("empty bucket value in %q", s)
+		}
+		v, err := strconv.ParseFloat(p, 64)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse %q as a number: %w", p, err)
+		}
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, fmt.Errorf("bucket values must be finite, got %q", p)
+		}
+		if v <= 0 {
+			return nil, fmt.Errorf("bucket values must be positive, got %v", v)
+		}
+		if len(buckets) > 0 && v <= buckets[len(buckets)-1] {
+			return nil, fmt.Errorf("bucket values must be in strictly ascending order, got %v after %v", v, buckets[len(buckets)-1])
+		}
+		buckets = append(buckets, v)
+	}
+	return buckets, nil
+}
+
 // validateLogFormat makes sure a given logFormat is one of the allowed values
 func validateLogFormat(logFormat string) error {
 	switch strings.ToLower(logFormat) {
@@ -672,6 +731,10 @@ func validateCIDRorIP(cidr string) error {
 		return fmt.Errorf("invalid IP address: %v", cidr)
 	}
 	return nil
+}
+
+func validateAppProtectEnforcerAddress(address string) error {
+	return internalValidation.ValidateDirectiveToken(address)
 }
 
 const (

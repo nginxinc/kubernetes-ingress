@@ -10,7 +10,7 @@ SKOPEO_BIN=skopeo
 if [ -n "$CI" ]; then
     SKOPEO_IMAGE=quay.io/skopeo/stable
     # renovate: datasource=docker depName=quay.io/skopeo/stable
-    SKOPEO_VERSION=v1.22.2-immutable
+    SKOPEO_VERSION=v1.22.3-immutable
     SKOPEO_BIN="docker run --rm -v $HOME/.docker/config.json:/tmp/auth.json ${SKOPEO_IMAGE}:${SKOPEO_VERSION}"
 fi
 
@@ -45,13 +45,13 @@ SOURCE_PLUS_IMAGE_PREFIX=${SOURCE_PLUS_IMAGE_PREFIX:-"nginx-ic/nginx-plus-ingres
 SOURCE_NAP_WAF_IMAGE_PREFIX=${SOURCE_NAP_WAF_IMAGE_PREFIX:-"nginx-ic-nap/nginx-plus-ingress"}
 SOURCE_NAP_WAFV5_IMAGE_PREFIX=${SOURCE_NAP_WAFV5_IMAGE_PREFIX:-"nginx-ic-nap-v5/nginx-plus-ingress"}
 SOURCE_NAP_DOS_IMAGE_PREFIX=${SOURCE_NAP_DOS_IMAGE_PREFIX:-"nginx-ic-dos/nginx-plus-ingress"}
-SOURCE_NAP_WAF_DOS_IMAGE_PREFIX=${SOURCE_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap/nginx-plus-ingress"}
+SOURCE_NAP_WAF_DOS_IMAGE_PREFIX=${SOURCE_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-nap-dos/nginx-plus-ingress"}
 
 TARGET_PLUS_IMAGE_PREFIX=${TARGET_PLUS_IMAGE_PREFIX:-"nginx-ic/nginx-plus-ingress"}
 TARGET_NAP_WAF_IMAGE_PREFIX=${TARGET_NAP_WAF_IMAGE_PREFIX:-"nginx-ic-nap/nginx-plus-ingress"}
 TARGET_NAP_WAFV5_IMAGE_PREFIX=${TARGET_NAP_WAFV5_IMAGE_PREFIX:-"nginx-ic-nap-v5/nginx-plus-ingress"}
 TARGET_NAP_DOS_IMAGE_PREFIX=${TARGET_NAP_DOS_IMAGE_PREFIX:-"nginx-ic-dos/nginx-plus-ingress"}
-TARGET_NAP_WAF_DOS_IMAGE_PREFIX=${TARGET_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap/nginx-plus-ingress"}
+TARGET_NAP_WAF_DOS_IMAGE_PREFIX=${TARGET_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-nap-dos/nginx-plus-ingress"}
 
 declare -a OSS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine")
 declare -a PLUS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine" "-alpine-fips")
@@ -100,6 +100,9 @@ ARCH_OPTS="-a"
 if [[ $TARGET_REGISTRY =~ f5-7626-networks-public ]] || [[ $TARGET_REGISTRY =~ nginxmktpl ]]; then
     ARCH_OPTS="--override-os linux --override-arch amd64"
 fi
+
+echo "SOURCE_REGISTRY: ${SOURCE_REGISTRY}"
+echo "TARGET_REGISTRY: ${TARGET_REGISTRY}"
 
 ## Main publish loops
 

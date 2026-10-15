@@ -80,7 +80,7 @@ permissions:
 jobs:
   release-to-gcr-release-registry:
     name: Push images to the GCR Release Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -144,7 +144,7 @@ jobs:
 
   release-oss-to-ecr-public-registry:
     name: Push OSS images to the AWS Public Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -180,7 +180,7 @@ jobs:
           password: ${{ steps.gcr-auth.outputs.access_token }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: us-east-1
           role-to-assume: ${{ env.AWS_ROLE_PUBLIC_ECR }}
@@ -219,7 +219,7 @@ jobs:
 
   release-oss-to-dockerhub-public-registry:
     name: Push OSS images to the DockerHub Public Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -298,7 +298,7 @@ jobs:
 
   release-oss-to-quay-public-registry:
     name: Push OSS images to the Quay Public Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
@@ -369,7 +369,7 @@ jobs:
 
   release-oss-to-github-public-registry:
     name: Push OSS images to the GitHub Public Registry
-    runs-on: ubuntu-24.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write

@@ -187,7 +187,7 @@ jobs:
           image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
           project_id: ${{ env.PYXIS_CERTIFICATION_PROJECT_ID }}
           pyxis_token: ${{ env.PYXIS_TOKEN }}
-          preflight_version: 1.21.0 # renovate: datasource=github-releases depName=preflight packageName=redhat-openshift-ecosystem/openshift-preflight
+          preflight_version: 1.21.2 # renovate: datasource=github-releases depName=preflight packageName=redhat-openshift-ecosystem/openshift-preflight
 
   operator:
     # operator_version has no sensible default, so skip rather than dispatch the
@@ -321,7 +321,7 @@ jobs:
     if: github.repository == 'nginx/kubernetes-ingress' && (! cancelled() && ! failure())
     name: Upload binaries GitHub Release
     runs-on: ubuntu-24.04
-    needs: [variables]
+    needs: [variables, tag]
     permissions:
       id-token: write
       contents: write # to modify the release
@@ -341,7 +341,7 @@ jobs:
           env-names: "AZURE_STORAGE_ACCOUNT, AZURE_BUCKET_NAME"
 
       - name: Azure login
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

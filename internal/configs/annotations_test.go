@@ -6,6 +6,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -210,6 +211,7 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 		AddHeaderInheritAnnotation:        addHeaderInheritOn,
 		JWTTokenAnnotation:                "$cookie_auth_token",
 		UpstreamVhostAnnotation:           "master.example.com",
+		ProxyHTTPVersionAnnotation:        "1.0",
 	}
 	minionAnnotations := map[string]string{
 		"nginx.org/client-max-body-size":  "2m",
@@ -224,6 +226,7 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 		"nginx.org/client-max-body-size":  "2m",
 		"nginx.org/proxy-connect-timeout": "20s",
 		UpstreamVhostAnnotation:           "master.example.com",
+		ProxyHTTPVersionAnnotation:        "1.0",
 	}
 	if !reflect.DeepEqual(expectedMergedAnnotations, minionAnnotations) {
 		t.Errorf("mergeMasterAnnotationsIntoMinion returned %v, but expected %v", minionAnnotations, expectedMergedAnnotations)
@@ -252,6 +255,27 @@ func TestMergeMasterAnnotationsIntoMinionUpstreamVhostOverride(t *testing.T) {
 	}
 }
 
+// TestMergeMasterAnnotationsIntoMinionProxyHTTPVersionOverride verifies that a
+// nginx.org/proxy-http-version value set on the minion takes priority over the master's
+// value and is not overwritten by inheritance.
+func TestMergeMasterAnnotationsIntoMinionProxyHTTPVersionOverride(t *testing.T) {
+	t.Parallel()
+	masterAnnotations := map[string]string{
+		ProxyHTTPVersionAnnotation: "1.0",
+	}
+	minionAnnotations := map[string]string{
+		ProxyHTTPVersionAnnotation: "2",
+	}
+	mergeMasterAnnotationsIntoMinion(minionAnnotations, masterAnnotations)
+
+	expectedMergedAnnotations := map[string]string{
+		ProxyHTTPVersionAnnotation: "2",
+	}
+	if !reflect.DeepEqual(expectedMergedAnnotations, minionAnnotations) {
+		t.Errorf("mergeMasterAnnotationsIntoMinion returned %v, but expected %v", minionAnnotations, expectedMergedAnnotations)
+	}
+}
+
 func TestParseAnnotationsAddHeaderInherit(t *testing.T) {
 	t.Parallel()
 
@@ -272,6 +296,69 @@ func TestParseAnnotationsAddHeaderInherit(t *testing.T) {
 
 	if result.AddHeaderInherit != addHeaderInheritMerge {
 		t.Errorf("Expected AddHeaderInherit %q, got %q", addHeaderInheritMerge, result.AddHeaderInherit)
+	}
+}
+
+// TestParseAnnotationsHeaderListsAreNormalized pins that the header names
+// configured into NGINX are the ones admission validation judged. The validator
+// trims each comma-separated entry, so the applier has to trim as well; reading
+// the raw annotation back apart here would configure " X-B" from "X-A, X-B" and
+// the applied value would differ from the validated one.
+func TestParseAnnotationsHeaderListsAreNormalized(t *testing.T) {
+	t.Parallel()
+
+	ingEx := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/proxy-hide-headers": "X-Accel-Redirect, X-Custom-Header",
+					"nginx.org/proxy-pass-headers": "X-Accel-Expires,\tX-Accel-Limit-Rate",
+				},
+			},
+		},
+	}
+
+	result := parseAnnotations(ingEx, NewDefaultConfigParams(context.Background(), false), false, false, false, false)
+
+	wantHide := []string{"X-Accel-Redirect", "X-Custom-Header"}
+	if diff := cmp.Diff(wantHide, result.ProxyHideHeaders); diff != "" {
+		t.Errorf("ProxyHideHeaders mismatch (-want +got):\n%s", diff)
+	}
+	wantPass := []string{"X-Accel-Expires", "X-Accel-Limit-Rate"}
+	if diff := cmp.Diff(wantPass, result.ProxyPassHeaders); diff != "" {
+		t.Errorf("ProxyPassHeaders mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// TestParseAnnotationsInvalidHeaderListsAreIgnored covers the defensive path in
+// the applier. Admission validation rejects these annotations, so this only
+// happens for an Ingress that was admitted before the validation existed; the
+// defaults must survive rather than an invalid name reaching the config.
+func TestParseAnnotationsInvalidHeaderListsAreIgnored(t *testing.T) {
+	t.Parallel()
+
+	ingEx := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/proxy-hide-headers": "X-Good,X-Bad; return 200",
+					"nginx.org/proxy-pass-headers": "X-Good,$header",
+				},
+			},
+		},
+	}
+
+	result := parseAnnotations(ingEx, NewDefaultConfigParams(context.Background(), false), false, false, false, false)
+
+	if result.ProxyHideHeaders != nil {
+		t.Errorf("ProxyHideHeaders = %v, want nil", result.ProxyHideHeaders)
+	}
+	if result.ProxyPassHeaders != nil {
+		t.Errorf("ProxyPassHeaders = %v, want nil", result.ProxyPassHeaders)
 	}
 }
 
@@ -1685,6 +1772,59 @@ func TestParseAnnotationsAddHeader(t *testing.T) {
 			// MainAddHeaders (http {} context) must never be touched by the annotation path.
 			if len(result.MainAddHeaders) != 0 {
 				t.Errorf("annotation must not populate MainAddHeaders (http context); got %v", result.MainAddHeaders)
+			}
+		})
+	}
+}
+
+func TestParseAnnotationsProxyHTTPVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		want        string
+	}{
+		{
+			name: "no annotation leaves ProxyHTTPVersion unset",
+			want: "",
+		},
+		{
+			name:        "annotation is copied verbatim",
+			annotations: map[string]string{ProxyHTTPVersionAnnotation: "2"},
+			want:        "2",
+		},
+		{
+			name:        "1.0 is copied verbatim",
+			annotations: map[string]string{ProxyHTTPVersionAnnotation: "1.0"},
+			want:        "1.0",
+		},
+		{
+			name:        "1.1 is copied verbatim",
+			annotations: map[string]string{ProxyHTTPVersionAnnotation: "1.1"},
+			want:        "1.1",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ingEx := &IngressEx{
+				Ingress: &networking.Ingress{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "test-ingress",
+						Namespace:   "default",
+						Annotations: test.annotations,
+					},
+				},
+			}
+
+			baseCfgParams := NewDefaultConfigParams(context.Background(), false)
+			result := parseAnnotations(ingEx, baseCfgParams, false, false, false, false)
+
+			if result.ProxyHTTPVersion != test.want {
+				t.Errorf("ProxyHTTPVersion: want %q, got %q", test.want, result.ProxyHTTPVersion)
 			}
 		})
 	}

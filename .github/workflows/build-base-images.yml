@@ -60,10 +60,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: arm64
 
@@ -98,7 +98,7 @@ jobs:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss
           flavor: |
-            suffix=-${{ matrix.image }},onlatest=false
+            suffix=-${{ matrix.build_os }},onlatest=false
           tags: |
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
@@ -107,15 +107,15 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}', matrix.image) || '' }}
+          cache-from: type=gha,scope=${{ matrix.build_os }}
+          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}', matrix.build_os) || '' }}
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
           pull: true
           push: true
           build-args: |
-            BUILD_OS=${{ matrix.image }}
+            BUILD_OS=${{ matrix.build_os }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
             OSS_PACKAGE_REPO=${{ vars.OSS_REPO }}
 
@@ -159,10 +159,10 @@ jobs:
           echo "$PLUS_KEY" > nginx-repo.key
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: arm64
 
@@ -188,7 +188,7 @@ jobs:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus
           flavor: |
-            suffix=-${{ matrix.image }},onlatest=false
+            suffix=-${{ matrix.build_os }},onlatest=false
           tags: |
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
@@ -197,15 +197,15 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}', matrix.image) || '' }}
+          cache-from: type=gha,scope=${{ matrix.build_os }}
+          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}', matrix.build_os) || '' }}
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
           pull: true
           push: true
           build-args: |
-            BUILD_OS=${{ matrix.image }}
+            BUILD_OS=${{ matrix.build_os }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
             PLUS_PACKAGE_REPO=${{ vars.PLUS_REPO }}
           secret-files: |
@@ -257,7 +257,7 @@ jobs:
           echo "$PLUS_KEY" > nginx-repo.key
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -288,7 +288,7 @@ jobs:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus
           flavor: |
-            suffix=-${{ matrix.image }}-${{ steps.nap_modules.outputs.modules }},onlatest=false
+            suffix=-${{ matrix.build_os }}-${{ steps.nap_modules.outputs.modules }},onlatest=false
           tags: |
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
@@ -297,15 +297,15 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.image }}-${{ steps.nap_modules.outputs.modules }}
-          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}-{1}', matrix.image, steps.nap_modules.outputs.modules) || '' }}
+          cache-from: type=gha,scope=${{ matrix.build_os }}-${{ steps.nap_modules.outputs.modules }}
+          cache-to: ${{ (github.ref_name == github.event.repository.default_branch || github.event_name == 'schedule') && format('type=gha,mode=max,scope={0}-{1}', matrix.build_os, steps.nap_modules.outputs.modules) || '' }}
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
           pull: true
           push: true
           build-args: |
-            BUILD_OS=${{ matrix.image }}
+            BUILD_OS=${{ matrix.build_os }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
             PLUS_PACKAGE_REPO=${{ vars.PLUS_REPO }}
             WAF_PACKAGE_REPO=${{ vars.WAF_REPO }}
