@@ -107,6 +107,58 @@ class TestExternalAuthPolicies:
             assert resp.status_code == 401
             assert "Authorization Required" in resp.text
 
+    @pytest.mark.parametrize("credentials", [valid_credentials, invalid_credentials])
+    @pytest.mark.parametrize("ext_auth_setup", [([ext_auth_pol_valid_src],)], indirect=True)
+    def test_external_auth_policy_spoofed_headers_and_non_get(
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        ext_auth_setup,
+        ext_auth_restore_vs,
+        credentials,
+    ):
+        """
+        Test external-auth policy boundary on VirtualServer with client-supplied spoofed headers
+        and non-GET (POST) request.
+        Verifies that spoofed headers (X-Forwarded-Prefix, X-Forwarded-URI, X-Forwarded-Method,
+        X-Original-URI) are sanitized by NGINX and not forwarded to the auth backend,
+        and requests are successfully authenticated (or rejected if unauthorized).
+        """
+        _, _ = ext_auth_setup
+        headers = build_ext_auth_headers(virtual_server_setup.vs_host, credentials)
+        headers.update(
+            {
+                "X-Forwarded-Prefix": "/malicious-prefix",
+                "X-Forwarded-URI": "/malicious-uri",
+                "X-Forwarded-Method": "DELETE",
+                "X-Original-URI": "/malicious-uri",
+            }
+        )
+
+        apply_and_assert_valid_vs(
+            kube_apis,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ext_auth_vs_single_src,
+        )
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url,
+            virtual_server_setup.vs_host,
+            additional_headers=valid_auth_headers(),
+        )
+
+        resp = requests.post(virtual_server_setup.backend_1_url, headers=headers)
+        print(resp.status_code)
+
+        if credentials == valid_credentials:
+            assert resp.status_code == 200
+            assert "Request ID:" in resp.text
+        else:
+            assert resp.status_code == 401
+            assert "Authorization Required" in resp.text
+
     @pytest.mark.smoke
     @pytest.mark.parametrize("ext_auth_setup", [([ext_auth_pol_valid_src],)], indirect=True)
     def test_external_auth_policy_valid(

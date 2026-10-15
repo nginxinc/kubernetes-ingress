@@ -4,9 +4,9 @@ Note: there is no test_configmap_partial_rollback for TS because no ConfigMap ke
 injects into individual TS server blocks. ConfigMap server-snippets and location-snippets
 only affect http server/location blocks (VS/Ingress), not stream server blocks (TS).
 TS server blocks only get snippets from the TS resource's own serverSnippets field.
-Stream-related ConfigMap settings (stream-snippets, stream-log-format,
-stream-log-format-escaping) go into the main nginx.conf stream block, so invalid
-values cause main config rollback (tested in test_configmap_main_snippet_rollback).
+Stream-related ConfigMap settings (stream-snippets, stream-log-format) and the
+variables-hash-max-size key go into the main nginx.conf, so NGINX-rejected values cause
+main config rollback (tested in test_configmap_main_snippet_rollback).
 """
 
 import socket
@@ -342,10 +342,13 @@ class TestConfigRollbackTransportServer:
             ({"stream-snippets": "upstream;"}, 'directive "upstream" has no opening "{"'),
             # stream log_format with an unknown nginx variable (no $ in the error message)
             ({"stream-log-format": "$invalid_nonexistent_var"}, 'unknown "invalid_nonexistent_var" variable'),
-            # stream log_format: must set stream-log-format too, otherwise escaping is never rendered
+            # http variables hash: NIC accepts any unsigned integer, but NGINX
+            # cannot build the variables hash with a maximum size of 0. The
+            # directive is rendered only in nginx.conf, so this exercises the
+            # main config rollback path.
             (
-                {"stream-log-format": "$remote_addr", "stream-log-format-escaping": "invalid_escape_value"},
-                'unknown log format escaping "invalid_escape_value"',
+                {"variables-hash-max-size": "0"},
+                "could not build variables_hash, you should increase variables_hash_max_size: 0",
             ),
         ],
     )
@@ -367,7 +370,7 @@ class TestConfigRollbackTransportServer:
         - main-snippets: invalid value
         - stream-snippets: missing block
         - stream-log-format: unknown variable
-        - stream-log-format-escaping: unknown escape value (needs stream-log-format set too)
+        - variables-hash-max-size: a size of 0 that NGINX cannot build the hash with
         All cause main config nginx -t failure → main config rollback.
         """
         ic_pod = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace, IC_SELECTOR)
