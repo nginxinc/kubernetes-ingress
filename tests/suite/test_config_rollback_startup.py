@@ -14,6 +14,8 @@ The safety behaviour under test is:
  , no manual pod restart required.
 """
 
+import time
+
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_assertions import assert_event, assert_ingress_conf_not_exists, wait_and_assert_status_code
@@ -219,13 +221,22 @@ class TestConfigRollbackStartup:
 
         print("Step 2: restart the controller pod against the invalid Ingress")
         ic_pod_name = restart_ic_pod(kube_apis.v1, ic_namespace)
-        for _ in range(60):
-            pod = kube_apis.v1.read_namespaced_pod(ic_pod_name, ic_namespace)
-            if pod.status.phase == "Running":
-                break
+        # Same startup budget wait_until_all_pods_are_ready gives the other restart tests.
+        deadline = time.monotonic() + 600
+        while kube_apis.v1.read_namespaced_pod(ic_pod_name, ic_namespace).status.phase != "Running":
+            if time.monotonic() > deadline:
+                pytest.fail(f"Pod {ic_pod_name} did not reach Running phase")
             wait_before_test(1)
-        else:
-            pytest.fail(f"Pod {ic_pod_name} did not reach Running phase")
+
+        # Running only means the container started; this line is logged after the startup batch and readiness decision.
+        startup_exclusion_message = "Config safety: startup batch excluded 1 resource(s)"
+        while startup_exclusion_message not in (
+            ic_logs := kube_apis.v1.read_namespaced_pod_log(ic_pod_name, ic_namespace)
+        ):
+            if time.monotonic() > deadline:
+                pytest.fail(f"Startup config-safety batch did not finish for pod {ic_pod_name}")
+            wait_before_test(1)
+        pod = kube_apis.v1.read_namespaced_pod(ic_pod_name, ic_namespace)
 
         print("Step 3: pod is Running but held Not Ready; the default server is preserved")
         ready_condition = next(
@@ -243,7 +254,6 @@ class TestConfigRollbackStartup:
         assert invalid_events[-1].reason == "AddedOrUpdatedWithError"
         assert_event("but was not applied", invalid_events)
         assert_event('invalid value "invalid" in "sub_filter_once" directive', invalid_events)
-        ic_logs = kube_apis.v1.read_namespaced_pod_log(ic_pod_name, ic_namespace)
         assert "Config safety: ALL 1 resource(s) excluded at startup" in ic_logs
         assert "Config safety: startup batch excluded 1 resource(s)" in ic_logs
 
