@@ -1,4 +1,4 @@
-<!-- markdownlint-disable-next-line first-line-h1 -->
+# NGINX Ingress Controller
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Latest Release](https://img.shields.io/github/v/release/nginx/kubernetes-ingress?logo=github&sort=semver)](https://github.com/nginx/kubernetes-ingress/releases/latest)
@@ -9,7 +9,6 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Commercial Support](https://badgen.net/badge/support/commercial/green?icon=awesome)
 
-# NGINX Ingress Controller
 ![logo](docs/img/logo.png)
 
 **A production-grade Ingress Controller for Kubernetes, powered by NGINX or NGINX Plus.**
@@ -27,28 +26,6 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 - [Community](#community)
 - [License](#license)
 - [Support](#support)
-
-## Join The Next Community Call
-
-We value community input and would love to see you at the next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
-
-**Zoom**: [NGINX Ingress Controller - Community Call](https://f5.zoom.us/j/98544055687?pwd=q4sGaaeWM0DawJTePBGbCngtfLJxgq.1&from=addon)
-
-**Meeting ID:** `985 4405 5687`
-
-**Passcode:** `982193`
-
-**When**: 16:00 Irish Time / [Convert to your timezone](https://dateful.com/convert/ireland?t=16), every other Monday.
-
-| **Community Call Dates** |
-| ------------------------ |
-| **2026-10-19**           |
-| **2026-11-02**           |
-| **2026-11-16**           |
-| **2026-11-30**           |
-| **2026-12-14**           |
-
-You can also join the [NGINX Community Forum](https://community.nginx.org) to chat about the NGINX Ingress Controller.
 
 ---
 
@@ -156,7 +133,7 @@ LTS (Long Term Support) releases receive extended maintenance, including critica
 
 | LTS Release | Base Version | Release Date | Tag |
 | --- | --- | ------------- | --- |
-| 2026 LTS r9 | 5.4.3 | 4 June 2026 | `2026-lts-r9` |
+| 2026 LTS r9 | 5.4.3 | 14 Oct 2026 | `2026-lts-r9` |
 
 LTS images are available from the following registries:
 
@@ -181,14 +158,37 @@ docker buildx imagetools inspect nginx/nginx-ingress:edge --format '{{ json (ind
 ## Community
 
 We'd love to hear from you! Here's how to get involved:
-
+- **[Upcoming Events](https://community.nginx.org/upcoming-events/month)**
 - **[Community Forum](https://community.nginx.org)** — Ask questions and share knowledge
 - **[Issues](https://github.com/nginx/kubernetes-ingress/issues)** — Report bugs or request features
 - **[Discussions](https://github.com/nginx/kubernetes-ingress/discussions)** — Talk about NGINX Ingress Controller, share ideas, and connect with other users
 - **[Contributing Guide](CONTRIBUTING.md)** — Learn how to contribute
-- **[Code of Conduct](CODE_OF_CONDUCT.md)** — Our commitment to a welcoming community
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** — Our commitment to a welcoming community **PLEASE READ BEFORE SUBMITTING**
 - **[Security Policy](SECURITY.md)** — How to report security issues
 - **Community Calls** — Every other Monday at 16:00 GMT ([convert to your timezone](https://dateful.com/convert/gmt?t=16))
+
+### Join The Next Community Call
+
+We value community input and would love to see you at the next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
+
+**Zoom**: [NGINX Ingress Controller - Community Call](https://f5.zoom.us/j/98544055687?pwd=q4sGaaeWM0DawJTePBGbCngtfLJxgq.1&from=addon)
+
+**Meeting ID:** `985 4405 5687`
+
+**Passcode:** `982193`
+
+**When**: 16:00 Irish Time / [Convert to your timezone](https://dateful.com/convert/ireland?t=16), every other Monday.
+
+| **Community Call Dates** |
+| ------------------------ |
+| **2026-10-19**           |
+| **2026-11-19**           |
+| **2026-12-19**           |
+| **2027-01-19**           |
+| **2027-02-19**           |
+
+You can also join the [NGINX Community Forum](https://community.nginx.org) to chat about the NGINX Ingress Controller.
+
 
 ## License
 
