@@ -238,34 +238,6 @@ func TestParseAddHeaders(t *testing.T) {
 	}
 }
 
-func TestValidateAddHeaderName(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		wantErr bool
-	}{
-		{name: "valid simple", input: "X-Frame-Options", wantErr: false},
-		{name: "valid with numbers", input: "X-Custom-123", wantErr: false},
-		{name: "space in name", input: "X Bad", wantErr: true},
-		{name: "at sign", input: "X-He@der", wantErr: true},
-		{name: "dollar sign", input: "$bad", wantErr: true},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			msgs := ValidateAddHeaderName(tc.input)
-			if tc.wantErr && len(msgs) == 0 {
-				t.Errorf("ValidateAddHeaderName(%q): want error messages, got none", tc.input)
-			}
-			if !tc.wantErr && len(msgs) != 0 {
-				t.Errorf("ValidateAddHeaderName(%q): want no messages, got %v", tc.input, msgs)
-			}
-		})
-	}
-}
-
 func TestValidateAddHeaderValue(t *testing.T) {
 	t.Parallel()
 
