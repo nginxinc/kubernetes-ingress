@@ -175,7 +175,7 @@ docker buildx imagetools inspect nginx/nginx-ingress:edge --format '{{ json (ind
 We'd love to hear from you! Here's how to get involved:
 
 - **[Upcoming Events](https://community.nginx.org/upcoming-events/month)**
-- **[Community Forum](https://community.nginx.org)** — Ask questions and share knowledge
+- **[Community Forum](https://community.nginx.org)** — Questions and discussion about NGINX Ingress Controller
 - **[Issues](https://github.com/nginx/kubernetes-ingress/issues)** — Report bugs or request features
 - **[Discussions](https://github.com/nginx/kubernetes-ingress/discussions)** — Talk about NGINX Ingress Controller, share ideas, and connect with other users
 - **[Contributing Guide](CONTRIBUTING.md)** — Learn how to contribute
@@ -185,7 +185,7 @@ We'd love to hear from you! Here's how to get involved:
 
 ### Join The Next Community Call
 
-We value community input and would love to see you at the next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
+We value community input so please join our community call on the first Tuesday of each month. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests. We would love to see you there!
 
 **Zoom**: [NGINX Ingress Controller - Community Call](https://f5.zoom.us/j/98544055687?pwd=q4sGaaeWM0DawJTePBGbCngtfLJxgq.1&from=addon)
 
@@ -193,15 +193,17 @@ We value community input and would love to see you at the next community call. A
 
 **Passcode:** `982193`
 
-**When**: 16:00 Irish Time / [Convert to your timezone](https://dateful.com/convert/ireland?t=16), every other Monday.
+**When**: 16:00 Irish Time / [Convert to your timezone](https://dateful.com/convert/ireland?t=16), first Tuesday of every month.
 
 | **Community Call Dates** |
 | ------------------------ |
 | **2026-10-19**           |
-| **2026-11-19**           |
-| **2026-12-19**           |
-| **2027-01-19**           |
-| **2027-02-19**           |
+| **2026-11-03**           |
+| **2026-12-01**           |
+| **2027-01-05**           |
+| **2027-02-02**           |
+| **2027-03-02**           |
+| **2027-04-06**           |
 
 You can also join the [NGINX Community Forum](https://community.nginx.org) to chat about the NGINX Ingress Controller.
 
