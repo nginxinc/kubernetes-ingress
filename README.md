@@ -1,15 +1,29 @@
 # NGINX Ingress Controller
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![logo](docs/img/logo.png)
+
+[![Go Version](https://img.shields.io/github/go-mod/go-version/nginx/kubernetes-ingress?logo=go&logoColor=white)](https://github.com/nginx/kubernetes-ingress/blob/main/go.mod)
+[![Stars](https://img.shields.io/github/stars/nginx/kubernetes-ingress?style=flat&logo=github)](https://github.com/nginx/kubernetes-ingress/stargazers)
+[![Forks](https://img.shields.io/github/forks/nginx/kubernetes-ingress?style=flat&logo=github)](https://github.com/nginx/kubernetes-ingress/forks)
 [![Latest Release](https://img.shields.io/github/v/release/nginx/kubernetes-ingress?logo=github&sort=semver)](https://github.com/nginx/kubernetes-ingress/releases/latest)
-[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
-[![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginx/kubernetes-ingress/badge)](https://scorecard.dev/viewer/?uri=github.com/nginx/kubernetes-ingress)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
+[![Contributors](https://img.shields.io/github/contributors/nginx/kubernetes-ingress?logo=github)](https://github.com/nginx/kubernetes-ingress/graphs/contributors)
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/nginx/kubernetes-ingress.svg)](https://pkg.go.dev/github.com/nginx/kubernetes-ingress)
 [![codecov](https://codecov.io/gh/nginx/kubernetes-ingress/branch/main/graph/badge.svg?token=snCn7Y0zC7)](https://codecov.io/gh/nginx/kubernetes-ingress)
+[![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginx/kubernetes-ingress/badge)](https://scorecard.dev/viewer/?uri=github.com/nginx/kubernetes-ingress)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Commercial Support](https://badgen.net/badge/support/commercial/green?icon=awesome)
 
-![logo](docs/img/logo.png)
+[![Open Issues](https://img.shields.io/github/issues/nginx/kubernetes-ingress?logo=github)](https://github.com/nginx/kubernetes-ingress/issues)
+[![Closed Issues](https://img.shields.io/github/issues-closed/nginx/kubernetes-ingress?logo=github)](https://github.com/nginx/kubernetes-ingress/issues?q=is%3Aissue+is%3Aclosed)
+[![Open PRs](https://img.shields.io/github/issues-pr/nginx/kubernetes-ingress?logo=github)](https://github.com/nginx/kubernetes-ingress/pulls)
+
+[![Community Forum](https://img.shields.io/badge/Community_Forum-Join_us!-009639?logo=nginx&logoColor=white)](https://community.nginx.org)
+[![Forum Topics](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fcommunity.nginx.org&logo=nginx&label=forum)](https://community.nginx.org)
+[![Forum Users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.nginx.org&logo=nginx&label=forum)](https://community.nginx.org)
+
+[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
 
 **A production-grade Ingress Controller for Kubernetes, powered by NGINX or NGINX Plus.**
 
@@ -158,6 +172,7 @@ docker buildx imagetools inspect nginx/nginx-ingress:edge --format '{{ json (ind
 ## Community
 
 We'd love to hear from you! Here's how to get involved:
+
 - **[Upcoming Events](https://community.nginx.org/upcoming-events/month)**
 - **[Community Forum](https://community.nginx.org)** — Ask questions and share knowledge
 - **[Issues](https://github.com/nginx/kubernetes-ingress/issues)** — Report bugs or request features
@@ -188,7 +203,6 @@ We value community input and would love to see you at the next community call. A
 | **2027-02-19**           |
 
 You can also join the [NGINX Community Forum](https://community.nginx.org) to chat about the NGINX Ingress Controller.
-
 
 ## License
 
