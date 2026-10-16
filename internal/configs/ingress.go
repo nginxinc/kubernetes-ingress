@@ -129,6 +129,12 @@ var ingressPoliciesRequiringPlusAnnotation = []ingressPolicyAnnotationRequiremen
 			return policy.Spec.OIDCNative != nil
 		},
 	},
+	{
+		policyType: "JWTAuth",
+		matches: func(policy *conf_v1.Policy) bool {
+			return policy.Spec.JWTAuth != nil
+		},
+	},
 }
 
 var ingressWAFAnnotations = []string{
@@ -137,6 +143,13 @@ var ingressWAFAnnotations = []string{
 	"appprotect.f5.com/app-protect-security-log-enable",
 	AppProtectLogConfAnnotation,
 	AppProtectLogConfDstAnnotation,
+}
+
+var ingressJWTAnnotations = []string{
+	JWTKeyAnnotation,
+	JWTRealmAnnotation,
+	JWTTokenAnnotation,
+	JWTLoginURLAnnotation,
 }
 
 // filterIngressPolicyRefs removes policy references that are not allowed for the
@@ -248,6 +261,51 @@ func resolveIngressAppProtectResources(ingEx *IngressEx, apResources *AppProtect
 	)
 
 	return &AppProtectResources{}, warnings
+}
+
+func resolveIngressJWTAnnotations(ingEx *IngressEx, cfgParams *ConfigParams, policyCfg policiesCfg) Warnings {
+	warnings := newWarnings()
+	if ingEx == nil || ingEx.Ingress == nil || policyCfg.JWTAuth.Auth == nil {
+		return warnings
+	}
+
+	var presentAnnotations []string
+	for _, annotation := range ingressJWTAnnotations {
+		if _, exists := ingEx.Ingress.Annotations[annotation]; exists {
+			presentAnnotations = append(presentAnnotations, annotation)
+		}
+	}
+
+	if len(presentAnnotations) == 0 {
+		return warnings
+	}
+
+	warnings.AddWarningf(
+		ingEx.Ingress,
+		"JWT cannot be configured through both Policy and JWT annotations on the same Ingress; annotations %s will be ignored because the Policy configuration takes precedence",
+		strings.Join(presentAnnotations, ", "),
+	)
+
+	cfgParams.JWTKey = ""
+	cfgParams.JWTRealm = ""
+	cfgParams.JWTToken = ""
+	cfgParams.JWTLoginURL = ""
+
+	return warnings
+}
+
+func convertPolicyJWTAuth(jwt *version2.JWTAuth) *version1.JWTAuth {
+	if jwt == nil {
+		return nil
+	}
+	return &version1.JWTAuth{
+		Key:        jwt.Secret,
+		JWKSUriKey: jwt.Key,
+		JwksURI:    jwt.JwksURI,
+		KeyCache:   jwt.KeyCache,
+		Realm:      jwt.Realm,
+		Token:      jwt.Token,
+	}
 }
 
 //nolint:gocyclo
@@ -381,6 +439,9 @@ func generateNginxCfg(ncp NginxCfgParams) (version1.IngressNginxConfig, Warnings
 	apResources, appProtectWarnings := resolveIngressAppProtectResources(ncp.ingEx, ncp.apResources, policyCfg)
 	allWarnings.Add(appProtectWarnings)
 
+	jwtWarnings := resolveIngressJWTAnnotations(ncp.ingEx, &cfgParams, policyCfg)
+	allWarnings.Add(jwtWarnings)
+
 	if policyCfg.CORSMap != nil {
 		// CORS origin validation map is rendered at http{} level and consumed by location headers.
 		maps = append(maps, *policyCfg.CORSMap)
@@ -449,6 +510,12 @@ func generateNginxCfg(ncp NginxCfgParams) (version1.IngressNginxConfig, Warnings
 			PoliciesErrorReturn:    policyCfg.ErrorReturn,
 		}
 
+		if policyCfg.JWTAuth.JWKSEnabled {
+			server.JWTAuthList = map[string]*version2.JWTAuth{
+				policyCfg.JWTAuth.Auth.Key: policyCfg.JWTAuth.Auth,
+			}
+		}
+
 		if isDefaultServer {
 			server.Ports = []int{ncp.staticParams.DefaultHTTPListenerPort}
 			server.SSLPorts = []int{ncp.staticParams.DefaultHTTPSListenerPort}
@@ -510,7 +577,9 @@ func generateNginxCfg(ncp NginxCfgParams) (version1.IngressNginxConfig, Warnings
 		var locations []version1.Location
 
 		if !ncp.isMinion {
-			if cfgParams.JWTKey != "" {
+			if policyCfg.JWTAuth.Auth != nil {
+				server.JWTAuth = convertPolicyJWTAuth(policyCfg.JWTAuth.Auth)
+			} else if cfgParams.JWTKey != "" {
 				jwtAuth, redirectLoc, warnings := generateJWTConfig(ncp.ingEx.Ingress, ncp.ingEx.Ingress.Namespace, ncp.ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ncp.ingEx.Ingress))
 				server.JWTAuth = jwtAuth
 				if redirectLoc != nil {
@@ -631,7 +700,9 @@ func generateNginxCfg(ncp NginxCfgParams) (version1.IngressNginxConfig, Warnings
 				loc.AddHeaderInherit = cfgParams.AddHeaderInherit
 				server.AddHeaderInherit = "" // unset to avoid writing AddHeaderInherit to server block when the ingress is a minion, since it's only relevant for master ingresses
 
-				if cfgParams.JWTKey != "" {
+				if policyCfg.JWTAuth.Auth != nil {
+					loc.JWTAuth = convertPolicyJWTAuth(policyCfg.JWTAuth.Auth)
+				} else if cfgParams.JWTKey != "" {
 					jwtAuth, redirectLoc, warnings := generateJWTConfig(ncp.ingEx.Ingress, ncp.ingEx.Ingress.Namespace, ncp.ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ncp.ingEx.Ingress))
 					loc.JWTAuth = jwtAuth
 					if redirectLoc != nil {
@@ -1567,6 +1638,12 @@ func generateNginxCfgForMergeableIngresses(ncp NginxCfgParams) (version1.Ingress
 				healthChecks[hcName] = healthCheck
 			}
 			masterServer.JWTRedirectLocations = append(masterServer.JWTRedirectLocations, server.JWTRedirectLocations...)
+			for k, v := range server.JWTAuthList {
+				if masterServer.JWTAuthList == nil {
+					masterServer.JWTAuthList = make(map[string]*version2.JWTAuth)
+				}
+				masterServer.JWTAuthList[k] = v
+			}
 		}
 
 		if minionNginxCfg.OIDCProviders != nil {

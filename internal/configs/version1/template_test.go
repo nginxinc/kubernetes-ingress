@@ -9554,3 +9554,124 @@ func TestExecuteTemplatesForIngressRedirectNoChallengeUnchanged(t *testing.T) {
 		})
 	}
 }
+
+func TestExecuteTemplatesForIngressWithJWTPolicyJWKS(t *testing.T) {
+	t.Parallel()
+	cfg := acmeChallengeIngressCfg(Location{
+		Path:                "/coffee",
+		ServiceName:         "coffee-svc",
+		Upstream:            testUpstream,
+		ProxyConnectTimeout: "10s",
+		ProxyReadTimeout:    "10s",
+		ProxySendTimeout:    "10s",
+		ClientMaxBodySize:   "1m",
+		ProxyPass:           "http://test",
+		JWTAuth: &JWTAuth{
+			Realm:      "Coffee API",
+			Token:      "$http_authorization",
+			KeyCache:   "30m",
+			JWKSUriKey: "default/coffee-jwt-policy",
+			JwksURI: version2.JwksURI{
+				JwksScheme:     "https",
+				JwksHost:       "idp.example.com",
+				JwksPort:       "8443",
+				JwksPath:       "/realms/coffee/protocol/openid-connect/certs",
+				JwksSNIEnabled: true,
+				JwksSNIName:    "idp.example.com",
+				SSLVerify:      true,
+				TrustedCert:    "/etc/nginx/secrets/default-jwk-ca",
+				SSLVerifyDepth: 2,
+			},
+		},
+	})
+	cfg.AppProtectLoadModule = true
+	cfg.Servers[0].ACMEChallengeActive = false
+	cfg.Servers[0].SSLRedirect = false
+	cfg.Servers[0].JWTRedirectLocations = nil
+	cfg.Servers[0].JWTAuth = &JWTAuth{
+		Realm:      "Cafe API",
+		Token:      "$cookie_auth_token",
+		KeyCache:   "1h",
+		JWKSUriKey: "default/cafe-jwt-policy",
+		JwksURI: version2.JwksURI{
+			JwksScheme:     "https",
+			JwksHost:       "idp.example.com",
+			JwksPort:       "8443",
+			JwksPath:       "/realms/cafe/protocol/openid-connect/certs",
+			JwksSNIEnabled: true,
+			JwksSNIName:    "idp.example.com",
+			SSLVerify:      true,
+			TrustedCert:    "/etc/nginx/secrets/default-jwk-ca",
+			SSLVerifyDepth: 2,
+		},
+	}
+	cfg.Servers[0].Locations[1].GRPC = true
+	cfg.Servers[0].Locations[1].JWTAuth = &JWTAuth{
+		Realm:      "Tea gRPC API",
+		KeyCache:   "15m",
+		JWKSUriKey: "default/tea-jwt-policy",
+		JwksURI: version2.JwksURI{
+			JwksScheme: "https",
+			JwksHost:   "idp.example.com",
+			JwksPath:   "/realms/tea/protocol/openid-connect/certs",
+		},
+	}
+	cfg.Servers[0].JWTAuthList = map[string]*version2.JWTAuth{
+		"default/cafe-jwt-policy": {
+			Key:      "default/cafe-jwt-policy",
+			Realm:    "Cafe API",
+			Token:    "$cookie_auth_token",
+			KeyCache: "1h",
+			JwksURI: version2.JwksURI{
+				JwksScheme:     "https",
+				JwksHost:       "idp.example.com",
+				JwksPort:       "8443",
+				JwksPath:       "/realms/cafe/protocol/openid-connect/certs",
+				JwksSNIEnabled: true,
+				JwksSNIName:    "idp.example.com",
+				SSLVerify:      true,
+				TrustedCert:    "/etc/nginx/secrets/default-jwk-ca",
+				SSLVerifyDepth: 2,
+			},
+		},
+		"default/coffee-jwt-policy": {
+			Key:      "default/coffee-jwt-policy",
+			Realm:    "Coffee API",
+			Token:    "$http_authorization",
+			KeyCache: "30m",
+			JwksURI: version2.JwksURI{
+				JwksScheme: "https",
+				JwksHost:   "idp.example.com",
+				JwksPort:   "8443",
+				JwksPath:   "/realms/coffee/protocol/openid-connect/certs",
+			},
+		},
+	}
+
+	conf := executeIngressTmpl(t, newNGINXPlusIngressTmpl(t), cfg)
+
+	assertCount(t, conf, `auth_jwt "Cafe API" token=$cookie_auth_token;`, 1)
+	assertCount(t, conf, "auth_jwt_key_cache 1h;", 1)
+	assertCount(t, conf, "auth_jwt_key_request /_jwks_uri_server_default/cafe-jwt-policy;", 1)
+	assertCount(t, conf, "location = /_jwks_uri_server_default/cafe-jwt-policy {", 1)
+	assertCount(t, conf, "set $idp_backend idp.example.com;", 2)
+	assertCount(t, conf, "proxy_pass https://$idp_backend:8443/realms/cafe/protocol/openid-connect/certs;", 1)
+	assertCount(t, conf, "proxy_ssl_server_name on;", 1)
+	assertCount(t, conf, `proxy_ssl_name "idp.example.com";`, 1)
+	assertCount(t, conf, "proxy_ssl_verify on;", 1)
+	assertCount(t, conf, "proxy_ssl_trusted_certificate /etc/nginx/secrets/default-jwk-ca;", 1)
+	assertCount(t, conf, "proxy_ssl_verify_depth 2;", 1)
+	assertCount(t, conf, "app_protect_enable off;", 2)
+
+	coffeeBlock := locationBlock(t, conf, `location "/coffee" {`)
+	assertCount(t, coffeeBlock, `auth_jwt "Coffee API" token=$http_authorization;`, 1)
+	assertCount(t, coffeeBlock, "auth_jwt_key_cache 30m;", 1)
+	assertCount(t, coffeeBlock, "auth_jwt_key_request /_jwks_uri_server_default/coffee-jwt-policy;", 1)
+
+	teaBlock := locationBlock(t, conf, `location "/tea" {`)
+	assertCount(t, teaBlock, `auth_jwt "Tea gRPC API";`, 1)
+	assertCount(t, teaBlock, "auth_jwt_key_cache 15m;", 1)
+	assertCount(t, teaBlock, "auth_jwt_key_request /_jwks_uri_server_default/tea-jwt-policy;", 1)
+
+	snaps.MatchSnapshot(t, conf)
+}

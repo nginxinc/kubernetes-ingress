@@ -134,6 +134,7 @@ type Server struct {
 	RealIPRecursive bool
 
 	JWTAuth              *JWTAuth
+	JWTAuthList          map[string]*version2.JWTAuth
 	ExternalAuth         *version2.ExternalAuth
 	BasicAuth            *BasicAuth
 	JWTRedirectLocations []JWTRedirectLocation
@@ -194,6 +195,9 @@ type BasicAuth struct {
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
 	Key                  string
+	JWKSUriKey           string
+	JwksURI              version2.JwksURI
+	KeyCache             string
 	Realm                string
 	Token                string
 	RedirectLocationName string

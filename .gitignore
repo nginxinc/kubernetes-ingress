@@ -293,6 +293,7 @@ examples/custom-resources/external-auth-oauth2/htpasswd-secret.yaml
 # Jwks secrets
 common-secrets/example-jwt-jwks-secret.yaml
 examples/custom-resources/jwt/jwk-secret.yaml
+examples/ingress-resources/jwt-secret-policy/jwk-secret.yaml
 common-secrets/tests-jwt-master-jwk.yaml
 tests/data/jwt-auth-mergeable/jwt-master-secret.yaml
 common-secrets/tests-jwt-master-jwk-updated.yaml

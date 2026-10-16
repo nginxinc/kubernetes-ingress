@@ -177,7 +177,8 @@ func IsPolicySupportedOnIngress(pol *conf_v1.Policy) bool {
 		pol.Spec.IngressMTLS != nil ||
 		pol.Spec.EgressMTLS != nil ||
 		pol.Spec.WAF != nil ||
-		pol.Spec.OIDCNative != nil
+		pol.Spec.OIDCNative != nil ||
+		pol.Spec.JWTAuth != nil
 }
 
 func (p *policiesCfg) addAccessControlConfig(accessControl *conf_v1.AccessControl) *validationResults {

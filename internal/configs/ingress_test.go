@@ -636,6 +636,20 @@ func TestFilterIngressPolicyRefs(t *testing.T) {
 			warningSubstr: "OIDCNative policy default/oidc-native-policy is not supported in annotation nginx.org/policies",
 		},
 		{
+			name:            "filters jwt policy from nginx org policies",
+			annotationValue: "jwt-policy",
+			policies: map[string]*conf_v1.Policy{
+				"default/jwt-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{Name: "jwt-policy", Namespace: "default"},
+					Spec:       conf_v1.PolicySpec{JWTAuth: &conf_v1.JWTAuth{Realm: "Cafe App", Secret: "cafe-jwk"}},
+				},
+			},
+			policyRefs:    []conf_v1.PolicyReference{{Name: "jwt-policy"}},
+			expectedRefs:  nil,
+			expectError:   true,
+			warningSubstr: "JWTAuth policy default/jwt-policy is not supported in annotation nginx.org/policies",
+		},
+		{
 			name:            "keeps non plus policy from nginx org policies",
 			annotationValue: "cors-policy",
 			policies: map[string]*conf_v1.Policy{
@@ -7263,5 +7277,346 @@ func assertUpstreamKeepalive(t *testing.T, label, got, want string) {
 	t.Helper()
 	if got != want {
 		t.Errorf("%s Keepalive = %q, want %q", label, got, want)
+	}
+}
+
+func TestResolveIngressJWTAnnotations(t *testing.T) {
+	t.Parallel()
+
+	baseCfgParams := ConfigParams{
+		JWTKey:      "cafe-jwk",
+		JWTRealm:    "Cafe App",
+		JWTToken:    "$cookie_auth_token",
+		JWTLoginURL: "https://login.example.com",
+	}
+
+	tests := []struct {
+		name              string
+		ingEx             *IngressEx
+		cfgParams         ConfigParams
+		policyCfg         policiesCfg
+		expectedCfgParams ConfigParams
+		warningSubstr     string
+	}{
+		{
+			name:              "returns original cfgParams when jwt policy is absent",
+			ingEx:             &IngressEx{Ingress: createCafeIngressEx().Ingress},
+			cfgParams:         baseCfgParams,
+			policyCfg:         policiesCfg{},
+			expectedCfgParams: baseCfgParams,
+		},
+		{
+			name:              "returns original cfgParams when ingress has no jwt annotations",
+			ingEx:             &IngressEx{Ingress: createCafeIngressEx().Ingress},
+			cfgParams:         ConfigParams{},
+			policyCfg:         policiesCfg{JWTAuth: jwtAuth{Auth: &version2.JWTAuth{Realm: "Policy Realm"}}},
+			expectedCfgParams: ConfigParams{},
+		},
+		{
+			name: "policy jwt takes precedence over jwt annotations",
+			ingEx: func() *IngressEx {
+				ingEx := createCafeIngressEx()
+				ingEx.Ingress.Annotations[JWTKeyAnnotation] = "cafe-jwk"
+				ingEx.Ingress.Annotations[JWTRealmAnnotation] = "Cafe App"
+				return &ingEx
+			}(),
+			cfgParams:         baseCfgParams,
+			policyCfg:         policiesCfg{JWTAuth: jwtAuth{Auth: &version2.JWTAuth{Realm: "Policy Realm"}}},
+			expectedCfgParams: ConfigParams{},
+			warningSubstr:     "JWT cannot be configured through both Policy and JWT annotations",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfgParams := test.cfgParams
+			warnings := resolveIngressJWTAnnotations(test.ingEx, &cfgParams, test.policyCfg)
+			if diff := cmp.Diff(test.expectedCfgParams, cfgParams); diff != "" {
+				t.Fatalf("resolveIngressJWTAnnotations() returned unexpected cfgParams (-want +got):\n%s", diff)
+			}
+
+			ingressWarnings := warnings[test.ingEx.Ingress]
+			if test.warningSubstr == "" {
+				if len(ingressWarnings) != 0 {
+					t.Fatalf("expected no warnings, got %v", ingressWarnings)
+				}
+				return
+			}
+
+			if len(ingressWarnings) != 1 || !strings.Contains(ingressWarnings[0], test.warningSubstr) {
+				t.Fatalf("expected warning containing %q, got %v", test.warningSubstr, ingressWarnings)
+			}
+		})
+	}
+}
+
+func TestGenerateNginxCfgForJWTPolicy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("secret-based JWT policy via nginx.com/policies", func(t *testing.T) {
+		t.Parallel()
+		cafeIngressEx := createCafeIngressEx()
+		cafeIngressEx.Ingress.Annotations[PoliciesAnnotationPlus] = "jwt-policy"
+		cafeIngressEx.SecretRefs[secrets.RefKey("default/cafe-jwk", secrets.RoleJWK)] = &secrets.SecretReference{
+			Secret: &v1.Secret{},
+			Path:   "/etc/nginx/secrets/default-cafe-jwk",
+		}
+		cafeIngressEx.Policies = map[string]*conf_v1.Policy{
+			"default/jwt-policy": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					JWTAuth: &conf_v1.JWTAuth{
+						Realm:  "Cafe App",
+						Secret: "cafe-jwk",
+						Token:  "$cookie_auth_token",
+					},
+				},
+			},
+		}
+
+		isPlus := true
+		result, warnings := generateNginxCfg(NginxCfgParams{
+			staticParams:  &StaticConfigParams{},
+			ingEx:         &cafeIngressEx,
+			isPlus:        isPlus,
+			BaseCfgParams: NewDefaultConfigParams(context.Background(), isPlus),
+		})
+
+		if len(warnings) != 0 {
+			t.Fatalf("generateNginxCfg() returned unexpected warnings: %v", warnings)
+		}
+
+		expectedJWT := &version1.JWTAuth{
+			Key:   "/etc/nginx/secrets/default-cafe-jwk",
+			Realm: "Cafe App",
+			Token: "$cookie_auth_token",
+		}
+		if diff := cmp.Diff(expectedJWT, result.Servers[0].JWTAuth); diff != "" {
+			t.Errorf("server JWTAuth mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("JWKS-based JWT policy via nginx.com/policies", func(t *testing.T) {
+		t.Parallel()
+		cafeIngressEx := createCafeIngressEx()
+		cafeIngressEx.Ingress.Annotations[PoliciesAnnotationPlus] = "jwt-jwks-policy"
+		cafeIngressEx.SecretRefs[secrets.RefKey("default/jwk-ca", secrets.RoleCA)] = &secrets.SecretReference{
+			Secret: &v1.Secret{},
+			Path:   "/etc/nginx/secrets/default-jwk-ca",
+		}
+		cafeIngressEx.Policies = map[string]*conf_v1.Policy{
+			"default/jwt-jwks-policy": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwt-jwks-policy",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					JWTAuth: &conf_v1.JWTAuth{
+						Realm:             "Cafe API",
+						Token:             "$http_token",
+						JwksURI:           "https://idp.example.com:8443/realms/cafe/protocol/openid-connect/certs",
+						KeyCache:          "1h",
+						SNIEnabled:        true,
+						SNIName:           "idp.example.com",
+						SSLVerify:         true,
+						TrustedCertSecret: "jwk-ca",
+						SSLVerifyDepth:    new(2),
+					},
+				},
+			},
+		}
+
+		isPlus := true
+		result, warnings := generateNginxCfg(NginxCfgParams{
+			staticParams:  &StaticConfigParams{},
+			ingEx:         &cafeIngressEx,
+			isPlus:        isPlus,
+			BaseCfgParams: NewDefaultConfigParams(context.Background(), isPlus),
+		})
+
+		if len(warnings) != 0 {
+			t.Fatalf("generateNginxCfg() returned unexpected warnings: %v", warnings)
+		}
+
+		expectedJwksURI := version2.JwksURI{
+			JwksScheme:     "https",
+			JwksHost:       "idp.example.com",
+			JwksPort:       "8443",
+			JwksPath:       "/realms/cafe/protocol/openid-connect/certs",
+			JwksSNIEnabled: true,
+			JwksSNIName:    "idp.example.com",
+			SSLVerify:      true,
+			TrustedCert:    "/etc/nginx/secrets/default-jwk-ca",
+			SSLVerifyDepth: 2,
+		}
+		expectedJWT := &version1.JWTAuth{
+			Realm:      "Cafe API",
+			Token:      "$http_token",
+			KeyCache:   "1h",
+			JWKSUriKey: "default/jwt-jwks-policy",
+			JwksURI:    expectedJwksURI,
+		}
+		if diff := cmp.Diff(expectedJWT, result.Servers[0].JWTAuth); diff != "" {
+			t.Errorf("server JWTAuth mismatch (-want +got):\n%s", diff)
+		}
+
+		expectedList := map[string]*version2.JWTAuth{
+			"default/jwt-jwks-policy": {
+				Key:      "default/jwt-jwks-policy",
+				Realm:    "Cafe API",
+				Token:    "$http_token",
+				KeyCache: "1h",
+				JwksURI:  expectedJwksURI,
+			},
+		}
+		if diff := cmp.Diff(expectedList, result.Servers[0].JWTAuthList); diff != "" {
+			t.Errorf("server JWTAuthList mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("JWT policy takes precedence over JWT annotations with warning", func(t *testing.T) {
+		t.Parallel()
+		cafeIngressEx := createCafeIngressEx()
+		cafeIngressEx.Ingress.Annotations[PoliciesAnnotationPlus] = "jwt-policy"
+		cafeIngressEx.Ingress.Annotations[JWTKeyAnnotation] = "annotation-jwk"
+		cafeIngressEx.Ingress.Annotations[JWTRealmAnnotation] = "Annotation Realm"
+		cafeIngressEx.Ingress.Annotations[JWTTokenAnnotation] = "$cookie_ann_token"
+		cafeIngressEx.Ingress.Annotations[JWTLoginURLAnnotation] = "https://login.example.com"
+		cafeIngressEx.SecretRefs[secrets.RefKey("default/policy-jwk", secrets.RoleJWK)] = &secrets.SecretReference{
+			Secret: &v1.Secret{},
+			Path:   "/etc/nginx/secrets/default-policy-jwk",
+		}
+		cafeIngressEx.SecretRefs[secrets.RefKey("default/annotation-jwk", secrets.RoleJWK)] = &secrets.SecretReference{
+			Secret: &v1.Secret{},
+			Path:   "/etc/nginx/secrets/default-annotation-jwk",
+		}
+		cafeIngressEx.Policies = map[string]*conf_v1.Policy{
+			"default/jwt-policy": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					JWTAuth: &conf_v1.JWTAuth{
+						Realm:  "Policy Realm",
+						Secret: "policy-jwk",
+						Token:  "$http_authorization",
+					},
+				},
+			},
+		}
+
+		isPlus := true
+		result, warnings := generateNginxCfg(NginxCfgParams{
+			staticParams:  &StaticConfigParams{},
+			ingEx:         &cafeIngressEx,
+			isPlus:        isPlus,
+			BaseCfgParams: NewDefaultConfigParams(context.Background(), isPlus),
+		})
+
+		ingressWarnings := warnings[cafeIngressEx.Ingress]
+		if len(ingressWarnings) != 1 || !strings.Contains(ingressWarnings[0], "JWT cannot be configured through both Policy and JWT annotations") {
+			t.Fatalf("expected conflict warning, got %v", ingressWarnings)
+		}
+
+		expectedJWT := &version1.JWTAuth{
+			Key:   "/etc/nginx/secrets/default-policy-jwk",
+			Realm: "Policy Realm",
+			Token: "$http_authorization",
+		}
+		if diff := cmp.Diff(expectedJWT, result.Servers[0].JWTAuth); diff != "" {
+			t.Errorf("server JWTAuth mismatch (-want +got):\n%s", diff)
+		}
+		if len(result.Servers[0].JWTRedirectLocations) != 0 {
+			t.Errorf("expected no JWTRedirectLocations from ignored annotations, got %v", result.Servers[0].JWTRedirectLocations)
+		}
+	})
+}
+
+func TestGenerateNginxCfgForMergeableIngressesJWTPolicy(t *testing.T) {
+	t.Parallel()
+
+	mergeableIngresses := createMergeableCafeIngress()
+
+	// Master has secret-based JWT policy
+	mergeableIngresses.Master.Ingress.Annotations[PoliciesAnnotationPlus] = "master-jwt"
+	mergeableIngresses.Master.SecretRefs[secrets.RefKey("default/master-jwk", secrets.RoleJWK)] = &secrets.SecretReference{
+		Secret: &v1.Secret{},
+		Path:   "/etc/nginx/secrets/default-master-jwk",
+	}
+	mergeableIngresses.Master.Policies = map[string]*conf_v1.Policy{
+		"default/master-jwt": {
+			ObjectMeta: meta_v1.ObjectMeta{Name: "master-jwt", Namespace: "default"},
+			Spec: conf_v1.PolicySpec{
+				JWTAuth: &conf_v1.JWTAuth{
+					Realm:  "Master Realm",
+					Secret: "master-jwk",
+				},
+			},
+		},
+	}
+
+	// Coffee minion has JWKS-based JWT policy and conflicting JWT annotations
+	coffeeMinion := mergeableIngresses.Minions[0]
+	originalCoffeeIngress := coffeeMinion.Ingress
+	coffeeMinion.Ingress.Annotations[PoliciesAnnotationPlus] = "coffee-jwt-jwks"
+	coffeeMinion.Ingress.Annotations[JWTKeyAnnotation] = "ignored-jwk"
+	coffeeMinion.Ingress.Annotations[JWTRealmAnnotation] = "Ignored Realm"
+	coffeeMinion.Policies = map[string]*conf_v1.Policy{
+		"default/coffee-jwt-jwks": {
+			ObjectMeta: meta_v1.ObjectMeta{Name: "coffee-jwt-jwks", Namespace: "default"},
+			Spec: conf_v1.PolicySpec{
+				JWTAuth: &conf_v1.JWTAuth{
+					Realm:    "Coffee JWKS Realm",
+					JwksURI:  "https://idp.example.com/certs",
+					KeyCache: "1h",
+				},
+			},
+		},
+	}
+
+	isPlus := true
+	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs: mergeableIngresses,
+		BaseCfgParams: NewDefaultConfigParams(context.Background(), isPlus),
+		isPlus:        isPlus,
+		staticParams:  &StaticConfigParams{},
+	})
+
+	coffeeWarnings := warnings[originalCoffeeIngress]
+	if len(coffeeWarnings) != 1 || !strings.Contains(coffeeWarnings[0], "JWT cannot be configured through both Policy and JWT annotations") {
+		t.Fatalf("expected conflict warning on coffee minion, got %v", warnings)
+	}
+
+	server := result.Servers[0]
+	expectedMasterJWT := &version1.JWTAuth{
+		Key:   "/etc/nginx/secrets/default-master-jwk",
+		Realm: "Master Realm",
+	}
+	if diff := cmp.Diff(expectedMasterJWT, server.JWTAuth); diff != "" {
+		t.Errorf("master server JWTAuth mismatch (-want +got):\n%s", diff)
+	}
+
+	// Master server's JWTAuthList must include the minion's JWKS policy
+	if _, ok := server.JWTAuthList["default/coffee-jwt-jwks"]; !ok {
+		t.Errorf("expected master server JWTAuthList to contain minion key 'default/coffee-jwt-jwks', got %v", server.JWTAuthList)
+	}
+
+	for _, loc := range server.Locations {
+		switch loc.Path {
+		case "/coffee":
+			if loc.JWTAuth == nil || loc.JWTAuth.Realm != "Coffee JWKS Realm" || loc.JWTAuth.JWKSUriKey != "default/coffee-jwt-jwks" {
+				t.Errorf("unexpected coffee location JWTAuth: %+v", loc.JWTAuth)
+			}
+		case "/tea":
+			if loc.JWTAuth != nil {
+				t.Errorf("expected tea location JWTAuth to be nil (inherits from master), got %+v", loc.JWTAuth)
+			}
+		}
 	}
 }

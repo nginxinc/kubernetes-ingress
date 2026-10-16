@@ -338,7 +338,14 @@ server {
 	{{- end }}
 
 	{{with $jwt := $server.JWTAuth}}
+	{{- if $jwt.JwksURI.JwksHost}}
+	{{- if $jwt.KeyCache}}
+	auth_jwt_key_cache {{$jwt.KeyCache}};
+	{{- end}}
+	auth_jwt_key_request /_jwks_uri_server_{{$jwt.JWKSUriKey}};
+	{{- else}}
 	auth_jwt_key_file {{$jwt.Key}};
+	{{- end}}
 	{{- /* .Realm is already escaped for NGINX by validAnnotationValueRegex, which
 	       accepts '\"' but rejects an unescaped '"', so plain quoting is correct
 	       here and printf "%q" would escape the backslashes a second time.
@@ -400,6 +407,42 @@ server {
 		return 302 {{$location.LoginURL}};
 	}
 	{{end -}}
+
+	{{- range $index, $element := $server.JWTAuthList }}
+	location = /_jwks_uri_server_{{ .Key }} {
+		internal;
+		client_max_body_size 0;
+		{{- if $.AppProtectLoadModule }}
+		app_protect_enable off;
+		{{- end }}
+		proxy_method GET;
+		proxy_set_header Content-Length "";
+		{{- with .JwksURI }}
+		{{- if .JwksSNIEnabled }}
+		proxy_ssl_server_name on;
+		{{- if .JwksSNIName }}
+		proxy_ssl_name {{ printf "%q" .JwksSNIName }};
+		{{- end }}
+		{{- end }}
+		{{- if .SSLVerify }}
+		proxy_ssl_verify on;
+		proxy_ssl_verify_depth {{ .SSLVerifyDepth }};
+		{{- if .TrustedCert }}
+		proxy_ssl_trusted_certificate {{ .TrustedCert }};
+		{{- else }}
+		proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+		{{- end }}
+		{{- else }}
+		proxy_ssl_verify off;
+		{{- end }}
+		proxy_pass_request_headers off;
+		proxy_pass_request_body off;
+		proxy_set_header Host {{ .JwksHost }};
+		set $idp_backend {{ .JwksHost }};
+		proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
+		{{- end }}
+	}
+	{{- end }}
 
 	{{- range $p := $.OIDCProviders }}
     {{- if $p.RedirectURI }}
@@ -560,7 +603,14 @@ server {
 		auth_jwt off;
 		{{- else}}
 		{{- with $jwt := $location.JWTAuth}}
+		{{- if $jwt.JwksURI.JwksHost}}
+		{{- if $jwt.KeyCache}}
+		auth_jwt_key_cache {{$jwt.KeyCache}};
+		{{- end}}
+		auth_jwt_key_request /_jwks_uri_server_{{$jwt.JWKSUriKey}};
+		{{- else}}
 		auth_jwt_key_file {{$jwt.Key}};
+		{{- end}}
 		{{- /* See the note on the server-level auth_jwt above: .Realm is
 		       pre-escaped and $jwt.Token must stay unquoted. */}}
 		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
@@ -624,7 +674,14 @@ server {
 		auth_jwt off;
 		{{- else}}
 		{{- with $jwt := $location.JWTAuth }}
+		{{- if $jwt.JwksURI.JwksHost}}
+		{{- if $jwt.KeyCache}}
+		auth_jwt_key_cache {{$jwt.KeyCache}};
+		{{- end}}
+		auth_jwt_key_request /_jwks_uri_server_{{$jwt.JWKSUriKey}};
+		{{- else}}
 		auth_jwt_key_file {{$jwt.Key}};
+		{{- end}}
 		{{- /* See the note on the server-level auth_jwt above: .Realm is
 		       pre-escaped and $jwt.Token must stay unquoted. */}}
 		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};

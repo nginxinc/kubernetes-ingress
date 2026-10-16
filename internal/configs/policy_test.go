@@ -5064,9 +5064,9 @@ func TestIsPolicySupportedOnIngress(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "JWTAuth is not supported",
+			name:     "JWTAuth is supported",
 			policy:   &conf_v1.Policy{Spec: conf_v1.PolicySpec{JWTAuth: &conf_v1.JWTAuth{}}},
-			expected: false,
+			expected: true,
 		},
 		{
 			name:     "BasicAuth is not supported",
@@ -5124,7 +5124,6 @@ func TestGeneratePolicies_UnsupportedOnIngress(t *testing.T) {
 
 	unsupportedPolicies := map[string]*conf_v1.Policy{
 		"RateLimit": {ObjectMeta: meta_v1.ObjectMeta{Name: "test-policy", Namespace: "default"}, Spec: conf_v1.PolicySpec{RateLimit: &conf_v1.RateLimit{}}},
-		"JWTAuth":   {ObjectMeta: meta_v1.ObjectMeta{Name: "test-policy", Namespace: "default"}, Spec: conf_v1.PolicySpec{JWTAuth: &conf_v1.JWTAuth{}}},
 		"BasicAuth": {ObjectMeta: meta_v1.ObjectMeta{Name: "test-policy", Namespace: "default"}, Spec: conf_v1.PolicySpec{BasicAuth: &conf_v1.BasicAuth{}}},
 		"OIDC":      {ObjectMeta: meta_v1.ObjectMeta{Name: "test-policy", Namespace: "default"}, Spec: conf_v1.PolicySpec{OIDC: &conf_v1.OIDC{}}},
 		"APIKey":    {ObjectMeta: meta_v1.ObjectMeta{Name: "test-policy", Namespace: "default"}, Spec: conf_v1.PolicySpec{APIKey: &conf_v1.APIKey{}}},
