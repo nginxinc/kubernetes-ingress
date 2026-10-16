@@ -745,7 +745,7 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 			value := strings.TrimSpace(parts[1])
 			for _, err := range common_validation.ValidateProxySetHeaderValue(value, context.fieldPath, context.isPlus) {
 				if err.Type == field.ErrorTypeForbidden {
-					allErrs = append(allErrs, field.Forbidden(context.fieldPath, err.Detail))
+					allErrs = append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("%q: %s", entry, err.Detail)))
 				} else {
 					allErrs = append(allErrs, field.Invalid(context.fieldPath, entry, err.Detail))
 				}

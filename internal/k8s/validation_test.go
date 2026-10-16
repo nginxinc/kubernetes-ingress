@@ -6342,7 +6342,7 @@ func TestValidateProxySetHeaderAnnotation(t *testing.T) {
 			value:  "X-User: ${jwt_claim_sub}",
 			isPlus: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/proxy-set-headers: Forbidden: is only supported in NGINX Plus`,
+				`annotations.nginx.org/proxy-set-headers: Forbidden: "X-User: ${jwt_claim_sub}": is only supported in NGINX Plus`,
 			},
 		},
 		{
