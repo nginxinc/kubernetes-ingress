@@ -10,6 +10,7 @@ from kubernetes.stream import stream
 from settings import CRDS, DEPLOYMENTS, NGX_REG, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
+    IC_SELECTOR,
     cleanup_rbac,
     configure_rbac_with_ap,
     configure_rbac_with_dos,
@@ -312,7 +313,7 @@ def crd_ingress_controller_with_waf_v5(
             with open(f"{dir}/wafv5.tgz", "rb") as f:
                 file_content = f.read()
             exec_command = ["sh", "-c", f"cat > /etc/app_protect/bundles/wafv5.tgz"]
-            pod_name = get_first_pod_name(kube_apis.v1, namespace)
+            pod_name = get_first_pod_name(kube_apis.v1, namespace, IC_SELECTOR)
             container_name = f"nginx-plus-ingress"
             resp = stream(
                 kube_apis.v1.connect_get_namespaced_pod_exec,
@@ -432,7 +433,9 @@ def crd_ingress_controller_with_dos(
         create_items_from_yaml(kube_apis, src_accesslog_yaml, namespace)
 
         before = time.time()
-        wait_until_all_pods_are_ready(kube_apis.v1, namespace)
+        # Wait per app: a combined selector passes as soon as either pod exists and is Ready.
+        for app in ("syslog", "accesslog"):
+            wait_until_all_pods_are_ready(kube_apis.v1, namespace, f"app={app}")
         after = time.time()
         print(f"All pods came up in {int(after-before)} seconds")
         print(f"syslog and accesslog svc was created")
