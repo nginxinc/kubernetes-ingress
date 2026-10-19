@@ -576,5 +576,3 @@ flowchart LR
    - Master (`server` block) uses `nginx.com/jwt-key` and `nginx.com/jwt-realm`.
    - Minion 1 (`location /minion1`) inherits Master's `nginx.com/jwt-*` config.
    - Minion 2 (`location /minion2`) uses `jwt-policy-valid-2` via `nginx.com/policies`, overriding Master's `nginx.com/jwt-*` config for `/minion2` only.
-
-
