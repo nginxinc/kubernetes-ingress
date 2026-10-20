@@ -7,7 +7,8 @@
 [![Forks](https://img.shields.io/github/forks/nginx/kubernetes-ingress?style=flat&logo=github)](https://github.com/nginx/kubernetes-ingress/forks)
 [![Latest Release](https://img.shields.io/github/v/release/nginx/kubernetes-ingress?logo=github&sort=semver)](https://github.com/nginx/kubernetes-ingress/releases/latest)
 [![Contributors](https://img.shields.io/github/contributors/nginx/kubernetes-ingress?logo=github)](https://github.com/nginx/kubernetes-ingress/graphs/contributors)
-
+[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nginx/kubernetes-ingress.svg)](https://pkg.go.dev/github.com/nginx/kubernetes-ingress)
 [![codecov](https://codecov.io/gh/nginx/kubernetes-ingress/branch/main/graph/badge.svg?token=snCn7Y0zC7)](https://codecov.io/gh/nginx/kubernetes-ingress)
 [![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginx/kubernetes-ingress/badge)](https://scorecard.dev/viewer/?uri=github.com/nginx/kubernetes-ingress)
@@ -22,9 +23,6 @@
 [![Community Forum](https://img.shields.io/badge/Community_Forum-Join_us!-009639?logo=nginx&logoColor=white)](https://community.nginx.org)
 [![Forum Topics](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fcommunity.nginx.org&logo=nginx&label=forum)](https://community.nginx.org)
 [![Forum Users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.nginx.org&logo=nginx&label=forum)](https://community.nginx.org)
-
-[![Docker Pulls](https://img.shields.io/docker/pulls/nginx/nginx-ingress?logo=docker&logoColor=white)](https://hub.docker.com/r/nginx/nginx-ingress)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/nginx-ingress)](https://artifacthub.io/packages/container/nginx-ingress/kubernetes-ingress)
 
 **A production-grade Ingress Controller for Kubernetes, powered by NGINX or NGINX Plus.**
 
