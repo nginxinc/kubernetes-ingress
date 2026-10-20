@@ -3651,7 +3651,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			nl.Warnf(l, "Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
 		}
 
-		if svc != nil && !external && hasUseClusterIP {
+		if svc != nil && !external && hasUseClusterIP && svc.Spec.Type != api_v1.ServiceTypeExternalName {
 			if ing.Spec.DefaultBackend.Service.Port.Number == 0 {
 				for _, port := range svc.Spec.Ports {
 					if port.Name == ing.Spec.DefaultBackend.Service.Port.Name {
@@ -3723,7 +3723,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 				nl.Warnf(l, "Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
 			}
 
-			if svc != nil && !external && hasUseClusterIP {
+			if svc != nil && !external && hasUseClusterIP && svc.Spec.Type != api_v1.ServiceTypeExternalName {
 				if path.Backend.Service.Port.Number == 0 {
 					for _, port := range svc.Spec.Ports {
 						if port.Name == path.Backend.Service.Port.Name {
