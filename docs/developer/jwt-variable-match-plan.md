@@ -180,6 +180,7 @@ Notes:
 - Claim sets are collected in `routingCfg.AuthJWTClaimSets` and appended to `authJWTClaimSets` at both match call sites in `GenerateVirtualServerConfig`.
 - `removeDuplicateAuthJWTClaimSets` deduplicates them. #11174's collision check (same variable, different claim path, for example `$jwt_custom_a.b` and a Policy claim `a_b`) covers all three features (R10).
 - `$jwt_claim_*` and `$jwt_header_*` are used directly as map sources (`getNameForSourceForMatchesRouteMapFromCondition`).
+- **Dotted resource names (prerequisite fix, R11).** `NewVSVariableNamer` and `generateAuthJwtClaimSetVariable` only replace `-` with `_`. A VS named `cafe.v1` yields `$vs_default_cafe.v1_matches_0` and `$jwt_default_cafe.v1_vs_sub`. NGINX ends a variable name at `.` (`ngx_http_script_compile`), so the reload fails. Today this already breaks every `matches` and `splits` route and every RateLimit JWT condition on such a VS. Fix it once, in both helpers. When the namespace/name contains `.`, replace `.` with `_` and append `_<first 8 hex chars of sha256("<ns>/<name>")>`. Names without `.` keep their current form, so existing snapshots don't change. The hash keeps `cafe.v1` distinct from `cafe-v1`. The existing `-`/separator ambiguity (ns `a-b`/name `c` vs ns `a`/name `b-c`) is pre-existing and out of scope.
 
 ### 2. Condition maps (`http` context)
 
@@ -252,6 +253,7 @@ R1–R6 keep the numbering of #11174's [Required: validate-then-route](https://g
 | R8 | When the route has its own rate limits and spec-level limits also exist, render the route's `limit_req` (and its options) in the entry location. Otherwise don't: route limits stay in the targets, and spec-level limits are inherited by both. | New. `limit_req` runs at most once per request (`r->main->limit_req_status`) and is inherited only by levels that define none. A spec-level limit inherited by the entry would run there, and the target's route limit would be skipped: fail open if the route limit is stricter. |
 | R9 | For `$jwt_*` conditions, emit `"" 0;` before the value key, unless the un-negated value is `""` (which would duplicate the key). | New. #11174's missing-claim invariant. |
 | R10 | `$jwt_custom_` claim sets go through #11174's collision check in `removeDuplicateAuthJWTClaimSets`. On a collision, the affected routes fail closed as in R3. | New; shared mechanism. |
+| R11 | Variable names generated from a VS namespace/name are valid NGINX variable names when the name contains `.` (see [Claim extraction](#1-claim-extraction-http-context)). | New; pre-existing bug in the shared namers, also affects #11174. |
 
 #### Entry location contents
 
@@ -275,6 +277,10 @@ The entry location carries everything route-scoped that runs before a target's p
 Implementation:
 
 - **Template:** move the route-policy sections of the target `location` block into named defines, next to #11174's `jwtAuth`, and call them from both the target and the entry location. The target calls them in the current order, so existing snapshots don't change.
+- **Define contract:** `{{ template "name" $l }}` passes only the location as `.`. Caller variables (`$`, `$s`) are not visible, and a field missing from the struct aborts rendering. That error fails the whole VirtualServer update. So each define reads only `.` fields that exist on both `Location` and `InternalRedirectLocation`. These stay in the caller, outside the defines:
+  - the `ACMEChallenge` / `AuthRequestOff` guards (`auth_request off`, `auth_jwt off`, `auth_basic off`, `auth_oidc off`). The target wraps the define call as `{{ if <guard> }}… off;{{ else }}{{ template … $l }}{{ end }}`. The entry location calls the define directly: `AuthRequestOff` is only set on the OAuth2 helper location (`virtualserver.go`) and ACME challenge locations are separate, so both guards are always false for an entry location.
+  - the server-level API key fallback (`{{ else }}{{ with $s.APIKey }}set $header_query_value …`), which both callers render after the API key define.
+  - blocks the entry location doesn't render: OIDC (`$s.OIDC`, excluded by R3), EgressMTLS (`$.StaticSSLPath`), and `DisableWAF` (`$.AppProtectLoadModule`).
 - **Go:** `InternalRedirectLocation` gets fields with the same names as on `Location`, so the defines work with both structs. A helper shared with `addPoliciesCfgToLocation` fills them, and a unit test checks that the entry and a target carry identical policy fields for the same `routePoliciesCfg`.
 
 ### 4. Target locations
@@ -344,7 +350,7 @@ No change. The entry location stays `client_max_body_size 0; rewrite ^ … last;
 | `auth_jwt_claim_set` variables, deduplication and collision detection | `removeDuplicateAuthJWTClaimSets` | One variable per (parent VS, claim); R10 |
 | JWT directive block | Shared `jwtAuth` define | Rendered at `server`, `location`, and the entry location of `$jwt_*` routes |
 | Other route-policy blocks | Shared defines added by this plan (R2) | Rendered by the target `location` and the entry location |
-| Order of validation and routing | This plan (R1–R10) | Required by #11174 for #6829's routing criteria |
+| Order of validation and routing | This plan (R1–R11) | Required by #11174 for #6829's routing criteria |
 | Upstream claim headers | Route `requestHeaders` win over `proxySetHeader` | #11174 §5 |
 | Matching semantics | Both plans | Side-by-side table in [Matching semantics](#matching-semantics) |
 
@@ -419,7 +425,9 @@ Confirm these against a running NGINX Plus in Phase 4, before the design is fina
      - R8: copy the route's `LimitReqs` into the entry location only when spec-level limits exist;
      - R5: warn for a `jwksURI` policy without `keyCache`.
    - `removeDuplicateAuthJWTClaimSets`: #11174's collision detection (R10).
+   - R11: `NewVSVariableNamer` (`virtualserver.go`) and `generateAuthJwtClaimSetVariable` (`policy.go`) encode dotted names. Land this first as its own bug-fix commit, because it also fixes existing `matches`, `splits` and RateLimit JWT configs.
 3. **Tests:**
+   - R11: unit tests for both helpers with `cafe.v1` (valid `[a-zA-Z0-9_]` name, distinct from `cafe-v1`), and unchanged output for undotted names; a template fixture with a dotted VS name and a `$jwt_custom_` match.
    - `internal/configs/virtualserver_routing_test.go`: map sources for the three variable kinds; R9 keys for `""`, `!`, `!x`, plain and regex values; claim sets keyed on the parent VS for VS routes and VSR subroutes.
    - `internal/configs/virtualserver_policy_test.go` and `virtualserver_config_test.go`: entry location contents for spec, route, subroute and inherited VS-route policies; precedence (with spec-level and route-level BasicAuth, the entry carries the route's); the R8 cases; the R3 guard (no JWT policy, OIDC route, spec-level `JWTAuth` with route-level OIDC); non-JWT `matches` and `splits` unchanged; parity between the entry location and a target.
    - `internal/configs/virtualserver_helpers_test.go` (`TestRemoveDuplicateAuthJWTClaimSets`): `$jwt_custom_a.b` vs Policy claim `a_b` vs rate-limit claim `a-b`.
@@ -427,10 +435,10 @@ Confirm these against a running NGINX Plus in Phase 4, before the design is fina
 ### Phase 4: Templates & Snapshots
 
 1. **`internal/configs/version2/nginx-plus.virtualserver.tmpl`:**
-   - Move the target location's route-policy sections into named defines next to `jwtAuth`: external auth, `PoliciesErrorReturn`, `allow`/`deny`, `limit_req`, `auth_basic`, API key, WAF, gRPC status mapping, DoS, `errorPages`, CORS (preflight and headers), HSTS.
+   - Move the target location's route-policy sections into named defines next to `jwtAuth`: external auth, `PoliciesErrorReturn`, `allow`/`deny`, `limit_req`, `auth_basic`, API key, WAF, gRPC status mapping, DoS, `errorPages`, CORS (preflight and headers), HSTS. Follow the [define contract](#entry-location-contents): the defines read only `.`, and the ACME/`AuthRequestOff` guards and the `$s.APIKey` fallback stay in the callers.
    - In `InternalRedirectLocations`, if `ValidateBeforeRouting`, render the defines, then `client_max_body_size 0; root /dev/null; try_files /nic-route {{ $l.Destination }}$is_args$args;`. Otherwise keep the current `rewrite` block.
    - The OSS template is not modified: `$jwt_*` is rejected on NGINX OSS.
-2. **Fixtures** in `internal/configs/version2/templates_test.go`: entry location with a route-level JWT policy (and `auth_jwt_require` once #11174 lands); spec-level JWT inherited by the entry; R8 with and without spec-level limits; CORS; HSTS; gRPC mapping; `PoliciesErrorReturn`; a route with non-JWT matches (unchanged).
+2. **Fixtures** in `internal/configs/version2/templates_test.go`: entry location with a route-level JWT policy (and `auth_jwt_require` once #11174 lands); spec-level JWT inherited by the entry; an entry location with only a JWT policy (every other define renders nothing); a server-level API key inherited by the entry (the `$s.APIKey` fallback); R8 with and without spec-level limits; CORS; HSTS; gRPC mapping; `PoliciesErrorReturn`; a route with non-JWT matches (unchanged). The existing ACME challenge and `AuthRequestOff` fixtures must render unchanged.
 3. Run `make test-update-snaps`. The new fixtures must add snapshots, and the existing snapshots must not change: this proves the define extraction preserves behaviour.
 4. Run the [Verification gates](#verification-gates).
 
@@ -470,7 +478,7 @@ In `nginx/documentation`:
 
 ### Cross-plan and cross-project actions
 
-- **#11174:** apply [Requested changes to the #11174 plan](#requested-changes-to-the-11174-plan).
+- **#11174:** apply [Requested changes to the #11174 plan](#requested-changes-to-the-11174-plan). Its `$jwt_authz_*` and claim-set variable names also need R11.
 - **Rate limiting** (follow-up issue, shared with #11174): count only validated tokens for spec-level limits and for routes without `$jwt_*` matches ([discussion #10371](https://github.com/nginx/kubernetes-ingress/discussions/10371)).
 - **#6829:** decide how invalid resources keep the last valid configuration.
 - **#11175:** update the issue scope and acceptance criteria to match this plan.
@@ -492,9 +500,9 @@ flowchart LR
 
 | Order | Scope | Purpose for Reviewers | Files Included |
 | :---: | --- | --- | --- |
-| **1** | **Design & Test Plan** | Agree the variables, validate-then-route (R1–R10), the entry location contents, matching semantics, and the gaps vs #6829. | • [`docs/developer/jwt-variable-match-plan.md`](jwt-variable-match-plan.md) |
+| **1** | **Design & Test Plan** | Agree the variables, validate-then-route (R1–R11), the entry location contents, matching semantics, and the gaps vs #6829. | • [`docs/developer/jwt-variable-match-plan.md`](jwt-variable-match-plan.md) |
 | **2** | **Examples & User Contract** | Show the user experience before implementation. | • `examples/custom-resources/jwt-claim-routing/` |
 | **3** | **Validation** | NGINX Plus-only `$jwt_claim_`, `$jwt_header_` and `$jwt_custom_` in conditions; shared `validateJWTClaimPath`; negative tests. | • [`pkg/apis/configuration/validation/virtualserver.go`](../../pkg/apis/configuration/validation/virtualserver.go)<br>• [`pkg/apis/configuration/validation/common.go`](../../pkg/apis/configuration/validation/common.go)<br>• [`pkg/apis/configuration/validation/virtualserver_test.go`](../../pkg/apis/configuration/validation/virtualserver_test.go)<br>• [`pkg/apis/configuration/v1/types.go`](../../pkg/apis/configuration/v1/types.go) (comment only)<br>• `config/crd/bases/`, `deploy/crds*.yaml`, `docs/crd/` (regenerated) |
-| **4** | **Config Generation Logic** | Claim sets, R9 keys, entry location contents, R3 guard, R8, collision handling, unit tests. | • [`internal/configs/version2/http.go`](../../internal/configs/version2/http.go)<br>• [`internal/configs/virtualserver.go`](../../internal/configs/virtualserver.go)<br>• [`internal/configs/virtualserver_routing_test.go`](../../internal/configs/virtualserver_routing_test.go)<br>• [`internal/configs/virtualserver_policy_test.go`](../../internal/configs/virtualserver_policy_test.go)<br>• [`internal/configs/virtualserver_config_test.go`](../../internal/configs/virtualserver_config_test.go)<br>• [`internal/configs/virtualserver_helpers_test.go`](../../internal/configs/virtualserver_helpers_test.go) |
+| **4** | **Config Generation Logic** | R11 dotted-name fix (first commit), claim sets, R9 keys, entry location contents, R3 guard, R8, collision handling, unit tests. | • [`internal/configs/version2/http.go`](../../internal/configs/version2/http.go)<br>• [`internal/configs/virtualserver.go`](../../internal/configs/virtualserver.go)<br>• [`internal/configs/policy.go`](../../internal/configs/policy.go)<br>• [`internal/configs/virtualserver_routing_test.go`](../../internal/configs/virtualserver_routing_test.go)<br>• [`internal/configs/virtualserver_policy_test.go`](../../internal/configs/virtualserver_policy_test.go)<br>• [`internal/configs/virtualserver_config_test.go`](../../internal/configs/virtualserver_config_test.go)<br>• [`internal/configs/virtualserver_helpers_test.go`](../../internal/configs/virtualserver_helpers_test.go) |
 | **5** | **Template Rendering & Snapshots** | Shared defines with no change to existing snapshots, entry location rendering, new fixtures, verification gates. | • [`internal/configs/version2/nginx-plus.virtualserver.tmpl`](../../internal/configs/version2/nginx-plus.virtualserver.tmpl)<br>• [`internal/configs/version2/templates_test.go`](../../internal/configs/version2/templates_test.go)<br>• [`internal/configs/version2/__snapshots__/templates_test.snap`](../../internal/configs/version2/__snapshots__/templates_test.snap) |
 | **6** | **End-to-End Tests** | Runtime behaviour per Phase 5. | • [`tests/suite/test_jwt_policies.py`](../../tests/suite/test_jwt_policies.py)<br>• [`tests/suite/test_jwt_policies_vsr.py`](../../tests/suite/test_jwt_policies_vsr.py)<br>• [`tests/data/jwt-policy/`](../../tests/data/jwt-policy/)<br>• [`hack/secrets.json`](../../hack/secrets.json) |
