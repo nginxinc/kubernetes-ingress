@@ -62,8 +62,28 @@ jobs:
       - name: Lint Code
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.14.0
+          version: v2.15.0
           only-new-issues: true
+
+  python-unit:
+    name: Python Test Utils Unit Tests
+    if: github.repository == 'nginx/kubernetes-ingress'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.15"
+
+      - name: Install test dependencies
+        run: pip install --require-hashes --no-deps -r tests/requirements.txt
+
+      - name: Run unit tests
+        # --noconftest: these tests mock the Kubernetes API and must not load the cluster fixtures
+        run: PYTHONPATH=tests python -m pytest --noconftest -m utils tests/suite/utils
 
   actionlint:
     name: Actionlint
@@ -73,7 +93,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: reviewdog/action-actionlint@a8ac3eea598697a830f7d8e701fc9fcbfde88974 # v1.80.0
+      - uses: reviewdog/action-actionlint@3cbf14efd750961dba35fccbf00f9e14028cb1f5 # v1.80.2
         with:
           actionlint_flags: -shellcheck ""
 
@@ -93,7 +113,7 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v4.3.0 # renovate: datasource=github-releases depName=helm/helm
+          version: v4.3.1 # renovate: datasource=github-releases depName=helm/helm
 
       - name: Lint chart
         run: helm lint charts/nginx-ingress

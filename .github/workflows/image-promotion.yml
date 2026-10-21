@@ -155,7 +155,7 @@ jobs:
           fi
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         if: steps.check-sarif.outputs.sarif_has_results == 'true'
         with:
           sarif_file: govulncheck.sarif
@@ -236,7 +236,10 @@ jobs:
     # pushes edge images to docker hub
     if: github.repository == 'nginx/kubernetes-ingress' && (!cancelled() && !failure() && github.ref_name == github.event.repository.default_branch)
     name: Release Docker OSS
-    needs: [checks, build-artifacts]
+    needs:
+      - checks
+      - build-artifacts
+      - tag-stable
     uses: ./.github/workflows/oss-release.yml
     with:
       gcr_release_registry: false
@@ -258,7 +261,10 @@ jobs:
     # pushes plus edge images to nginx registry
     if: github.repository == 'nginx/kubernetes-ingress' && (!cancelled() && !failure() && github.ref_name == github.event.repository.default_branch)
     name: Release Docker Plus
-    needs: [checks, build-artifacts]
+    needs:
+      - checks
+      - build-artifacts
+      - tag-stable
     uses: ./.github/workflows/plus-release.yml
     with:
       nginx_registry: true
@@ -320,7 +326,7 @@ jobs:
           image: quay.io/nginx/nginx-ingress:edge-ubi
           project_id: ${{ env.PYXIS_CERTIFICATION_PROJECT_ID }}
           pyxis_token: ${{ env.PYXIS_TOKEN }}
-          preflight_version: 1.21.1 # renovate: datasource=github-releases depName=preflight packageName=redhat-openshift-ecosystem/openshift-preflight
+          preflight_version: 1.21.2 # renovate: datasource=github-releases depName=preflight packageName=redhat-openshift-ecosystem/openshift-preflight
 
   scan-docker-oss:
     name: Scan ${{ matrix.build_os }}
@@ -417,7 +423,7 @@ jobs:
         if: ${{ steps.docker-scout.outcome == 'success' }}
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
         if: ${{ steps.docker-scout.outcome == 'success' }}
@@ -517,7 +523,7 @@ jobs:
         if: ${{ steps.docker-scout.outcome == 'success' }}
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
         if: ${{ steps.docker-scout.outcome == 'success' }}
@@ -617,7 +623,7 @@ jobs:
         if: ${{ steps.docker-scout.outcome == 'success' }}
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
         if: ${{ steps.docker-scout.outcome == 'success' }}
