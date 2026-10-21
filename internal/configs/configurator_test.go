@@ -4445,3 +4445,26 @@ func TestDualResolutionNoCollision(t *testing.T) {
 		seen[p] = true
 	}
 }
+
+func TestGetWeightUpdates(t *testing.T) {
+	t.Parallel()
+
+	vs := &conf_v1.VirtualServer{ObjectMeta: meta_v1.ObjectMeta{Namespace: "default", Name: "cafe"}}
+	splitClients := []version2.TwoWaySplitClients{
+		{Key: "k1", ZoneName: "z1", Weights: []int{30, 70}, SplitClientsIndex: 0},
+		{Key: "k2", ZoneName: "z2", Weights: []int{100}, SplitClientsIndex: 1}, // skipped: not two-way
+	}
+
+	cnf := createTestConfigurator(t)
+
+	cnf.staticCfgParams.DynamicWeightChangesReload = false
+	if got := cnf.getWeightUpdates(vs, splitClients); got != nil {
+		t.Errorf("getWeightUpdates() with feature disabled = %v, want nil", got)
+	}
+
+	cnf.staticCfgParams.DynamicWeightChangesReload = true
+	want := []WeightUpdate{{Zone: "z1", Key: "k1", Value: NewVSVariableNamer(vs).GetNameOfKeyOfMapForWeights(0, 30, 70)}}
+	if got := cnf.getWeightUpdates(vs, splitClients); !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}

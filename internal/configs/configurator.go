@@ -801,17 +801,25 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
 
-	if cnf.staticCfgParams.DynamicWeightChangesReload && len(vsCfg.TwoWaySplitClients) > 0 {
-		for _, splitClient := range vsCfg.TwoWaySplitClients {
-			if len(splitClient.Weights) != 2 {
-				continue
-			}
-			variableNamer := *NewVSVariableNamer(virtualServerEx.VirtualServer)
-			value := variableNamer.GetNameOfKeyOfMapForWeights(splitClient.SplitClientsIndex, splitClient.Weights[0], splitClient.Weights[1])
-			weightUpdates = append(weightUpdates, WeightUpdate{Zone: splitClient.ZoneName, Key: splitClient.Key, Value: value})
-		}
-	}
+	weightUpdates = cnf.getWeightUpdates(virtualServerEx.VirtualServer, vsCfg.TwoWaySplitClients)
 	return changed, warnings, weightUpdates, nil
+}
+
+// getWeightUpdates returns the split clients key-val updates for two-way splits when dynamic weight changes are enabled.
+func (cnf *Configurator) getWeightUpdates(vs *conf_v1.VirtualServer, splitClients []version2.TwoWaySplitClients) []WeightUpdate {
+	if !cnf.staticCfgParams.DynamicWeightChangesReload {
+		return nil
+	}
+	var updates []WeightUpdate
+	variableNamer := NewVSVariableNamer(vs)
+	for _, splitClient := range splitClients {
+		if len(splitClient.Weights) != 2 {
+			continue
+		}
+		value := variableNamer.GetNameOfKeyOfMapForWeights(splitClient.SplitClientsIndex, splitClient.Weights[0], splitClient.Weights[1])
+		updates = append(updates, WeightUpdate{Zone: splitClient.ZoneName, Key: splitClient.Key, Value: value})
+	}
+	return updates
 }
 
 // AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
