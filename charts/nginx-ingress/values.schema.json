@@ -397,10 +397,10 @@
                     },
                     "tag": {
                       "type": "string",
-                      "default": "5.15.0",
+                      "default": "5.16.0",
                       "title": "The tag of the  App Protect WAF v5 Enforcer image",
                       "examples": [
-                        "5.15.0"
+                        "5.16.0"
                       ]
                     },
                     "digest": {
@@ -436,7 +436,7 @@
                   "examples": [
                     {
                       "repository": "private-registry.nginx.com/nap/waf-enforcer",
-                      "tag": "5.15.0",
+                      "tag": "5.16.0",
                       "pullPolicy": "IfNotPresent"
                     }
                   ]
@@ -474,10 +474,10 @@
                     },
                     "tag": {
                       "type": "string",
-                      "default": "5.15.0",
+                      "default": "5.16.0",
                       "title": "The tag of the  App Protect WAF v5 Config Manager image",
                       "examples": [
-                        "5.15.0"
+                        "5.16.0"
                       ]
                     },
                     "digest": {
@@ -513,7 +513,7 @@
                   "examples": [
                     {
                       "repository": "private-registry.nginx.com/nap/waf-config-mgr",
-                      "tag": "5.15.0",
+                      "tag": "5.16.0",
                       "pullPolicy": "IfNotPresent"
                     }
                   ]
@@ -570,10 +570,10 @@
                     },
                     "tag": {
                       "type": "string",
-                      "default": "5.15.0",
+                      "default": "5.16.0",
                       "title": "The tag of the App Protect WAF v5 IP Intelligence image",
                       "examples": [
-                        "5.15.0"
+                        "5.16.0"
                       ]
                     },
                     "digest": {
@@ -609,7 +609,7 @@
                   "examples": [
                     {
                       "repository": "private-registry.nginx.com/nap/waf-ip-intelligence",
-                      "tag": "5.15.0",
+                      "tag": "5.16.0",
                       "pullPolicy": "IfNotPresent"
                     }
                   ]
@@ -854,10 +854,10 @@
             },
             "tag": {
               "type": "string",
-              "default": "5.6.3",
+              "default": "5.7.0",
               "title": "The tag of the Ingress Controller image",
               "examples": [
-                "5.6.3"
+                "5.7.0"
               ]
             },
             "digest": {
@@ -893,7 +893,7 @@
           "examples": [
             {
               "repository": "nginx/nginx-ingress",
-              "tag": "5.6.3",
+              "tag": "5.7.0",
               "pullPolicy": "IfNotPresent"
             }
           ]
@@ -2215,6 +2215,14 @@
             "5,10,25,50,100,250,500,1000"
           ]
         },
+        "enableTopologyAwareRouting": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableTopologyAwareRouting",
+          "examples": [
+            false
+          ]
+        },
         "disableIPV6": {
           "type": "boolean",
           "default": false,
@@ -2349,7 +2357,7 @@
               "port": 50000,
               "image": {
                 "repository": "private-registry.nginx.com/nap/waf-enforcer",
-                "tag": "5.15.0",
+                "tag": "5.16.0",
                 "pullPolicy": "IfNotPresent"
               },
               "securityContext": {}
@@ -2357,7 +2365,7 @@
             "configManager": {
               "image": {
                 "repository": "private-registry.nginx.com/nap/waf-config-mgr",
-                "tag": "5.15.0",
+                "tag": "5.16.0",
                 "pullPolicy": "IfNotPresent"
               },
               "securityContext": {
@@ -2375,7 +2383,7 @@
               "enable": false,
               "image": {
                 "repository": "private-registry.nginx.com/nap/waf-ip-intelligence",
-                "tag": "5.15.0",
+                "tag": "5.16.0",
                 "pullPolicy": "IfNotPresent"
               },
               "securityContext": {
@@ -2415,7 +2423,7 @@
           "customPorts": [],
           "image": {
             "repository": "nginx/nginx-ingress",
-            "tag": "5.6.3",
+            "tag": "5.7.0",
             "digest": "",
             "pullPolicy": "IfNotPresent"
           },
@@ -2559,6 +2567,7 @@
             "initialDelaySeconds": 0
           },
           "enableLatencyMetrics": false,
+          "enableTopologyAwareRouting": false,
           "disableIPV6": false,
           "defaultHTTPListenerPort": 80,
           "defaultHTTPSListenerPort": 443,
@@ -2977,7 +2986,7 @@
             "port": 50000,
             "image": {
               "repository": "private-registry.nginx.com/nap/waf-enforcer",
-              "tag": "5.15.0",
+              "tag": "5.16.0",
               "pullPolicy": "IfNotPresent"
             },
             "securityContext": {}
@@ -2985,7 +2994,7 @@
           "configManager": {
             "image": {
               "repository": "private-registry.nginx.com/nap/waf-config-mgr",
-              "tag": "5.15.0",
+              "tag": "5.16.0",
               "pullPolicy": "IfNotPresent"
             },
             "securityContext": {
@@ -3003,7 +3012,7 @@
             "enable": false,
             "image": {
               "repository": "private-registry.nginx.com/nap/waf-ip-intelligence",
-              "tag": "5.15.0",
+              "tag": "5.16.0",
               "pullPolicy": "IfNotPresent"
             },
             "securityContext": {
@@ -3043,7 +3052,7 @@
         "customPorts": [],
         "image": {
           "repository": "nginx/nginx-ingress",
-          "tag": "5.6.3",
+          "tag": "5.7.0",
           "digest": "",
           "pullPolicy": "IfNotPresent"
         },
@@ -3187,6 +3196,7 @@
           "initialDelaySeconds": 0
         },
         "enableLatencyMetrics": false,
+        "enableTopologyAwareRouting": false,
         "disableIPV6": false,
         "defaultHTTPListenerPort": 80,
         "defaultHTTPSListenerPort": 443,

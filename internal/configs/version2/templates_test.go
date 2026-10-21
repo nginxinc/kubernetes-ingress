@@ -4710,6 +4710,98 @@ func TestVirtualServerForNginxPlusWithExternalAuthSigninURL(t *testing.T) {
 	t.Log(string(data))
 }
 
+func TestVirtualServerWithExternalAuthHeaders(t *testing.T) {
+	t.Parallel()
+
+	cfg := VirtualServerConfig{
+		Upstreams: []Upstream{
+			{
+				Name:    "vs_default_cafe_tea",
+				Servers: []UpstreamServer{{Address: "10.0.0.20:80"}},
+			},
+			{
+				Name:    "vs_exauth_default_external-auth-policy",
+				Servers: []UpstreamServer{{Address: "10.0.0.40:4180"}},
+			},
+		},
+		Server: Server{
+			ServerName: "cafe.example.com",
+			StatusZone: "cafe.example.com",
+			Locations: []Location{
+				{
+					Path:        "/tea",
+					ProxyPass:   "http://vs_default_cafe_tea",
+					ServiceName: "tea-svc",
+					ExternalAuth: &ExternalAuth{
+						URI: &AuthURI{
+							Service:      "oauth2-proxy",
+							Upstream:     "vs_exauth_default_external-auth-policy",
+							Path:         "/oauth2/auth",
+							InternalPath: "/_external_auth/oauth2/auth",
+						},
+					},
+				},
+				{
+					Path:                 "/_external_auth/oauth2/auth",
+					Internal:             true,
+					DisableWAF:           true,
+					ProxyPass:            "http://vs_exauth_default_external-auth-policy/oauth2/auth",
+					ProxyPassRequestBody: "off",
+					ClientMaxBodySize:    "0",
+					ProxySetHeaders: []Header{
+						{Name: "Content-Length", Value: "0"},
+						{Name: "Host", Value: "$host"},
+						{Name: "X-Scheme", Value: "$scheme"},
+						{Name: "X-Forwarded-Prefix", Value: ""},
+						{Name: "X-Forwarded-URI", Value: "$request_uri"},
+						{Name: "X-Forwarded-Method", Value: "$request_method"},
+						{Name: "X-Original-URI", Value: "$request_uri"},
+					},
+					ProxyConnectTimeout:      "10s",
+					ProxyReadTimeout:         "15s",
+					ProxySendTimeout:         "15s",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ServiceName:              "oauth2-proxy",
+				},
+			},
+		},
+	}
+
+	for _, test := range []struct {
+		name    string
+		newTmpl func(t *testing.T) *TemplateExecutor
+	}{
+		{name: "nginx", newTmpl: newTmplExecutorNGINX},
+		{name: "nginx-plus", newTmpl: newTmplExecutorNGINXPlus},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			data, err := test.newTmpl(t).ExecuteVirtualServerTemplate(&cfg)
+			if err != nil {
+				t.Fatalf("Failed to execute template: %v", err)
+			}
+			got := string(data)
+
+			for _, wantHeader := range []string{
+				`proxy_set_header Content-Length "0";`,
+				`proxy_set_header Host "$host";`,
+				`proxy_set_header X-Scheme "$scheme";`,
+				`proxy_set_header X-Forwarded-Prefix "";`,
+				`proxy_set_header X-Forwarded-URI "$request_uri";`,
+				`proxy_set_header X-Forwarded-Method "$request_method";`,
+				`proxy_set_header X-Original-URI "$request_uri";`,
+			} {
+				if !strings.Contains(got, wantHeader) {
+					t.Errorf("rendered config missing %q\n---\n%s", wantHeader, got)
+				}
+			}
+
+			snaps.MatchSnapshot(t, got)
+		})
+	}
+}
+
 // TestErrorPageRendering guards the rendered `error_page` directive for the two
 // supported ResponseCode encodings: 0 (emit no `=`) and >0 (emit `=<code>`).
 func TestErrorPageRendering(t *testing.T) {
