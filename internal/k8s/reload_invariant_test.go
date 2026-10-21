@@ -22,10 +22,9 @@ import (
 // pending (see the invariant documented on Configurator.deferReload). Every
 // entry on this list has been checked to either honor that invariant or to
 // not need to (the two state-only accessors, which never write NGINX
-// config). The four UpdateEndpoints* entries route their own errors through
-// Configurator.deferReload directly; the three AddOrUpdate* entries inherit
-// it automatically because their underlying addOrUpdate* helpers call it
-// themselves on every error path (see Configurator.deferReload).
+// config). The four UpdateEndpoints* entries call Configurator.deferReload from
+// their loops once an earlier iteration wrote; the three AddOrUpdate* entries
+// rely on their addOrUpdate* helpers calling it on post-write errors.
 //
 // If this test fails because it found a method NOT on this list: a new
 // Configurator call was added somewhere reachable from an endpointslice-only

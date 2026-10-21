@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nginx/kubernetes-ingress/internal/helpers"
 	internalValidation "github.com/nginx/kubernetes-ingress/internal/validation"
@@ -444,8 +445,10 @@ func mustValidateFlags(ctx context.Context) {
 		nl.Fatalf(l, "Invalid value for service-insight-listen-port: %v", metricsPortValidationError)
 	}
 
-	if *batchReloadWindow < 0 {
-		nl.Fatalf(l, "Invalid value for batch-reload-window: %v, must be a non-negative number of milliseconds", *batchReloadWindow)
+	// The upper bound keeps time.Duration(ms) * time.Millisecond from overflowing int64.
+	const maxBatchReloadWindow = math.MaxInt64 / int64(time.Millisecond)
+	if *batchReloadWindow < 0 || int64(*batchReloadWindow) > maxBatchReloadWindow {
+		nl.Fatalf(l, "Invalid value for batch-reload-window: %v, must be between 0 and %d milliseconds", *batchReloadWindow, maxBatchReloadWindow)
 	}
 
 	var err error

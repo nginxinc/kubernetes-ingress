@@ -13,6 +13,7 @@ import (
 	"github.com/nginx/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginx/kubernetes-ingress/pkg/apis/configuration/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // osReadFile / osWriteFile / osMkdirAll / bytesEqual are aliases so the
@@ -36,6 +37,7 @@ type recordingBatchManager struct {
 	reloads             atomic.Int32
 	updateServersInPlus atomic.Int32
 	updateStreamServers atomic.Int32
+	apFiles             []string // names passed to CreateAppProtectResourceFile
 }
 
 func newRecordingBatchManager() *recordingBatchManager {
@@ -45,6 +47,11 @@ func newRecordingBatchManager() *recordingBatchManager {
 func (m *recordingBatchManager) Reload(isEndpointsUpdate bool) error {
 	m.reloads.Add(1)
 	return m.FakeManager.Reload(isEndpointsUpdate)
+}
+
+func (m *recordingBatchManager) CreateAppProtectResourceFile(name string, content []byte) {
+	m.apFiles = append(m.apFiles, name)
+	m.FakeManager.CreateAppProtectResourceFile(name, content)
 }
 
 func (m *recordingBatchManager) UpdateServersInPlus(upstream string, servers []string, cfg nginx.ServerConfig) error {
@@ -694,14 +701,9 @@ func (m *failOnNameManager) CreateConfig(name string, content []byte) (bool, err
 	return m.FakeManager.CreateConfig(name, content)
 }
 
-// TestBatchPartialEndpointFailureStillReloads pins the fix to the UpdateEndpoints*
-// family (Configurator.deferReload): each of those functions can return an error
-// mid-loop after an earlier resource in the same call already wrote its config via
-// addOrUpdate* — on OSS, addOrUpdate* never calls Reload() itself, so the function
-// returns before reaching its own Reload() call at the end. Without deferReload()
-// marking the batch dirty on that early-return path, the earlier resource's
-// written-but-unapplied config would never get a reload: reloadDeferred stays false,
-// and ReloadForBatchUpdates(false) at batch end becomes a silent no-op.
+// TestBatchPartialEndpointFailureStillReloads pins the UpdateEndpoints* loops: when a
+// later resource fails after an earlier one in the same call was written, the loop must
+// call deferReload(), otherwise ReloadForBatchUpdates(false) is a silent no-op.
 func TestBatchPartialEndpointFailureStillReloads(t *testing.T) {
 	t.Parallel()
 
@@ -752,19 +754,10 @@ func (m *failOnDefaultServerManager) CreateConfig(name string, content []byte) (
 }
 
 // TestBatchModeAddOrUpdateIngressPartialWriteStillReloads pins the fix to
-// Configurator.AddOrUpdateIngress (entry point #5 of the 7 reachable from an
-// endpointslice-only batch — see the invariant documented on deferReload):
-// addOrUpdateIngress can succeed in writing the Ingress's own config and then fail in
-// the subsequent syncDefaultServerConfig() call, all inside the same function, before
-// AddOrUpdateIngress ever reaches its own Reload() call.
-//
-// This matters specifically because AddOrUpdateIngress — not one of the UpdateEndpoints*
-// wrappers — is what LoadBalancerController.updateNumberOfIngressControllerReplicas
-// calls (controller.go), which is itself reached from an endpointslice task for the
-// controller's own Service (see LoadBalancerController.syncEndpointSlices). Since
-// #7778, an endpointslice-only batch no longer unconditionally forces a reload at batch
-// end, so without deferReload() on this path, a replica-count change that updates a
-// rate-limit-scaled Ingress's config would be written to disk but never applied.
+// Configurator.AddOrUpdateIngress: addOrUpdateIngress writes the Ingress config and then
+// fails in syncDefaultServerConfig(), so it must call deferReload() itself. This is
+// reachable from an endpointslice-only batch via updateNumberOfIngressControllerReplicas,
+// which no longer reloads unconditionally since #7778.
 func TestBatchModeAddOrUpdateIngressPartialWriteStillReloads(t *testing.T) {
 	t.Parallel()
 
@@ -797,10 +790,7 @@ func TestBatchModeAddOrUpdateIngressPartialWriteStillReloads(t *testing.T) {
 }
 
 // TestBatchModeAddOrUpdateMergeableIngressPartialWriteStillReloads is the mergeable-
-// Ingress counterpart to TestBatchModeAddOrUpdateIngressPartialWriteStillReloads (entry
-// point #6 of the 7 reachable from an endpointslice-only batch — see the invariant
-// documented on deferReload): addOrUpdateMergeableIngress has the identical
-// write-then-syncDefaultServerConfig-fails shape as addOrUpdateIngress.
+// Ingress counterpart to TestBatchModeAddOrUpdateIngressPartialWriteStillReloads.
 func TestBatchModeAddOrUpdateMergeableIngressPartialWriteStillReloads(t *testing.T) {
 	t.Parallel()
 
@@ -1020,14 +1010,11 @@ func BenchmarkUpdateEndpointsForVirtualServers(b *testing.B) {
 }
 
 // TestBatchModeSkipsPlusAPIWritesAfterPartialPolicyUpdate pins the fix for the
-// gap in AddOrUpdateVirtualServers/AddOrUpdateIngresses/AddOrUpdateResources/
-// addOrUpdateIngressesAndVirtualServers (see TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure
+// gap in the bulk AddOrUpdate* loops (see TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure
 // below): internal/k8s/policy.go's syncPolicy calls AddOrUpdateVirtualServers with every
-// VirtualServer referencing a changed Policy. Before the fix, a failure partway through
-// that batch (one VirtualServer's config successfully rewritten with a new ExternalAuth
-// AuthServiceName, a later VirtualServer in the same call failing to render) left
-// reloadDeferred false — because AddOrUpdateVirtualServers returned on the helper's error
-// without going through Reload() or deferReload(). That makes plusAPIWritesAllowed return
+// VirtualServer referencing a changed Policy. A failure partway through that call (one
+// VirtualServer rewritten with a new ExternalAuth AuthServiceName, a later one failing to
+// render) must leave reloadDeferred set. Otherwise plusAPIWritesAllowed returns
 // true mid-batch: a same-batch EndpointSlice event for the new auth Service could PATCH
 // the live vs_exauth_<ns>_<pol> upstream — which encodes neither the Service nor the
 // port — rebinding it while NGINX is still proxying auth traffic under the old
@@ -1112,13 +1099,8 @@ func TestBatchModeSkipsPlusAPIWritesAfterPartialPolicyUpdate(t *testing.T) {
 // Configurator entry points that previously returned on a partial-write error without
 // marking the batch dirty: AddOrUpdateVirtualServers, AddOrUpdateIngresses,
 // AddOrUpdateResources, and addOrUpdateIngressesAndVirtualServers (called by
-// AddOrUpdateAppProtectResource/AddOrUpdateResourcesThatUseDosProtected). Each loops
-// over a slice of resources and used to `return` directly on the first error instead of
-// going through deferReload or Reload() — unlike the single-resource AddOrUpdate*
-// wrappers, which already called deferReload on error. The fix moved deferReload into
-// the underlying addOrUpdateVirtualServer/addOrUpdateIngress helpers themselves (see
-// Configurator.deferReload), so every caller — these four included — now inherits it
-// automatically.
+// AddOrUpdateAppProtectResource/AddOrUpdateResourcesThatUseDosProtected). Each loop
+// calls deferReload() on error only when an earlier iteration already wrote ("good").
 func TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure(t *testing.T) {
 	t.Parallel()
 
@@ -1183,11 +1165,69 @@ func TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure(t *testing.T) {
 	}
 }
 
+// TestAppProtectPathFirstResourceFailureStillReloads: AddOrUpdateAppProtectResource writes
+// the shared AP policy file before the per-resource work, so even a failure of the first
+// resource must leave a reload pending.
+func TestAppProtectPathFirstResourceFailureStillReloads(t *testing.T) {
+	t.Parallel()
+
+	apPol := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": map[string]interface{}{"policy": map[string]interface{}{"name": "dataguard-alarm"}},
+	}}
+	apPol.SetNamespace("default")
+	apPol.SetName("dataguard-alarm")
+
+	bad := cafeVSExWithEndpoints("10.0.0.2:80")
+	bad.ApPolRefs = map[string]*unstructured.Unstructured{"default/dataguard-alarm": apPol}
+
+	mgr := &failOnNameManager{recordingBatchManager: newRecordingBatchManager(), failName: "vs_default_cafe"}
+	cnf := createTestConfiguratorWithManager(t, mgr)
+
+	// sync() enters batch mode.
+	cnf.DisableReloads()
+
+	if _, err := cnf.AddOrUpdateAppProtectResource(apPol, nil, nil, []*VirtualServerEx{bad}); err == nil {
+		t.Fatal("AddOrUpdateAppProtectResource: expected error from simulated CreateConfig failure, got nil")
+	}
+	if want := appProtectPolicyFileNameFromUnstruct(apPol); len(mgr.apFiles) != 1 || mgr.apFiles[0] != want {
+		t.Fatalf("AP files written = %v, want [%s] (written before the VirtualServer failure)", mgr.apFiles, want)
+	}
+	if got := mgr.reloads.Load(); got != 0 {
+		t.Fatalf("in-batch reload count = %d, want 0", got)
+	}
+
+	cnf.EnableReloads()
+	if err := cnf.ReloadForBatchUpdates(false); err != nil {
+		t.Fatalf("ReloadForBatchUpdates: %v", err)
+	}
+	if got := mgr.reloads.Load(); got != 1 {
+		t.Fatalf("post-batch reload count = %d, want 1 (the AP file written before the failure must be applied)", got)
+	}
+}
+
+// TestStartupPendingReloadDoesNotReloadOrPatch: during startup (reloads and Plus API both
+// disabled) a pending reload must not make UpdateEndpoints* write to the Plus API or reload.
+func TestStartupPendingReloadDoesNotReloadOrPatch(t *testing.T) {
+	t.Parallel()
+
+	mgr := newRecordingBatchManager()
+	cnf := newBenchConfigurator(t, mgr, true) // never calls EnableReloads: startup state
+	cnf.reloadDeferred = true
+
+	if _, err := cnf.UpdateEndpointsForVirtualServers([]*VirtualServerEx{cafeVSExWithEndpoints("10.0.0.1:80")}); err != nil {
+		t.Fatalf("UpdateEndpointsForVirtualServers: %v", err)
+	}
+	if got := mgr.updateServersInPlus.Load(); got != 0 {
+		t.Fatalf("UpdateServersInPlus calls = %d, want 0 (Plus API disabled during startup)", got)
+	}
+	if got := mgr.reloads.Load(); got != 0 {
+		t.Fatalf("reload count = %d, want 0 (reloads disabled during startup)", got)
+	}
+}
+
 // TestBatchModeAddOrUpdateIngressesPartialWriteStillReloads pins the fix to
 // AddOrUpdateIngresses, the bulk-Ingress counterpart to
-// TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure's VirtualServer cases:
-// AddOrUpdateIngresses loops over ingExes and used to return directly on the first
-// addOrUpdateIngress error, without going through deferReload or Reload().
+// TestBulkUpdateEntryPointsMarkBatchDirtyOnPartialFailure's VirtualServer cases.
 func TestBatchModeAddOrUpdateIngressesPartialWriteStillReloads(t *testing.T) {
 	t.Parallel()
 
@@ -1244,6 +1284,78 @@ func TestDeleteIngressPartialWriteStillReloads(t *testing.T) {
 	}
 	if got := mgr.reloads.Load(); got != 1 {
 		t.Fatalf("post-batch reload count = %d, want 1 (the already-deleted Ingress config must not be silently dropped)", got)
+	}
+}
+
+// TestPendingReloadSuppressesPlusAPIWriteOutsideBatch: with reloads enabled, a partial bulk
+// write leaves reloadDeferred set while NGINX still runs the old config. A later endpoint
+// update must not PATCH the live upstream; it reloads, which applies the pending write.
+func TestPendingReloadSuppressesPlusAPIWriteOutsideBatch(t *testing.T) {
+	t.Parallel()
+
+	mgr := &failOnNameManager{recordingBatchManager: newRecordingBatchManager(), failName: "vs_default_cafe2"}
+	cnf := createTestConfiguratorWithManager(t, mgr)
+	cnf.isPlus = true
+
+	good := cafeVSExWithEndpoints("10.0.0.1:80")
+	bad := cafeVSExWithEndpoints("10.0.0.2:80")
+	bad.VirtualServer.Name = "cafe2"
+	bad.VirtualServer.Spec.Host = "cafe2.example.com"
+
+	if _, err := cnf.AddOrUpdateVirtualServers([]*VirtualServerEx{good, bad}); err == nil {
+		t.Fatal("AddOrUpdateVirtualServers: expected error from simulated CreateConfig failure, got nil")
+	}
+	if !cnf.reloadDeferred {
+		t.Fatal("reloadDeferred = false, want true after a partial write")
+	}
+	if got := mgr.reloads.Load(); got != 0 {
+		t.Fatalf("reload count = %d, want 0", got)
+	}
+
+	if _, err := cnf.UpdateEndpointsForVirtualServers([]*VirtualServerEx{good}); err != nil {
+		t.Fatalf("UpdateEndpointsForVirtualServers: %v", err)
+	}
+	if got := mgr.updateServersInPlus.Load(); got != 0 {
+		t.Fatalf("UpdateServersInPlus calls = %d, want 0 (a reload is pending)", got)
+	}
+	if got := mgr.reloads.Load(); got != 1 {
+		t.Fatalf("reload count = %d, want 1 (the pending write must be applied)", got)
+	}
+	if cnf.reloadDeferred {
+		t.Fatal("reloadDeferred = true, want false after a successful reload")
+	}
+}
+
+// TestPreWriteFailureDoesNotSuppressPlusAPIWrites: a single resource that fails before
+// anything is written (config safety already rolled it back) leaves nothing pending, so
+// later endpoint updates still go through the Plus API without a reload.
+func TestPreWriteFailureDoesNotSuppressPlusAPIWrites(t *testing.T) {
+	t.Parallel()
+
+	mgr := &failOnNameManager{recordingBatchManager: newRecordingBatchManager(), failName: "vs_default_cafe2"}
+	cnf := createTestConfiguratorWithManager(t, mgr)
+	cnf.isPlus = true
+
+	bad := cafeVSExWithEndpoints("10.0.0.2:80")
+	bad.VirtualServer.Name = "cafe2"
+	bad.VirtualServer.Spec.Host = "cafe2.example.com"
+
+	if _, err := cnf.UpdateEndpointsForVirtualServers([]*VirtualServerEx{bad}); err == nil {
+		t.Fatal("UpdateEndpointsForVirtualServers: expected error from simulated CreateConfig failure, got nil")
+	}
+	if cnf.reloadDeferred {
+		t.Fatal("reloadDeferred = true, want false: nothing was written")
+	}
+
+	good := cafeVSExWithEndpoints("10.0.0.1:80")
+	if _, err := cnf.UpdateEndpointsForVirtualServers([]*VirtualServerEx{good}); err != nil {
+		t.Fatalf("UpdateEndpointsForVirtualServers: %v", err)
+	}
+	if got := mgr.updateServersInPlus.Load(); got != 1 {
+		t.Fatalf("UpdateServersInPlus calls = %d, want 1", got)
+	}
+	if got := mgr.reloads.Load(); got != 0 {
+		t.Fatalf("reload count = %d, want 0", got)
 	}
 }
 
