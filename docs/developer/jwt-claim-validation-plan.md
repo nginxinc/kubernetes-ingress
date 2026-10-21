@@ -307,19 +307,13 @@ One map per claim check. All value matches compile to a **single case-sensitive 
 
 - `{{ $proxyOrGRPC }}_set_header <proxySetHeader> $<claim_var>;` in every proxied location, for both route-level policies and server-level policies inherited by locations. Locations always emit their own `proxy_set_header`, which overrides server-level ones.
 - Reject duplicate `proxySetHeader` names within a policy.
-- **Route headers win.** If the location's `action.proxy.requestHeaders` sets a header with the same name (case-insensitive), skip the policy's header. [#11175](jwt-variable-match-plan.md) makes this likely, since `${jwt_claim_<name>}` becomes valid in `requestHeaders`. Reuse the existing check that already suppresses default `X-Forwarded-*` headers:
+- **Merge in Go, not in the template.** Precedence, compared case-insensitively: explicit route `requestHeaders` > policy `proxySetHeader` > NIC defaults. Today the template's default checks (`X-Real-IP`, `X-Forwarded-*`, `nginx-plus.virtualserver.tmpl`) only see `$l.ProxySetHeaders`, and `generateProxySetHeaders` (`internal/configs/virtualserver.go`) puts a fallback `Host` into that same list. A template-side `hasCIKey` check against it would therefore (a) skip a policy `Host` header even when the route sets none, and (b) not see a policy `X-Real-IP`/`X-Forwarded-For`, emitting it twice. So:
+  1. Collect the explicit `requestHeaders.Set` names.
+  2. Add each policy header whose name is not in that set.
+  3. Add the fallback `Host` only if neither the route nor a policy set `Host`.
+  4. Leave the template's default-header checks as they are; they now see policy headers because those are in `$l.ProxySetHeaders`.
 
-  ```gotemplate
-  {{- $custom_headers := $l.ProxySetHeaders | headerListToCIMap }}
-  ...
-  {{- range $h := $jwt.ProxySetHeaders }}
-  {{- if not ($custom_headers | hasCIKey $h.Name) }}
-  {{ $proxyOrGRPC }}_set_header {{ $h.Name }} {{ $h.Value }};
-  {{- end }}
-  {{- end }}
-  ```
-
-  Here `$jwt` is `$l.JWTAuth`, falling back to `$s.JWTAuth`. Add a snapshot fixture where both set the same header.
+  [#11175](jwt-variable-match-plan.md) makes route/policy overlap likely, since `${jwt_claim_<name>}` becomes valid in `requestHeaders`. The merge applies to both HTTP and gRPC (`$proxyOrGRPC`), and to server-level policies inherited by locations.
 - Document collisions with OIDC's `username` header.
 - Under `rules[].require: Any`, a forwarded header carries the claim's value even when that particular check failed. Document this.
 
@@ -379,7 +373,7 @@ The two features are designed to be used together. Shared pieces:
 | Array / space-delimited claims | Not supported: equality against the comma-joined value | `Contains` |
 | Missing claim | Matches `""` / falls to default route | Value checks fail (fail-closed) |
 
-Because authorization is always the stricter of the two, the difference cannot widen access. For example, routing `premium` to the premium upstream still requires the authorization check to accept the token.
+The stricter authorization semantics do **not** make routing safe as an access boundary. Authorization only checks the claims the policy lists, and need not check the routing claim. For example, a policy that checks only `aud: api` accepts a valid token with `tier: Premium`, which also selects a route matching `tier: premium`. Case-insensitive routing is not an authorization boundary: upstream-specific privileges must be enforced by an authorization rule on the same claim or by the upstream itself. Document this.
 
 #### Required: validate-then-route
 
@@ -499,19 +493,19 @@ These must be confirmed against a running NGINX Plus in Phase 4 before the desig
    - Append JWT claim sets and maps to `authJWTClaimSets` / `maps` for spec, route and subroute policies.
    - In `removeDuplicateAuthJWTClaimSets`, detect entries with the same case-folded `Variable` (`strings.ToLower`) and a different `Claim`, and return a warning for the resource whose claim was dropped (Configuration Design §1).
    - **Merge note:** [#11175](jwt-variable-match-plan.md) appends `cfg.AuthJWTClaimSets` at the same three call sites. Whichever PR lands second rebases.
-4. **Tests:** `internal/configs/policy_test.go`: a table covering the 4 match types × `negate`, each against a missing, empty, matching and non-matching claim value; `require` `Any`/`All` at both levels; naming with a policy shared by two parents; collision detection within a policy; rendered map keys for values containing `"` and `\` (no unescaped quote in the output). The built pattern (before escaping) for `Exact` ends in `\z`, and for `Contains` its closing group is `([ ,]|\z)`; the rendered token holds the same text with each backslash doubled. `internal/configs/virtualserver_test.go`: spec, route and VSR wiring; collisions across resources (Policy claim `a_b` vs rate-limit `a.b`, and vs `$jwt_custom_a.b` once #11175 lands).
+4. **Tests:** `internal/configs/policy_test.go`: a table covering the 4 match types × `negate`, each against a missing, empty, matching and non-matching claim value; `require` `Any`/`All` at both levels; naming with a policy shared by two parents; collision detection within a policy; header merge precedence (explicit route > policy > NIC defaults) for `Host`, `X-Real-IP`, `X-Forwarded-For`; rendered map keys for values containing `"` and `\` (no unescaped quote in the output). The built pattern (before escaping) for `Exact` ends in `\z`, and for `Contains` its closing group is `([ ,]|\z)`; the rendered token holds the same text with each backslash doubled. `internal/configs/virtualserver_test.go`: spec, route and VSR wiring; collisions across resources (Policy claim `a_b` vs rate-limit `a.b`, and vs `$jwt_custom_a.b` once #11175 lands).
 
 ### Phase 4: Templates & Snapshots
 
 1. **`internal/configs/version2/nginx-plus.virtualserver.tmpl`:**
    - Extract the existing `server`- and `location`-level `auth_jwt` blocks into one `{{ define "jwtAuth" }}`, and add `{{ if .RequireVariable }}auth_jwt_require {{ .RequireVariable }} error={{ .RequireErrorCode }};{{ end }}` to it. Locations flagged `ResetJWTRequire` instead emit `auth_jwt_require $jwt_authz_none;` (Configuration Design §4). The guard is required: policies without `authorization` leave both fields empty and would otherwise render `auth_jwt_require error=0;`, which NGINX rejects. Call it from `$s.JWTAuth` and `$l.JWTAuth`. #11175 calls the same define from `InternalRedirectLocations` for `$jwt_*` match routes, alongside `try_files` (Configuration Design §4, [validate-then-route](#required-validate-then-route)).
-   - `{{ $proxyOrGRPC }}_set_header` for `ProxySetHeaders` in proxied locations, from `$l.JWTAuth` or the inherited `$s.JWTAuth`, skipping names already set by `requestHeaders` (`hasCIKey`).
+   - `{{ $proxyOrGRPC }}_set_header` for `ProxySetHeaders` in proxied locations, from `$l.JWTAuth` or the inherited `$s.JWTAuth`, already merged into `$l.ProxySetHeaders` in Go (Configuration Design §5), so the template needs no policy-specific header check.
    - The OSS template is not modified.
 2. **Snapshot fixtures** (`internal/configs/version2/templates_test.go`; `internal/configs` has no snapshot tests, so its coverage stays in the Phase 3 unit tests):
    - every match type × `negate`, both `require` values at both levels, `errorCode` 401 and 403, `proxySetHeader` for HTTP and gRPC;
    - negative fixtures: server-level JWT authorization combined with an OIDC location (reset emitted), an ACME-challenge location, and a JWKS location;
    - mixed policies: server-level JWT policy with `authorization` plus a route-level JWT policy without it (reset emitted, route is not gated by the server's authorization), and the reverse (route-level `authorization` only). Repeat both for the validate-then-route entry location once #11175 lands;
-   - `proxySetHeader` and `requestHeaders` setting the same header name (the policy header must be absent from output);
+   - header precedence, for HTTP and gRPC: `proxySetHeader` and `requestHeaders` setting the same name (the policy header is absent); a policy `Host` with no route `Host` (the policy value is emitted, no fallback `Host`); a policy `X-Real-IP` and `X-Forwarded-For` (each emitted once, no NIC default alongside);
    - once #11175 lands: route-level authorization with `$jwt_*` matches, showing the JWT block (including `auth_jwt_require`) and `try_files` in the entry location. Also a route with non-JWT `matches` showing the entry location unchanged (`rewrite ... last`, no JWT block).
    - backward compatibility: an existing JWT-only policy (no `authorization`) renders with no `auth_jwt_require` line, and its existing snapshots are unchanged;
    - Run `make test-update-snaps`. An empty snapshot diff means the fixture is not exercising the new branch.
@@ -540,7 +534,7 @@ Per #11174's acceptance criteria and #6829's documentation requirements, in `ngi
 - Configuration guide: Examples 1–3.
 - Reference: fields, match semantics table, defaults, status codes.
 - Security guidance: fail-closed behaviour; the missing-claim invariant; `Any` is permissive; empty `""`/`[]` claims are treated as absent; claim values are not logged by default; `proxySetHeader` under `Any`; match routing on `$jwt_*` (#11175) only evaluates claims after `auth_jwt` and `auth_jwt_require` succeed ([validate-then-route](#required-validate-then-route)). If #11175 ships without it, state instead that routing uses unverified claims but every response is still gated by authentication and authorization.
-- Routing vs authorization matching semantics: the side-by-side table from [Interaction with #11175](#interaction-with-11175-match-routing).
+- Routing vs authorization matching semantics: the side-by-side table from [Interaction with #11175](#interaction-with-11175-match-routing), and the warning that case-insensitive routing is not an authorization boundary.
 - Differences from NGF: `.` delimiter, `require: All` default, `Contains`, `Present`/`negate`, `errorCode`, case-sensitive `Exact`.
 - Limitation: claim names containing `.`, `/` or `:`.
 
