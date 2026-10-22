@@ -468,13 +468,13 @@ volumes:
 {{- end -}}
 
 {{/*
-Renders an `emptyDir` volume source with an optional `sizeLimit`.
-The argument is the size value (empty string means no `sizeLimit`).
+Renders an `emptyDir` volume source from the given EmptyDirVolumeSource map.
+An empty or unset value renders `emptyDir: {}`.
 */}}
 {{- define "nginx-ingress.emptyDir" -}}
 {{- if . -}}
 emptyDir:
-  sizeLimit: {{ . | quote }}
+  {{- toYaml . | nindent 2 }}
 {{- else -}}
 emptyDir: {}
 {{- end -}}
@@ -485,19 +485,19 @@ List of volumes for controller.
 */}}
 {{- define "nginx-ingress.volumeEntries" -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
-{{- $volumeSizes := .Values.controller.readOnlyRootFilesystemVolumeSizes | default dict }}
+{{- $volumes := .Values.controller.readOnlyRootFilesystemVolumes | default dict }}
 - name: nginx-etc
-  {{- include "nginx-ingress.emptyDir" (get $volumeSizes "etc") | nindent 2 }}
+  {{- include "nginx-ingress.emptyDir" (get $volumes "etc") | nindent 2 }}
 - name: nginx-lib
-  {{- include "nginx-ingress.emptyDir" (get $volumeSizes "lib") | nindent 2 }}
+  {{- include "nginx-ingress.emptyDir" (get $volumes "lib") | nindent 2 }}
 - name: nginx-state
-  {{- include "nginx-ingress.emptyDir" (get $volumeSizes "state") | nindent 2 }}
+  {{- include "nginx-ingress.emptyDir" (get $volumes "state") | nindent 2 }}
 - name: nginx-log
-  {{- include "nginx-ingress.emptyDir" (get $volumeSizes "log") | nindent 2 }}
+  {{- include "nginx-ingress.emptyDir" (get $volumes "log") | nindent 2 }}
 {{- /* For StatefulSet, nginx-cache volume is always provided via volumeClaimTemplates */ -}}
 {{- if ne .Values.controller.kind "statefulset" }}
 - name: nginx-cache
-  {{- include "nginx-ingress.emptyDir" (get $volumeSizes "cache") | nindent 2 }}
+  {{- include "nginx-ingress.emptyDir" (get $volumes "cache") | nindent 2 }}
 {{- end }}
 {{- end }}
 {{- if .Values.controller.appprotect.v5 }}

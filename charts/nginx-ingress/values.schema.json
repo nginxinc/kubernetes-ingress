@@ -2267,61 +2267,42 @@
             false
           ]
         },
-        "readOnlyRootFilesystemVolumeSizes": {
+        "readOnlyRootFilesystemVolumes": {
           "type": "object",
           "default": {
-            "etc": "",
-            "cache": "",
-            "lib": "",
-            "log": "",
-            "state": ""
+            "etc": {},
+            "cache": {},
+            "lib": {},
+            "log": {},
+            "state": {}
           },
-          "title": "Size limits for the emptyDir volumes used with readOnlyRootFilesystem",
+          "title": "The emptyDir volumes used with readOnlyRootFilesystem",
+          "additionalProperties": false,
           "properties": {
             "etc": {
-              "type": "string",
-              "default": "",
-              "title": "sizeLimit for the nginx-etc emptyDir volume",
-              "examples": [
-                "",
-                "10Mi"
-              ]
+              "default": {},
+              "title": "The emptyDir spec for the nginx-etc volume",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.35.1/_definitions.json#/definitions/io.k8s.api.core.v1.EmptyDirVolumeSource"
             },
             "cache": {
-              "type": "string",
-              "default": "",
-              "title": "sizeLimit for the nginx-cache emptyDir volume",
-              "examples": [
-                "",
-                "1Gi"
-              ]
+              "default": {},
+              "title": "The emptyDir spec for the nginx-cache volume",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.35.1/_definitions.json#/definitions/io.k8s.api.core.v1.EmptyDirVolumeSource"
             },
             "lib": {
-              "type": "string",
-              "default": "",
-              "title": "sizeLimit for the nginx-lib emptyDir volume",
-              "examples": [
-                "",
-                "100Mi"
-              ]
+              "default": {},
+              "title": "The emptyDir spec for the nginx-lib volume",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.35.1/_definitions.json#/definitions/io.k8s.api.core.v1.EmptyDirVolumeSource"
             },
             "log": {
-              "type": "string",
-              "default": "",
-              "title": "sizeLimit for the nginx-log emptyDir volume",
-              "examples": [
-                "",
-                "500Mi"
-              ]
+              "default": {},
+              "title": "The emptyDir spec for the nginx-log volume",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.35.1/_definitions.json#/definitions/io.k8s.api.core.v1.EmptyDirVolumeSource"
             },
             "state": {
-              "type": "string",
-              "default": "",
-              "title": "sizeLimit for the nginx-state emptyDir volume",
-              "examples": [
-                "",
-                "10Mi"
-              ]
+              "default": {},
+              "title": "The emptyDir spec for the nginx-state volume",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.35.1/_definitions.json#/definitions/io.k8s.api.core.v1.EmptyDirVolumeSource"
             }
           }
         },
@@ -3263,12 +3244,12 @@
         "defaultHTTPListenerPort": 80,
         "defaultHTTPSListenerPort": 443,
         "readOnlyRootFilesystem": false,
-        "readOnlyRootFilesystemVolumeSizes": {
-          "etc": "",
-          "cache": "",
-          "lib": "",
-          "log": "",
-          "state": ""
+        "readOnlyRootFilesystemVolumes": {
+          "etc": {},
+          "cache": {},
+          "lib": {},
+          "log": {},
+          "state": {}
         },
         "enableSSLDynamicReload": true,
         "telemetryReporting": {
