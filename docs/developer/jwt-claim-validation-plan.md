@@ -4,6 +4,8 @@
 
 ## Summary
 
+> **NGINX Plus only.** The whole JWT policy (`spec.jwt`) is an NGINX Plus feature: `ngx_http_auth_jwt_module` is a Plus module, and the existing `policy.go` gate already rejects `spec.jwt` on OSS ("jwt secrets are only supported in NGINX Plus"). `authorization` is a field of that policy, so it needs no separate OSS handling. There is no OSS variant of this feature.
+
 **Goal:** Expand the `JWTAuth` policy (`spec.jwt`) in NGINX Ingress Controller (NIC) to support declarative JWT claim validation (`spec.jwt.authorization`).
 
 The structure follows [NGINX Gateway Fabric (NGF) JWT Claim Validation](https://docs.nginx.com/nginx-gateway-fabric/traffic-security/jwt-claim-validation/#understanding-the-configuration): two-level `require`, `rules`, `claims`, `match`, `values`, `proxySetHeader`. Product direction is to follow NGF for nesting and AND/OR semantics.
@@ -69,7 +71,7 @@ spec:
 
 | Field | Type | Required | Default | Validation / Constraints | Description |
 |---|---|---|---|---|---|
-| `jwt.authorization` | `*JWTAuthorization` | No | — | NGINX Plus only | Claim-based authorization rules, evaluated after JWT signature/expiry validation succeeds. |
+| `jwt.authorization` | `*JWTAuthorization` | No | — | Part of `spec.jwt`, which is already Plus-only; no separate gate | Claim-based authorization rules, evaluated after JWT signature/expiry validation succeeds. |
 | `authorization.errorCode` | `*int` | No | `403` | Enum: `401`, `403` | Status returned when claim validation fails. Authentication failures always return `401`. |
 | `authorization.require` | `*JWTRequireType` | No | `"All"` | Enum: `Any`, `All` | Whether **any** rule or **all** rules must pass. Defaults to `All` (deviates from NGF). |
 | `authorization.rules` | `[]JWTAuthorizationRule` | Yes | — | `MinItems: 1`, `MaxItems: 16` | Authorization rules. |
@@ -350,7 +352,7 @@ All `-` become `_`. If the policy were left out, two routes with different JWT p
 | Only authenticated claims affect rate-limit counters | **Partial, via #11175.** On routes that match on `$jwt_*`, validate-then-route means `limit_req` in the target location only sees tokens that already passed `auth_jwt`. That is the two-hop workaround from [discussion #10371](https://github.com/nginx/kubernetes-ingress/discussions/10371), generated automatically. All other JWT-protected routes still need a new issue: `limit_req` runs in PREACCESS, before `auth_jwt` in the same location. |
 | Claim names containing `.`, `/` or `:` (e.g. Auth0 `https://example.com/roles`) | **Documented limitation.** Not expressible with the `.` delimiter and name pattern. Future escape hatch: `nameSegments: [...]`. |
 
-Also out of scope: NGINX OSS. `authorization` is rejected on OSS, and nothing from it may appear in OSS templates or OSS snapshots.
+Also out of scope: NGINX OSS. `spec.jwt` as a whole is Plus-only and is already rejected on OSS by the existing `gateCheck` in `pkg/apis/configuration/validation/policy.go`. No OSS code path, template or snapshot is needed, and nothing from this feature may appear in OSS templates or OSS snapshots.
 
 ### Interaction with #11175 (match routing)
 
@@ -457,7 +459,11 @@ These must be confirmed against a running NGINX Plus in Phase 4 before the desig
 
 ### Phase 1: Examples & User Contract
 
-- Add `examples/custom-resources/jwt-claim-validation/` containing Examples 1–3: Policy, VirtualServer, JWK Secret, webapp, and a README with token outcomes.
+- Extend the existing `examples/custom-resources/jwt` and `examples/custom-resources/jwks` examples instead of adding new directories or Policies. Update their `jwt-policy` manifests in place with `spec.jwt.authorization`, and add a claim-validation section to each README, with a "NGINX Plus only" notice at the top of the README.
+  - `jwks` (Keycloak): Example 1, using claims a default Keycloak token carries (`aud: account`, `scope`, `realm_access.roles`) so it runs unmodified.
+  - `jwt` (local JWK secret): Example 2 (any-of-all rules, case-sensitive `Exact`, `Regex`, `Present` + `negate`, nested claim), keeping the existing `token.jwt` valid through its own rule so the original walkthrough still returns `200`.
+  - Example 3 (explicitly allowing a missing claim) needs a second Policy and is covered by unit and E2E tests instead of an example.
+  - Example tokens are generated through `hack/secrets.json` (`make secrets`), not committed.
 - Use `Contains` for `aud`/`scope` in every example. Do not show `Exact` on array claims.
 
 ### Phase 2: CRD Types, Codegen & Validation
@@ -500,7 +506,7 @@ These must be confirmed against a running NGINX Plus in Phase 4 before the desig
 1. **`internal/configs/version2/nginx-plus.virtualserver.tmpl`:**
    - Extract the existing `server`- and `location`-level `auth_jwt` blocks into one `{{ define "jwtAuth" }}`, and add `{{ if .RequireVariable }}auth_jwt_require {{ .RequireVariable }} error={{ .RequireErrorCode }};{{ end }}` to it. Locations flagged `ResetJWTRequire` instead emit `auth_jwt_require $jwt_authz_none;` (Configuration Design §4). The guard is required: policies without `authorization` leave both fields empty and would otherwise render `auth_jwt_require error=0;`, which NGINX rejects. Call it from `$s.JWTAuth` and `$l.JWTAuth`. #11175 calls the same define from `InternalRedirectLocations` for `$jwt_*` match routes, alongside `try_files` (Configuration Design §4, [validate-then-route](#required-validate-then-route)).
    - `{{ $proxyOrGRPC }}_set_header` for `ProxySetHeaders` in proxied locations, from `$l.JWTAuth` or the inherited `$s.JWTAuth`, already merged into `$l.ProxySetHeaders` in Go (Configuration Design §5), so the template needs no policy-specific header check.
-   - The OSS template is not modified.
+   - The OSS template is not modified (`spec.jwt` is Plus-only, so the OSS template has no JWT block to share).
 2. **Snapshot fixtures** (`internal/configs/version2/templates_test.go`; `internal/configs` has no snapshot tests, so its coverage stays in the Phase 3 unit tests):
    - every match type × `negate`, both `require` values at both levels, `errorCode` 401 and 403, `proxySetHeader` for HTTP and gRPC;
    - negative fixtures: server-level JWT authorization combined with an OIDC location (reset emitted), an ACME-challenge location, and a JWKS location;
@@ -561,7 +567,7 @@ flowchart LR
 | Order | Scope | Purpose for Reviewers | Files Included |
 | :---: | --- | --- | --- |
 | **1** | **Design & Test Plan** | Agree the API (`jwt.authorization`, match types, `negate`, `errorCode`, defaults), the NGINX directive mapping, NGF deviations and the gaps vs #6829. | • [`docs/developer/jwt-claim-validation-plan.md`](jwt-claim-validation-plan.md) |
-| **2** | **Examples & User Contract** | Show the end-user experience (Examples 1–3) before implementation. | • `examples/custom-resources/jwt-claim-validation/` |
+| **2** | **Examples & User Contract** | Show the end-user experience (Examples 1 and 2, in place in the existing `jwt` and `jwks` examples) before implementation. | • `examples/custom-resources/jwt/`<br>• `examples/custom-resources/jwks/`<br>• [`hack/secrets.json`](../../hack/secrets.json) and `.gitignore` (example tokens) |
 | **3** | **Types, Codegen & Validation** | CRD types, CEL, regenerated manifests/docs, Go validation and tests. | • [`pkg/apis/configuration/v1/types.go`](../../pkg/apis/configuration/v1/types.go)<br>• [`pkg/apis/configuration/v1/zz_generated.deepcopy.go`](../../pkg/apis/configuration/v1/zz_generated.deepcopy.go)<br>• `pkg/client/**`<br>• [`config/crd/bases/k8s.nginx.org_policies.yaml`](../../config/crd/bases/k8s.nginx.org_policies.yaml)<br>• [`deploy/crds.yaml`](../../deploy/crds.yaml) & [`deploy/crds-nap-dos.yaml`](../../deploy/crds-nap-dos.yaml)<br>• [`docs/crd/k8s.nginx.org_policies.md`](../crd/k8s.nginx.org_policies.md)<br>• [`pkg/apis/configuration/validation/policy.go`](../../pkg/apis/configuration/validation/policy.go)<br>• [`pkg/apis/configuration/validation/policy_test.go`](../../pkg/apis/configuration/validation/policy_test.go) |
 | **4** | **Config Generation Logic** | Claim extraction, map chain, variable naming, collision handling, header propagation, unit tests. | • [`internal/configs/version2/http.go`](../../internal/configs/version2/http.go)<br>• [`internal/configs/policy.go`](../../internal/configs/policy.go)<br>• [`internal/configs/policy_test.go`](../../internal/configs/policy_test.go)<br>• [`internal/configs/virtualserver.go`](../../internal/configs/virtualserver.go)<br>• [`internal/configs/virtualserver_test.go`](../../internal/configs/virtualserver_test.go) |
 | **5** | **Template Rendering & Snapshots** | `auth_jwt_require ... error=`, header forwarding, negative-scope fixtures, verification gates. | • [`internal/configs/version2/nginx-plus.virtualserver.tmpl`](../../internal/configs/version2/nginx-plus.virtualserver.tmpl)<br>• [`internal/configs/version2/templates_test.go`](../../internal/configs/version2/templates_test.go)<br>• `internal/configs/version2/__snapshots__/` |
