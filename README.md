@@ -183,7 +183,11 @@ We'd love to hear from you! Here's how to get involved:
 
 ### Join The Next Community Call
 
-We value community input so please join our community call on the first Tuesday of each month. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests. We would love to see you there!
+We value community input so please join our community call on the first Tuesday of each month. At these calls, we discuss submissions made by community members, answer your questions and hear your feedback. We would love to see you there!
+
+See all of our scheduled calls along with other events [here](https://community.nginx.org/upcoming-events).
+
+#### Meeting Details
 
 **Zoom**: [NGINX Ingress Controller - Community Call](https://f5.zoom.us/j/98544055687?pwd=q4sGaaeWM0DawJTePBGbCngtfLJxgq.1&from=addon)
 
@@ -195,7 +199,6 @@ We value community input so please join our community call on the first Tuesday 
 
 | **Community Call Dates** |
 | ------------------------ |
-| **2026-10-19**           |
 | **2026-11-03**           |
 | **2026-12-01**           |
 | **2027-01-05**           |
