@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   on-failure:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.repository == 'nginx/kubernetes-ingress' && (
       github.event.workflow_run.conclusion == 'failure' && github.event.repository.fork == false
       )
