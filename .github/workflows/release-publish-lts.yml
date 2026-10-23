@@ -51,7 +51,7 @@ jobs:
   variables:
     name: Set Variables
     if: github.repository == 'nginx/kubernetes-ingress'
-    runs-on: 'kic-plus'
+    runs-on: ubuntu-24.04-amd64
     permissions:
       contents: read
     outputs:

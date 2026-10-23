@@ -62,7 +62,7 @@ permissions:
 jobs:
   release-to-gcr-release-registry:
     name: Push images to the GCR Release Registry
-    runs-on: 'kic-plus'
+    runs-on: ubuntu-24.04-amd64
     permissions:
       contents: read
       id-token: write
@@ -132,7 +132,7 @@ jobs:
 
   release-to-nginx-registry:
     name: Push Plus images to the NGINX Registry
-    runs-on: 'kic-plus'
+    runs-on: ubuntu-24.04-amd64
     permissions:
       contents: read
       id-token: write

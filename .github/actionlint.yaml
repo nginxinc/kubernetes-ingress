@@ -1,7 +1,6 @@
 self-hosted-runner:
   # Labels of self-hosted runner in array of strings.
   labels:
-    - kic-plus
     - ubuntu-24.04-amd64
     - aw-ubuntu-24.04-amd64
 # Configuration variables in array of strings defined in your repository or
